@@ -1,13 +1,4 @@
-<footer>
-  <div class="footer-info" style="text-align: left;">
-    &copy; {{ dateFormat "2006" now }} Daffa Abhipraya |
-    <a href="https://abhipraya.dev">Portfolio</a> |
-    <a href="https://www.linkedin.com/in/absolutepraya/">LinkedIn</a>
-  </div>
-</footer>
-{{ if not hugo.IsServer }}
-{{ template "_internal/google_analytics.html" . }}
-{{ end }}
+{{/* Mermaid support — loaded only when a page uses mermaid code blocks */}}
 {{ if .Page.Store.Get "hasMermaid" }}
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';

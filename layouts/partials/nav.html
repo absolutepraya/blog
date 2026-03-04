@@ -1,0 +1,11 @@
+<nav>
+    {{ $menus := .Site.Menus.main }}
+    {{ range $i, $e := $menus }}{{ if $i }}<span>/</span>{{ end }}
+    <a href="{{ .URL }}">{{ .Name }}</a>
+    {{ end }}
+    <span>/</span>
+    <label class="toggle-switch" for="dark-mode-toggle">
+        <input type="checkbox" id="dark-mode-toggle" class="toggle-input">
+        <span class="toggle-slider"></span>
+    </label>
+</nav>
