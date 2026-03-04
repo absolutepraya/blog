@@ -657,7 +657,20 @@ article.post {
 }
 
 /* --- Responsive --- */
+/* Mermaid responsive containers */
+pre.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+pre.mermaid {
+  overflow-x: auto;
+}
+
 @media (max-width: 768px) {
+  body {
+    font-size: 1rem;
+  }
   .page-content {
     padding-inline: 1rem;
     padding-block: 1.5rem;
@@ -683,9 +696,11 @@ article.post {
   .post-title {
     font-size: 2rem;
   }
-  .post-content h1 { font-size: 1.25rem; }
-  .post-content h2 { font-size: 1.25rem; }
-  .post-content h3 { font-size: 1.125rem; }
+  .post-content h1 { font-size: 1.2rem; }
+  .post-content h2 { font-size: 1.15rem; }
+  .post-content h3 { font-size: 1.1rem; }
+  .post-content h4 { font-size: 1.05rem; }
+  .post-content h5, .post-content h6 { font-size: 1rem; }
 }
 
 @media (max-width: 600px) {
