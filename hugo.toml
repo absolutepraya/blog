@@ -12,6 +12,7 @@ pygmentscodefencesguesssyntax = true
   mode = "toggle"
   useCDN = false
   subtitle = "Thoughts on software, systems, and stuff"
+  customCSS = ["css/custom.css"]
 
 [pagination]
   pagerSize = 10
