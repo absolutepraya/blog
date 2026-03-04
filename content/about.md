@@ -5,6 +5,10 @@ date = "2026-03-04"
 aliases = ["about"]
 +++
 
-Hi, I'm Daffa Abhipraya. I write about software engineering, systems, and whatever catches my interest.
+Hi, I'm Abhip.
 
-You can find me on [GitHub](https://github.com/absolutepraya) and [LinkedIn](https://www.linkedin.com/in/absolutepraya/).
+I write about software engineering, systems, and whatever catches my interest.
+
+Check out my [portfolio](https://abhipraya.dev), or reach me at [daffa@abhipraya.dev](mailto:daffa@abhipraya.dev).
+
+You can also find me on [GitHub](https://github.com/absolutepraya) and [LinkedIn](https://www.linkedin.com/in/absolutepraya/).
