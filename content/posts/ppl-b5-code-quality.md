@@ -108,6 +108,53 @@ sonar.python.coverage.reportPaths=apps/api/coverage.xml
 
 Both coverage reports (Python XML + JS LCOV) flow into a single SonarQube project at `sonarqube.cs.ui.ac.id`. The SonarQube MCP server is also configured in `.mcp.json` for AI-assisted quality inspection directly from the editor.
 
+## Beyond Style — Runtime Failure Prevention
+
+Static analysis in SIRA is not limited to formatting and import order. The configuration catches issues that would manifest as runtime failures in production.
+
+### mypy Strict Mode: Untyped Code as a Runtime Risk
+
+`strict = true` enables a class of checks that catch real runtime failures:
+
+| mypy flag | What it prevents |
+|-----------|-----------------|
+| `--disallow-untyped-defs` | Functions with no type annotations — callers can't reason about null safety |
+| `--disallow-any-generics` | `list` without `list[str]` — type-erased collections that collapse to `Any` |
+| `--warn-return-any` | Functions returning `Any` — propagates type unsafety to every caller |
+| `--strict-optional` | Unenforced `Optional` checks — missed `None` dereferences become `AttributeError` at runtime |
+
+The last is the most critical: any `T | None` return must be narrowed before use. mypy surfaces these as type errors before CI, not as production crashes.
+
+### Biome `noExplicitAny`: Blocking the Type Escape Hatch
+
+TypeScript's `any` type disables all type inference — any method call or property access on `any` is unchecked:
+
+```typescript
+// ❌ blocked — data.amount is unchecked; typos and wrong shapes pass silently
+function process(data: any) { return data.amount }
+
+// ✅ required — TypeScript verifies .amount_paid exists on PaymentCreate
+function process(data: PaymentCreate) { return data.amount_paid }
+```
+
+With `any`, `data.typo` compiles and crashes at runtime. With typed parameters, it's a compile error caught before the branch executes.
+
+### Knip: Dead Code as a Behavioral Risk
+
+Unused exports are not just style noise — they represent a behavioral risk:
+
+- Unused functions accumulate bugs that tests never exercise
+- Dead branches can drift out of sync with the active codebase's assumptions
+- Unreachable code paths hide logic errors until accidentally reactivated
+
+`exports: "error"` ensures every exported symbol is consumed. Unused utilities are removed rather than accumulating drift.
+
+### SonarQube: Complexity as a Bug Predictor
+
+SonarQube's cognitive complexity metric flags functions with high branching depth — a reliable predictor of off-by-one and conditional logic errors. This catches behavioral issues that type checkers miss: not "what type is this value" but "is this branching logic reachable and correct."
+
+---
+
 ## Evidence
 
 - [MR !26 - SIRA-60 SonarQube CI integration](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/26)

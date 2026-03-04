@@ -44,7 +44,7 @@ graph LR
 
 Redis uses **separate databases** — DB 0 for the application Celery broker, DB 1 for GlitchTip's Celery worker. No contention between application jobs and monitoring event processing.
 
-GlitchTip is exposed on port 8080 and reverse-proxied via Nginx.
+GlitchTip is deployed and accessible at **http://10.10.25.75:8080**, reverse-proxied via Nginx on the Nashta VM.
 
 ## Sentry SDK Integration
 
@@ -112,10 +112,31 @@ This enables structured latency analysis — filter by `path` to find slow endpo
 
 Source: `apps/api/src/app/middleware/logging.py`, [MR !37](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/37)
 
+## Email Alerting (SIRA-75)
+
+GlitchTip supports email alerts for new errors and performance regressions. Both `glitchtip-web` and `glitchtip-worker` need `EMAIL_URL` and `DEFAULT_FROM_EMAIL` to send notifications:
+
+```yaml
+glitchtip-web:
+  environment:
+    EMAIL_URL: ${GLITCHTIP_EMAIL_URL}          # smtp+ssl://resend:<key>@smtp.resend.com:465
+    DEFAULT_FROM_EMAIL: sira@noreply.abhipraya.dev
+```
+
+`GLITCHTIP_EMAIL_URL` is injected at deploy time from the `PROD_GLITCHTIP_EMAIL_URL` GitLab CI variable — the Resend API key is never stored in the repository. The `noreply.abhipraya.dev` domain is verified on Resend.
+
+With email configured, GlitchTip can notify team members when:
+- A new error type appears (first occurrence of an exception class)
+- Error frequency crosses a threshold (e.g., >10 in 1 hour)
+- A performance transaction exceeds a latency budget
+
+This closes the alerting gap: errors are no longer only visible to whoever is watching the dashboard — they're pushed to inboxes.
+
 ## Evidence
 
 - [MR !33 - SIRA-59 GlitchTip](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/33)
 - [MR !37 - SIRA-70 Structured logging](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/37)
 - [Linear SIRA-59](https://linear.app/ppl-sira/issue/SIRA-59)
 - [Linear SIRA-70](https://linear.app/ppl-sira/issue/SIRA-70)
-- Source: `apps/api/src/app/main.py`, `workers/celery_app.py`, `middleware/logging.py`, `infra/docker-compose.yml`
+- [Linear SIRA-75](https://linear.app/ppl-sira/issue/SIRA-75)
+- Source: `apps/api/src/app/main.py`, `workers/celery_app.py`, `middleware/logging.py`, `infra/docker-compose.yml`, `.gitlab-ci.yml`

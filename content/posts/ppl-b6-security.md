@@ -145,18 +145,24 @@ Zero findings across 656 lines. The clean result reflects the architecture:
 
 ### pnpm audit — Frontend Dependencies
 
-Before the scan, two CVEs were present:
+#### Before — 2 CVEs Found
+
+Initial scan found two vulnerabilities in transitive dependencies:
 
 | Severity | Package | CVE | Path |
 |----------|---------|-----|------|
-| High | `rollup` 4.57.1 | [GHSA-mw96-cpmx-2vgc](https://github.com/advisories/GHSA-mw96-cpmx-2vgc) | `vite > rollup` |
-| Moderate | `esbuild` ≤0.24.2 | [GHSA-67mh-4wv8-2f99](https://github.com/advisories/GHSA-67mh-4wv8-2f99) | `vitest > vite > esbuild` |
+| **High** | `rollup` 4.57.1 | [GHSA-mw96-cpmx-2vgc](https://github.com/advisories/GHSA-mw96-cpmx-2vgc) | `vite > rollup` |
+| **Moderate** | `esbuild` ≤0.24.2 | [GHSA-67mh-4wv8-2f99](https://github.com/advisories/GHSA-67mh-4wv8-2f99) | `vitest > vite > esbuild` |
 
-**Rollup**: Arbitrary file write via path traversal — an attacker controlling build input could escape the output directory. Patched in ≥4.59.0.
+**Rollup** (High): Arbitrary file write via path traversal — an attacker controlling build input could escape the output directory. Patched in ≥4.59.0.
 
-**esbuild**: Dev server CORS bypass — any website could make requests to the local esbuild dev server and read responses. Dev-only, not a production risk, but patched in ≥0.25.0.
+**esbuild** (Moderate): Dev server CORS bypass — any website could make requests to the local esbuild dev server and read responses. Dev-only, not a production risk, but patched in ≥0.25.0.
 
-Both are transitive dependencies of `vite`/`vitest`, not directly declared in `package.json`. The fix: `pnpm.overrides` in `apps/web/package.json` to force patched versions without upgrading vite:
+Both are transitive dependencies of `vite`/`vitest` — not directly declared in `package.json`, so a standard upgrade would have missed them.
+
+#### Remediation
+
+`pnpm.overrides` in `apps/web/package.json` forces patched versions for the transitive chain without upgrading vite itself:
 
 ```json
 "pnpm": {
@@ -167,11 +173,17 @@ Both are transitive dependencies of `vite`/`vitest`, not directly declared in `p
 }
 ```
 
-After `pnpm install`:
+#### After — Clean
 
 ```
 No known vulnerabilities found
 ```
+
+| Metric | Before | After |
+|--------|--------|-------|
+| High severity CVEs | 1 | 0 |
+| Moderate severity CVEs | 1 | 0 |
+| Total vulnerabilities | 2 | 0 |
 
 ## Evidence
 
