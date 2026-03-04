@@ -33,6 +33,13 @@ header .main a {
   text-decoration: none;
 }
 
+/* Constrain header to match .content width */
+header {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1ch;
+}
+
 /* Left-justify footer */
 .footer-info {
   text-align: left;
