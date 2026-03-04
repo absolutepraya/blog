@@ -1,0 +1,3 @@
+[submodule "themes/archie-solarized"]
+	path = themes/archie-solarized
+	url = https://github.com/hcartiaux/hugo-theme-archie-solarized.git
