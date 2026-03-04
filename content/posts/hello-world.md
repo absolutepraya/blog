@@ -263,71 +263,58 @@ classDiagram
     class Site {
         +String title
         +String baseURL
-        +Config config
-        +build() void
-        +serve(port) void
+        +build()
+        +serve()
     }
     class Config {
         +String theme
         +Map params
-        +List~Taxonomy~ taxonomies
-        +load(path) Config
     }
     class Page {
-        <<abstract>>
         +String title
         +Date date
         +String content
-        +FrontMatter meta
-        +render() HTML
-        +permalink() URL
+        +render()
     }
     class Post {
-        +List~Tag~ tags
         +Author author
         +bool draft
-        +readingTime() int
-        +publish() void
+        +readingTime()
+        +publish()
     }
     class ListPage {
-        +List~Page~ pages
         +Paginator paginator
-        +paginate(size) List~Page~
+        +paginate()
     }
     class Author {
         +String name
         +String email
         +String bio
-        +URL avatar
-        +posts() List~Post~
     }
     class Tag {
         +String name
         +String slug
-        +posts() List~Post~
-        +count() int
+        +count()
     }
     class Template {
         <<interface>>
-        +execute(data) HTML
-        +name() String
+        +execute()
+        +name()
     }
     class BaseTemplate {
         +String layout
-        +partial(name data) HTML
     }
     class Taxonomy {
         +String singular
         +String plural
-        +terms() List~Tag~
     }
 
     Site *-- Config
     Site *-- Page
     Page <|-- Post
     Page <|-- ListPage
-    Post "1" --> "1" Author : writtenBy
-    Post "*" --> "*" Tag : tagged
+    Post --> Author : writtenBy
+    Post --> Tag : tagged
     Site --> Template : uses
     Template <|.. BaseTemplate
     Config *-- Taxonomy
