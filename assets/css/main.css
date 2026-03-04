@@ -347,7 +347,7 @@ nav a:hover {
 }
 
 .toggle-input:checked + .toggle-slider:before {
-  transform: translateX(calc(2.5rem - 1.25rem - 8px));
+  transform: translateX(calc(2.5rem - 1.25rem - 4px));
 }
 
 .toggle-slider:hover {
@@ -696,7 +696,7 @@ pre.mermaid {
     width: 14px;
   }
   .toggle-input:checked + .toggle-slider:before {
-    transform: translateX(18px);
+    transform: translateX(14px);
   }
   .post-title {
     font-size: 2rem;
@@ -743,7 +743,7 @@ pre.mermaid {
     width: 1rem;
   }
   .toggle-input:checked + .toggle-slider:before {
-    transform: translateX(17px);
+    transform: translateX(calc(2.25rem - 1rem - 4px));
   }
   .post-title {
     font-size: 1.75rem;
