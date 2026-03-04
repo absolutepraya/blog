@@ -7,7 +7,7 @@
 <section class="home">
     <ul class="post-list">
         {{ $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections }}
-        {{ range (where $pages "Params.hidden" "ne" true) }}
+        {{ range (where $pages "Params.hidden" "ne" true).ByDate.Reverse }}
         <li>
             <div class="post-title-container">
                 <a href="{{ .Permalink }}" class="post-title-link">{{ .Title }}</a>
