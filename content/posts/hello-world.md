@@ -260,65 +260,18 @@ gitGraph
 
 ```mermaid
 classDiagram
-    class Site {
-        +String title
-        +String baseURL
-        +build()
-        +serve()
-    }
-    class Config {
-        +String theme
-        +Map params
-    }
-    class Page {
-        +String title
-        +Date date
-        +String content
-        +render()
-    }
-    class Post {
-        +Author author
-        +bool draft
-        +readingTime()
-        +publish()
-    }
-    class ListPage {
-        +Paginator paginator
-        +paginate()
-    }
-    class Author {
-        +String name
-        +String email
-        +String bio
-    }
-    class Tag {
-        +String name
-        +String slug
-        +count()
-    }
-    class Template {
-        <<interface>>
-        +execute()
-        +name()
-    }
-    class BaseTemplate {
-        +String layout
-    }
-    class Taxonomy {
-        +String singular
-        +String plural
-    }
-
-    Site *-- Config
-    Site *-- Page
-    Page <|-- Post
-    Page <|-- ListPage
-    Post --> Author : writtenBy
-    Post --> Tag : tagged
-    Site --> Template : uses
-    Template <|.. BaseTemplate
-    Config *-- Taxonomy
-    Taxonomy --> Tag : groups
+    Animal <|-- Dog
+    Animal <|-- Cat
+    Animal <|-- Fish
+    Animal : +String name
+    Animal : +int age
+    Animal : +makeSound()
+    Dog : +String breed
+    Dog : +fetch()
+    Cat : +bool indoor
+    Cat : +purr()
+    Fish : +String habitat
+    Fish : +swim()
 ```
 
 ### State Diagram
