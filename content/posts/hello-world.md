@@ -7,4 +7,4 @@ tags: ["meta"]
 
 This is the first post on this blog. Built with [Hugo](https://gohugo.io/) and the [Archie-Solarized](https://github.com/hcartiaux/hugo-theme-archie-solarized) theme.
 
-More to come. Auto-deploy test.
+More to come.
