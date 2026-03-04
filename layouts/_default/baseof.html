@@ -59,7 +59,86 @@
     {{ if .Page.Store.Get "hasMermaid" }}
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: true });
+
+        var isDark = document.documentElement.classList.contains('dark-theme');
+        var lightVars = {
+            darkMode: false,
+            primaryColor: '#eee8d5',
+            primaryTextColor: '#586e75',
+            primaryBorderColor: '#93a1a1',
+            lineColor: '#93a1a1',
+            secondaryColor: '#fdf6e3',
+            tertiaryColor: '#eee8d5',
+            background: '#fdf6e3',
+            mainBkg: '#eee8d5',
+            nodeBorder: '#93a1a1',
+            clusterBkg: '#eee8d5',
+            clusterBorder: '#93a1a1',
+            titleColor: '#586e75',
+            edgeLabelBackground: '#eee8d5',
+            nodeTextColor: '#586e75',
+            noteBkgColor: '#eee8d5',
+            noteBorderColor: '#93a1a1',
+            noteTextColor: '#586e75',
+            fontFamily: '"Ubuntu", sans-serif'
+        };
+        var darkVars = {
+            darkMode: true,
+            primaryColor: '#073642',
+            primaryTextColor: '#93a1a1',
+            primaryBorderColor: '#586e75',
+            lineColor: '#586e75',
+            secondaryColor: '#002b36',
+            tertiaryColor: '#073642',
+            background: '#002b36',
+            mainBkg: '#073642',
+            nodeBorder: '#586e75',
+            clusterBkg: '#073642',
+            clusterBorder: '#586e75',
+            titleColor: '#93a1a1',
+            edgeLabelBackground: '#073642',
+            nodeTextColor: '#93a1a1',
+            noteBkgColor: '#073642',
+            noteBorderColor: '#586e75',
+            noteTextColor: '#93a1a1',
+            fontFamily: '"Ubuntu", sans-serif'
+        };
+
+        // Store original diagram source before first render
+        var originals = {};
+        document.querySelectorAll('pre.mermaid').forEach(function(el, i) {
+            originals[i] = el.textContent;
+            el.setAttribute('data-idx', i);
+        });
+
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'base',
+            themeVariables: isDark ? darkVars : lightVars
+        });
+        await mermaid.run();
+
+        // Re-render on dark mode toggle
+        var toggle = document.getElementById('dark-mode-toggle');
+        if (toggle) {
+            toggle.addEventListener('change', async function() {
+                var nowDark = document.documentElement.classList.contains('dark-theme');
+                // Restore original source text
+                document.querySelectorAll('pre.mermaid').forEach(function(el) {
+                    var idx = el.getAttribute('data-idx');
+                    if (idx !== null && originals[idx]) {
+                        el.removeAttribute('data-processed');
+                        el.innerHTML = originals[idx];
+                    }
+                });
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: 'base',
+                    themeVariables: nowDark ? darkVars : lightVars
+                });
+                await mermaid.run();
+            });
+        }
     </script>
     {{ end }}
 </body>
