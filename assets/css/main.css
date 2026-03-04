@@ -178,10 +178,15 @@ blockquote {
   border-left: 4px solid var(--color-blue);
   font-style: normal;
   font-size: 1rem;
-  margin-left: 2rem;
-  margin-right: 2rem;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
   background-color: var(--bg-secondary);
   padding: 1rem;
+}
+
+blockquote blockquote {
+  margin-left: 0.5rem;
+  margin-right: 0;
 }
 
 blockquote > :last-child {
@@ -776,6 +781,10 @@ pre.mermaid {
     background-color: var(--bg-secondary);
     padding-inline: 1rem;
   }
+  blockquote blockquote {
+    margin-inline: 0;
+    margin-left: 4px;
+  }
 }
 
 @media (max-width: 400px) {
@@ -809,6 +818,10 @@ pre.mermaid {
   }
   blockquote {
     margin-inline: -0.75rem;
+  }
+  blockquote blockquote {
+    margin-inline: 0;
+    margin-left: 4px;
   }
   pre {
     margin-inline: -0.75rem;
