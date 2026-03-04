@@ -185,7 +185,7 @@ td {
 
 hr {
   border: none;
-  border-top: 1px solid var(--text-primary);
+  border-top: 1px solid var(--border-color);
   margin: 0.75rem 0;
 }
 
@@ -335,7 +335,6 @@ nav a:hover {
 
 .post-list > li {
   margin-bottom: 0.5rem;
-  margin-left: -2rem;
   display: flex;
   list-style-type: none;
   align-items: baseline;
@@ -606,7 +605,7 @@ article.post {
 .copyright {
   margin-top: 1rem;
   font-family: var(--font-family-mono);
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
 .copyright p {
