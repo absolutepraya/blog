@@ -132,6 +132,24 @@ With email configured, GlitchTip can notify team members when:
 
 This closes the alerting gap: errors are no longer only visible to whoever is watching the dashboard — they're pushed to inboxes.
 
+Alert rules configured on both projects:
+- **Trigger**: 1 event in 1 minute → immediate notification on first error
+- **Uptime trigger**: alert fires if an uptime monitor goes down
+- **Recipient**: team members on the project via email
+
+## Uptime Monitoring
+
+GlitchTip has a built-in uptime monitor that pings endpoints every N seconds and fires an alert if a check fails — covering the "process is completely dead" failure mode that error tracking misses.
+
+Intended configuration:
+
+| Monitor | URL | Interval |
+|---------|-----|----------|
+| `sira-api` | `http://10.10.25.75:8000/api/health` | 60s |
+| `sira-web` | `http://10.10.25.75:3002` | 60s |
+
+**Current limitation:** GlitchTip blocks uptime monitors targeting private/internal IPs (`10.x.x.x`) as an SSRF protection. Since GlitchTip and the app are co-deployed on the same VM, the monitor worker would be pinging itself via a private address — which is rejected with a 422. This will be unblocked once the app is exposed on a public domain.
+
 ## Evidence
 
 - [MR !33 - SIRA-59 GlitchTip](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/33)
