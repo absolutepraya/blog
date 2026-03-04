@@ -13,8 +13,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
-    {{ $style := resources.Get "css/main.css" | fingerprint }}
-    <link rel="stylesheet" type="text/css" href="{{ $style.Permalink }}">
+    {{ $style := resources.Get "css/main.css" }}
+    {{ if not hugo.IsServer }}{{ $style = $style | fingerprint }}{{ end }}
+    <link rel="stylesheet" type="text/css" href="{{ $style.RelPermalink }}">
     <script>
         (function() {
             var theme = localStorage.getItem('theme');
