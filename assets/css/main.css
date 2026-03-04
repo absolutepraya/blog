@@ -33,6 +33,21 @@
   --text-secondary: var(--color-base00);
   --text-muted:     var(--color-base1);
   --border-color:   var(--color-base1);
+
+  /* Mermaid — solarized-light (beautiful-mermaid) */
+  --mermaid-bg:     var(--color-base3);   /* #fdf6e3 */
+  --mermaid-fg:     var(--color-base00);  /* #657b83 */
+  --mermaid-line:   var(--color-base1);   /* #93a1a1 */
+  --mermaid-accent: var(--color-blue);    /* #268bd2 */
+  --mermaid-muted:  var(--color-base1);   /* #93a1a1 */
+  --mermaid-pie1: var(--color-blue);
+  --mermaid-pie2: var(--color-cyan);
+  --mermaid-pie3: var(--color-green);
+  --mermaid-pie4: var(--color-yellow);
+  --mermaid-pie5: var(--color-orange);
+  --mermaid-pie6: var(--color-violet);
+  --mermaid-pie7: var(--color-magenta);
+  --mermaid-pie8: var(--color-red);
 }
 
 /* Dark mode */
@@ -43,6 +58,21 @@
   --text-secondary: var(--color-base0);
   --text-muted:     var(--color-base01);
   --border-color:   var(--color-base01);
+
+  /* Mermaid — solarized-dark (beautiful-mermaid) */
+  --mermaid-bg:     var(--color-base03);  /* #002b36 */
+  --mermaid-fg:     var(--color-base0);   /* #839496 */
+  --mermaid-line:   var(--color-base01);  /* #586e75 */
+  --mermaid-accent: var(--color-blue);    /* #268bd2 */
+  --mermaid-muted:  var(--color-base01);  /* #586e75 */
+  --mermaid-pie1: var(--color-blue);
+  --mermaid-pie2: var(--color-cyan);
+  --mermaid-pie3: var(--color-green);
+  --mermaid-pie4: var(--color-yellow);
+  --mermaid-pie5: var(--color-orange);
+  --mermaid-pie6: var(--color-violet);
+  --mermaid-pie7: var(--color-magenta);
+  --mermaid-pie8: var(--color-red);
 }
 
 /* --- Base Reset --- */

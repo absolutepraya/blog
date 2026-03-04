@@ -60,49 +60,85 @@
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';
 
-        var isDark = document.documentElement.classList.contains('dark-theme');
-        var lightVars = {
-            darkMode: false,
-            primaryColor: '#fdf6e3',
-            primaryTextColor: '#586e75',
-            primaryBorderColor: '#93a1a1',
-            lineColor: '#93a1a1',
-            secondaryColor: '#fdf6e3',
-            tertiaryColor: '#fdf6e3',
-            background: '#eee8d5',
-            mainBkg: '#fdf6e3',
-            nodeBorder: '#93a1a1',
-            clusterBkg: '#eee8d5',
-            clusterBorder: '#93a1a1',
-            titleColor: '#586e75',
-            edgeLabelBackground: '#fdf6e3',
-            nodeTextColor: '#586e75',
-            noteBkgColor: '#fdf6e3',
-            noteBorderColor: '#93a1a1',
-            noteTextColor: '#586e75',
-            fontFamily: '"Ubuntu", sans-serif'
-        };
-        var darkVars = {
-            darkMode: true,
-            primaryColor: '#002b36',
-            primaryTextColor: '#93a1a1',
-            primaryBorderColor: '#586e75',
-            lineColor: '#586e75',
-            secondaryColor: '#002b36',
-            tertiaryColor: '#002b36',
-            background: '#073642',
-            mainBkg: '#002b36',
-            nodeBorder: '#586e75',
-            clusterBkg: '#073642',
-            clusterBorder: '#586e75',
-            titleColor: '#93a1a1',
-            edgeLabelBackground: '#002b36',
-            nodeTextColor: '#93a1a1',
-            noteBkgColor: '#002b36',
-            noteBorderColor: '#586e75',
-            noteTextColor: '#93a1a1',
-            fontFamily: '"Ubuntu", sans-serif'
-        };
+        var root = document.documentElement;
+        function hexToRgb(hex) {
+            var h = hex.replace('#', '');
+            return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)];
+        }
+        function rgbToHex(r, g, b) {
+            return '#' + [r,g,b].map(function(c) {
+                var x = Math.round(Math.max(0, Math.min(255, c))).toString(16);
+                return x.length === 1 ? '0' + x : x;
+            }).join('');
+        }
+        function colorMix(fgHex, bgHex, pct) {
+            var fg = hexToRgb(fgHex), bg = hexToRgb(bgHex), t = pct / 100;
+            return rgbToHex(fg[0]*t + bg[0]*(1-t), fg[1]*t + bg[1]*(1-t), fg[2]*t + bg[2]*(1-t));
+        }
+        function cssVar(name, fallback) {
+            var value = getComputedStyle(root).getPropertyValue(name).trim();
+            if (!value) return fallback;
+            var m = value.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
+            if (m) return rgbToHex(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]));
+            return value;
+        }
+        function buildThemeVars(isDark) {
+            var bg     = cssVar('--mermaid-bg',     isDark ? '#002b36' : '#fdf6e3');
+            var fg     = cssVar('--mermaid-fg',     isDark ? '#839496' : '#657b83');
+            var line   = cssVar('--mermaid-line',   isDark ? '#586e75' : '#93a1a1');
+            var accent = cssVar('--mermaid-accent', '#268bd2');
+            var muted  = cssVar('--mermaid-muted',  isDark ? '#586e75' : '#93a1a1');
+            var nodeFill    = colorMix(fg, bg, 3);
+            var groupHdr    = colorMix(fg, bg, 5);
+            var innerStroke = colorMix(fg, bg, 12);
+            var nodeStroke  = colorMix(fg, bg, 20);
+            var pie1 = cssVar('--mermaid-pie1', '#268bd2');
+            var pie2 = cssVar('--mermaid-pie2', '#2aa198');
+            var pie3 = cssVar('--mermaid-pie3', '#859900');
+            var pie4 = cssVar('--mermaid-pie4', '#b58900');
+            var pie5 = cssVar('--mermaid-pie5', '#cb4b16');
+            var pie6 = cssVar('--mermaid-pie6', '#6c71c4');
+            var pie7 = cssVar('--mermaid-pie7', '#d33682');
+            var pie8 = cssVar('--mermaid-pie8', '#dc322f');
+            return {
+                darkMode: isDark,
+                primaryColor: nodeFill,
+                primaryBorderColor: nodeStroke,
+                primaryTextColor: fg,
+                secondaryColor: groupHdr,
+                secondaryBorderColor: innerStroke,
+                secondaryTextColor: fg,
+                tertiaryColor: nodeFill,
+                tertiaryBorderColor: innerStroke,
+                tertiaryTextColor: fg,
+                textColor: fg,
+                lineColor: line,
+                defaultLinkColor: line,
+                background: nodeFill,
+                mainBkg: nodeFill,
+                nodeBorder: nodeStroke,
+                clusterBkg: bg,
+                clusterBorder: innerStroke,
+                titleColor: accent,
+                edgeLabelBackground: bg,
+                nodeTextColor: fg,
+                noteBkgColor: nodeFill,
+                noteBorderColor: innerStroke,
+                noteTextColor: fg,
+                actorTextColor: fg,
+                signalTextColor: fg,
+                labelTextColor: fg,
+                loopTextColor: fg,
+                sequenceNumberColor: muted,
+                pie1: pie1, pie2: pie2, pie3: pie3, pie4: pie4,
+                pie5: pie5, pie6: pie6, pie7: pie7, pie8: pie8,
+                fillType0: pie1, fillType1: pie2, fillType2: pie3, fillType3: pie4,
+                fillType4: pie5, fillType5: pie6, fillType6: pie7, fillType7: pie8,
+                fontFamily: '"Ubuntu", sans-serif'
+            };
+        }
+        var isDark = root.classList.contains('dark-theme');
+        var themeVars = buildThemeVars(isDark);
 
         // Store original diagram source before first render
         var originals = {};
@@ -114,7 +150,7 @@
         mermaid.initialize({
             startOnLoad: false,
             theme: 'base',
-            themeVariables: isDark ? darkVars : lightVars
+            themeVariables: themeVars
         });
         await mermaid.run();
 
@@ -134,7 +170,7 @@
                 mermaid.initialize({
                     startOnLoad: false,
                     theme: 'base',
-                    themeVariables: nowDark ? darkVars : lightVars
+                    themeVariables: buildThemeVars(nowDark)
                 });
                 await mermaid.run();
             });
