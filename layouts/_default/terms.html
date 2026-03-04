@@ -1,0 +1,28 @@
+{{ define "main" }}
+<section class="site-header">
+    <h1 class="smallcap"><a class="site-title" href="/">~/abhipraya</a></h1>
+    {{ partial "nav.html" . }}
+</section>
+
+<section class="site-intro">
+    <p>All Tags</p>
+</section>
+
+<section class="home">
+    <ul class="tag-list">
+        {{ range .Data.Terms.Alphabetical }}
+        <li>
+            <a href="{{ .Page.Permalink }}">#{{ .Page.Title }}</a>
+            <span class="tag-count">({{ .Count }})</span>
+        </li>
+        {{ end }}
+    </ul>
+
+    <p><a href="/">&larr; Back to all posts</a></p>
+</section>
+
+<hr>
+<div class="copyright">
+    <p>&copy; {{ now.Year }} Daffa Abhipraya | <a href="https://abhipraya.dev">Portfolio</a> | <a href="https://www.linkedin.com/in/absolutepraya/">LinkedIn</a></p>
+</div>
+{{ end }}

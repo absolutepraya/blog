@@ -1,0 +1,62 @@
+{{ define "main" }}
+<section class="site-header">
+    <h1 class="smallcap"><a class="site-title" href="/">~/abhipraya</a></h1>
+    {{ partial "nav.html" . }}
+</section>
+
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">{{ .Title }}</h1>
+        <p class="post-meta">
+            <span class="post-meta-date">
+                <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Date.Format "Jan 02, 2006" }}</time>
+            </span>{{ if .Params.tags }}
+            <span class="tags">
+                {{ range .Params.tags }}
+                <a href="{{ "/tags/" | relURL }}{{ . | urlize }}/">#{{ . }}</a>
+                {{ end }}
+            </span>{{ end }}
+        </p>
+    </header>
+    <div class="post-content">
+        {{ .Content }}
+    </div>
+
+    {{ if .Params.tags }}
+    {{ $currentPage := . }}
+    {{ $tags := .Params.tags }}
+    {{ $relatedPages := slice }}
+    {{ range .Site.RegularPages }}
+        {{ $page := . }}
+        {{ if ne $page.Permalink $currentPage.Permalink }}
+            {{ $commonTags := 0 }}
+            {{ range $tag := $tags }}
+                {{ if in $page.Params.tags $tag }}
+                    {{ $commonTags = add $commonTags 1 }}
+                {{ end }}
+            {{ end }}
+            {{ if gt $commonTags 0 }}
+                {{ $relatedPages = $relatedPages | append (dict "page" $page "weight" $commonTags) }}
+            {{ end }}
+        {{ end }}
+    {{ end }}
+    {{ $relatedPages = sort $relatedPages "weight" "desc" }}
+    {{ if gt (len $relatedPages) 0 }}
+    <div class="related-posts">
+        <h3>Related Posts</h3>
+        <ul>
+        {{ range first 5 $relatedPages }}
+            <li><a href="{{ .page.Permalink }}">{{ .page.Title }}</a></li>
+        {{ end }}
+        </ul>
+    </div>
+    {{ end }}
+    {{ end }}
+
+    <hr>
+</article>
+
+<div class="copyright">
+    <p>&copy; {{ now.Year }} Daffa Abhipraya | <a href="https://abhipraya.dev">Portfolio</a> | <a href="https://www.linkedin.com/in/absolutepraya/">LinkedIn</a></p>
+</div>
+{{ end }}
