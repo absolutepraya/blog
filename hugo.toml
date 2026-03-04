@@ -31,6 +31,11 @@ copyright = "© Daffa Abhipraya"
       linkify = true
 
 [[menu.main]]
+name = "About"
+url = "/about"
+weight = 1
+
+[[menu.main]]
 name = "Posts"
 url = "/posts"
-weight = 1
+weight = 2
