@@ -1,9 +1,93 @@
 ---
-title: "PPL: Security Scanning in CI - Bandit + pnpm audit"
+title: "PPL: Secure Programming - OWASP Coverage and CI Security Scanning"
 date: 2026-03-05
-description: "Adding a security:sast CI job with Bandit for Python SAST and pnpm audit for dependency CVE scanning. Two real vulnerabilities found and remediated."
-tags: ["ppl", "security", "ci", "sast", "devops"]
+description: "Five OWASP Top 10 categories addressed through JWT auth, RBAC, RLS, Pydantic validation, and CORS hardening — plus a security:sast CI job with Bandit and pnpm audit."
+tags: ["ppl", "security", "owasp", "ci", "sast", "fastapi"]
 toc: true
+---
+
+## Security Implementation — OWASP Coverage
+
+Five of the OWASP Top 10 are addressed by design across the stack.
+
+### A01 — Broken Access Control
+
+**Backend:** `require_admin` FastAPI dependency chains on `get_current_user` without modifying it. Adding a new role = new function, zero changes to existing code (OCP):
+
+```python
+async def require_admin(
+    user: AuthenticatedUser = Depends(get_current_user),
+) -> AuthenticatedUser:
+    if user.role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+```
+
+**Frontend:** TanStack Router `beforeLoad` checks `isAuthenticated` and `role` before rendering any protected route. Unauthenticated users are redirected to `/login` at the router level, not just hidden in the UI.
+
+**Database:** Row-Level Security on `app_users`:
+
+```sql
+ALTER TABLE app_users ENABLE ROW LEVEL SECURITY;
+-- Users can only read their own profile
+-- Admins can read and modify all
+```
+
+Source: `supabase/migrations/20260302100000_app_users_rls_and_fk.sql`
+
+### A02 — Cryptographic Failures
+
+JWT verification supports both HS256 (legacy) and asymmetric algorithms (ES256 via JWKS) in `apps/api/src/app/dependencies.py`. The algorithm is read from the token header — no hardcoded assumption:
+
+```python
+def _decode_jwt(token: str) -> dict[str, object]:
+    header = jwt.get_unverified_header(token)
+    alg = header.get("alg", "HS256")
+    if alg == "HS256":
+        return jwt.decode(token, settings.supabase_jwt_secret,
+                          algorithms=["HS256"], audience="authenticated")
+    signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
+    return jwt.decode(token, signing_key.key, algorithms=[alg], audience="authenticated")
+```
+
+HTTPS enforced in production. `send_default_pii=False` in Sentry init prevents tokens from leaking into error reports.
+
+### A03 — Injection
+
+All API input validated through Pydantic models before reaching the database:
+
+```python
+class PaymentCreate(BaseModel):
+    amount_paid: float = Field(gt=0)   # rejects zero and negative
+    payment_date: date
+```
+
+No raw SQL anywhere — all queries use the Supabase Python client's parameterized builder. No string concatenation in query construction.
+
+### A05 — Security Misconfiguration
+
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,  # explicit list, never "*"
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+All secrets in `.env.local`, never committed. CI/CD injects from GitLab CI Variables at deploy time. `.env.example` uses placeholder values only.
+
+### A07 — Authentication Failures
+
+JWT is decoded and verified locally on every request (no network round-trip to Supabase Auth). Invalid tokens raise `PyJWTError` → 401. Token expiry is enforced by the JWT `exp` claim.
+
+Frontend Axios interceptor handles 401 responses by calling `supabase.auth.signOut()` + redirecting to `/login` — prevents infinite-loop token refresh cycles.
+
+Email fallback (SIRA-69): if `auth_user_id` is missing from `app_users`, match by email and auto-link on first login. This handles users who signed up before the linkage field existed.
+
+**5 OWASP categories covered: A01, A02, A03, A05, A07.**
+
 ---
 
 ## Why Security Scanning
