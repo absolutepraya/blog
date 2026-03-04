@@ -269,9 +269,9 @@ classDiagram
     }
     class Config {
         +String theme
-        +Map~String,Any~ params
-        +Taxonomy[] taxonomies
-        +load(path) Config$
+        +Map params
+        +List~Taxonomy~ taxonomies
+        +load(path) Config
     }
     class Page {
         <<abstract>>
@@ -283,16 +283,16 @@ classDiagram
         +permalink() URL
     }
     class Post {
-        +Tag[] tags
+        +List~Tag~ tags
         +Author author
         +bool draft
         +readingTime() int
         +publish() void
     }
     class ListPage {
-        +Page[] pages
+        +List~Page~ pages
         +Paginator paginator
-        +paginate(size) Page[]
+        +paginate(size) List~Page~
     }
     class Author {
         +String name
