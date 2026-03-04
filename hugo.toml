@@ -4,28 +4,31 @@ title = "Abhipraya"
 theme = "archie-solarized"
 copyright = "© Daffa Abhipraya"
 
-pygmentsStyle = "solarized-dark"
-pygmentscodefences = true
-pygmentscodefencesguesssyntax = true
-
 [params]
-  mode = "toggle"
-  useCDN = false
   subtitle = "Thoughts on software, systems, and stuff"
-  customCSS = ["css/custom.css"]
+  author = "Daffa Abhipraya"
+  mainSections = ["posts"]
 
 [pagination]
   pagerSize = 10
 
-[[params.social]]
-name = "GitHub"
-icon = "github"
-url = "https://github.com/absolutepraya"
-
-[[params.social]]
-name = "Linkedin"
-icon = "linkedin"
-url = "https://www.linkedin.com/in/absolutepraya/"
+[markup]
+  [markup.highlight]
+    codeFences = true
+    guessSyntax = true
+    noClasses = false
+    lineNos = false
+    lineNumbersInTable = true
+    tabWidth = 4
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+    [markup.goldmark.parser]
+      [markup.goldmark.parser.attribute]
+        block = true
+        title = true
+    [markup.goldmark.extensions]
+      linkify = true
 
 [[menu.main]]
 name = "Home"
@@ -41,8 +44,3 @@ weight = 2
 name = "About"
 url = "/about"
 weight = 3
-
-[[menu.main]]
-name = "Tags"
-url = "/tags"
-weight = 4
