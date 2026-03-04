@@ -120,9 +120,18 @@ hugo --minify        # Minified production build
 
 Output goes to `public/`. Site is served at `https://blog.abhipraya.dev/`.
 
+## Writing Style
+
+When writing blog post content:
+
+- **No em dashes** (`—`). Use a regular hyphen (`-`), comma, or restructure the sentence instead.
+- **No emoji**. None. Not in titles, not in body text, not anywhere.
+
 ## Do NOT
 
 - Edit files inside `themes/archie-solarized/` — override in `layouts/` and `assets/` instead
 - Add `--mermaid-*` CSS variables beyond the 13 defined (5 base + 8 pie per mode)
 - Use `Permalink` for CSS links in templates — use `RelPermalink` (avoids absolute URL issues)
 - Hardcode hex colors in Mermaid diagram source — let the theme handle it
+- Use em dashes (`—`) in post content — ever
+- Use emoji in post content — ever
