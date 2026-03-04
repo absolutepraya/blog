@@ -100,6 +100,13 @@
             var pie6 = cssVar('--mermaid-pie6', '#6c71c4');
             var pie7 = cssVar('--mermaid-pie7', '#d33682');
             var pie8 = cssVar('--mermaid-pie8', '#dc322f');
+            // Gantt-specific derived colors
+            var taskFill   = colorMix(fg, bg, 15);
+            var doneFill   = colorMix(fg, bg, 25);
+            var activeFill = colorMix(accent, bg, 30);
+            var sectionBg  = colorMix(fg, bg, 4);
+            var altSectionBg = colorMix(fg, bg, 8);
+
             return {
                 darkMode: isDark,
                 primaryColor: nodeFill,
@@ -130,8 +137,32 @@
                 labelTextColor: fg,
                 loopTextColor: fg,
                 sequenceNumberColor: muted,
+                // Gantt chart
+                taskBkgColor: taskFill,
+                taskBorderColor: nodeStroke,
+                taskTextColor: fg,
+                taskTextDarkColor: fg,
+                taskTextOutsideColor: fg,
+                doneTaskBkgColor: doneFill,
+                doneTaskBorderColor: colorMix(fg, bg, 30),
+                activeTaskBkgColor: activeFill,
+                activeTaskBorderColor: accent,
+                critBkgColor: colorMix(cssVar('--mermaid-pie5', '#cb4b16'), bg, 25),
+                critBorderColor: cssVar('--mermaid-pie5', '#cb4b16'),
+                sectionBkgColor: sectionBg,
+                altSectionBkgColor: altSectionBg,
+                gridColor: innerStroke,
+                todayLineColor: cssVar('--mermaid-pie8', '#dc322f'),
+                // Pie chart
                 pie1: pie1, pie2: pie2, pie3: pie3, pie4: pie4,
                 pie5: pie5, pie6: pie6, pie7: pie7, pie8: pie8,
+                pieTitleTextColor: fg,
+                pieSectionTextColor: bg,
+                pieLegendTextColor: fg,
+                pieStrokeColor: bg,
+                pieStrokeWidth: '2px',
+                pieOpacity: '0.9',
+                // Journey / fillType
                 fillType0: pie1, fillType1: pie2, fillType2: pie3, fillType3: pie4,
                 fillType4: pie5, fillType5: pie6, fillType6: pie7, fillType7: pie8,
                 fontFamily: '"Ubuntu", sans-serif'
