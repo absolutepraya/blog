@@ -46,6 +46,8 @@ Redis uses **separate databases** — DB 0 for the application Celery broker, DB
 
 GlitchTip is deployed and accessible at **http://10.10.25.75:8080**, reverse-proxied via Nginx on the Nashta VM.
 
+![GlitchTip dashboard — Issues view with SIRA organization and project selector](/images/ppl/glitchtip-dashboard.png)
+
 ## Sentry SDK Integration
 
 Three services instrumented. Each initialized independently so failures in one don't affect the others.
@@ -136,6 +138,8 @@ Alert rules configured on both projects:
 - **Trigger**: 1 event in 1 minute → immediate notification on first error
 - **Uptime trigger**: alert fires if an uptime monitor goes down
 - **Recipient**: team members on the project via email
+
+![GlitchTip alert rule — 1 event in 1 minute triggers email to team members](/images/ppl/glitchtip-alert-config.png)
 
 ## Uptime Monitoring
 
