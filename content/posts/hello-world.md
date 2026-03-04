@@ -299,12 +299,12 @@ classDiagram
         +String email
         +String bio
         +URL avatar
-        +posts() Post[]
+        +posts() List~Post~
     }
     class Tag {
         +String name
         +String slug
-        +posts() Post[]
+        +posts() List~Post~
         +count() int
     }
     class Template {
@@ -314,12 +314,12 @@ classDiagram
     }
     class BaseTemplate {
         +String layout
-        +partial(name, data) HTML
+        +partial(name data) HTML
     }
     class Taxonomy {
         +String singular
         +String plural
-        +terms() Tag[]
+        +terms() List~Tag~
     }
 
     Site *-- Config
