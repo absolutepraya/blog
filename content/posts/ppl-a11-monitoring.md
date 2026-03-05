@@ -141,6 +141,10 @@ Alert rules configured on both projects:
 
 ![GlitchTip alert rule — 1 event in 1 minute triggers email to team members](/images/ppl/glitchtip-alert-config.png)
 
+Here's what the email looks like when an error fires — a real `KeyError` caught in the `check_overdue_invoices` Celery task, sent from `sira@noreply.abhipraya.dev` via Resend SMTP:
+
+![GlitchTip email notification — KeyError in sira-api project with "View on GlitchTip" link](/images/ppl/glitchtip-email-notification.jpg)
+
 ## Uptime Monitoring
 
 GlitchTip has a built-in uptime monitor that pings endpoints every N seconds and fires an alert if a check fails — covering the "process is completely dead" failure mode that error tracking misses.
