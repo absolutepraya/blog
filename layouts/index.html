@@ -11,6 +11,13 @@
         <li>
             <div class="post-title-container">
                 <a href="{{ .Permalink }}" class="post-title-link">{{ .Title }}</a>
+                {{ if and .Site.Params.showTagsOnHomepage .Params.tags }}
+                <div class="post-list-tags">
+                    {{ range .Params.tags }}
+                    <a href="{{ "/tags/" | relURL }}{{ . | urlize }}/">#{{ . }}</a>
+                    {{ end }}
+                </div>
+                {{ end }}
             </div>
             <time datetime="{{ .Date.Format "2006-01-02" }}" class="post-date">{{ .Date.Format "Jan 02, 2006" }}</time>
         </li>

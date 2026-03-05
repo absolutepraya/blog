@@ -9,6 +9,7 @@ copyright = "© Daffa Abhipraya"
   subtitle = "Thoughts on software, systems, and stuff"
   author = "Daffa Abhipraya"
   mainSections = ["posts"]
+  showTagsOnHomepage = false
 
 [pagination]
   pagerSize = 10

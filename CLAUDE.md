@@ -12,7 +12,14 @@ assets/css/main.css  — All custom CSS (Solarized palette, layout, responsive)
 layouts/_default/baseof.html  — Base template (dark mode, Mermaid init)
 layouts/_default/_markup/render-codeblock-mermaid.html — Mermaid render hook
 hugo.toml            — Hugo config
+static/fonts/        — Self-hosted Ubuntu/Ubuntu Mono woff2 fonts
 ```
+
+## Feature Toggles (hugo.toml `[params]`)
+
+| Param | Default | Description |
+|-------|---------|-------------|
+| `showTagsOnHomepage` | `false` | Show tag pills below post titles on the homepage |
 
 ## Creating a Blog Post
 
