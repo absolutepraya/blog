@@ -82,6 +82,8 @@ The branch also predated three fixes already merged to main (commits `86b0f96`, 
 
 ---
 
+![MR comment thread — review feedback with file and line references on GitLab](/images/ppl/mr-review.png)
+
 ## Evidence
 
 - [MR !10](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/10) - Note 4378

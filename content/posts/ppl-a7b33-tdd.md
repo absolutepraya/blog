@@ -10,13 +10,14 @@ TDD forces you to think about the interface before the implementation. This post
 
 ## Test Distribution
 
-The API currently has 44 test functions across 3 files:
+The API currently has 51 test functions across 4 files:
 
 | File | Tests | Scope |
 |------|-------|-------|
 | `tests/test_auth.py` | 14 | JWT validation, RBAC, DB queries |
 | `tests/test_payments.py` | 24 | Payment CRUD, business logic, edge cases |
 | `tests/test_db_schema_and_seed.py` | 6 | Migration integrity, seed validation |
+| `tests/test_logging_middleware.py` | 7 | HTTP access logging, request/response capture |
 
 ## Red-Green-Refactor
 
@@ -91,9 +92,30 @@ pnpm test --coverage --reporter=lcov
 
 Both `coverage.xml` (Python) and `lcov.info` (JS/TS) are passed as artifacts to the SonarQube quality stage.
 
+Current test run — all 51 passing:
+
+```
+$ make test-api
+cd apps/api && uv run pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.12.12, pytest-9.0.2, pluggy-1.6.0
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0
+collected 51 items
+
+tests/test_auth.py ..............                                        [ 27%]
+tests/test_db_schema_and_seed.py ......                                  [ 39%]
+tests/test_logging_middleware.py .......                                  [ 52%]
+tests/test_payments.py ........................                          [100%]
+
+============================== 51 passed in 0.08s ==============================
+```
+
 ## Evidence
 
 - [MR !23 - SIRA-26 full-stack auth (TDD commits)](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/23)
-- [MR !35 - SIRA-69 auth bug fix + 3 new tests (44 total)](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/35)
+- [MR !35 - SIRA-69 auth bug fix + 3 new tests](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/35)
+- [MR !37 - SIRA-70 structured logging middleware + 7 tests (51 total)](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/37)
 - [Linear SIRA-26](https://linear.app/ppl-sira/issue/SIRA-26)
 - Source: `apps/api/tests/test_auth.py`, `test_payments.py`, `conftest.py`

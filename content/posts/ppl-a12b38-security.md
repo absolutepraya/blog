@@ -123,18 +123,24 @@ security:sast:
 ### Bandit — Python SAST
 
 ```
-Run started: 2026-03-04
+$ cd apps/api && uv run bandit -r src/
+
+Run started:2026-03-05 02:36:28.898128+00:00
 
 Test results:
-    No issues identified.
+	No issues identified.
 
 Code scanned:
-    Total lines of code: 656
-    Total lines skipped (#nosec): 0
+	Total lines of code: 656
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled: 0
 
 Run metrics:
-    Total issues (by severity):
-        Low: 0 / Medium: 0 / High: 0
+	Total issues (by severity):
+		Undefined: 0 / Low: 0 / Medium: 0 / High: 0
+	Total issues (by confidence):
+		Undefined: 0 / Low: 0 / Medium: 0 / High: 0
+Files skipped (0):
 ```
 
 Zero findings across 656 lines. The clean result reflects the architecture:
@@ -176,6 +182,7 @@ Both are transitive dependencies of `vite`/`vitest` — not directly declared in
 #### After — Clean
 
 ```
+$ pnpm --dir apps/web audit
 No known vulnerabilities found
 ```
 

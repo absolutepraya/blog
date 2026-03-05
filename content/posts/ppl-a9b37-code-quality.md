@@ -39,6 +39,31 @@ flowchart LR
 
 `git push` additionally runs the full test suite (vitest + pytest).
 
+Here's what a blocked commit looks like — Biome catches `any` type and an unused variable in the same line:
+
+```
+$ git commit -m "test: deliberate lint error"
+Running pre-commit checks...
+  [1/5] Checking frontend lint (Biome)...
+
+src/lib/api.ts:28:19 lint/suspicious/noExplicitAny
+  × Unexpected any. Specify a different type.
+
+  > 28 │ const unused_var: any = "test"
+       │                   ^^^
+
+src/lib/api.ts:28:7 lint/correctness/noUnusedVariables
+  × This variable unused_var is unused.
+
+  > 28 │ const unused_var: any = "test"
+       │       ^^^^^^^^^^
+
+Checked 41 files in 42ms. Found 3 errors.
+husky - pre-commit script failed (code 1)
+```
+
+After removing the line, the same commit succeeds — all 5 checks pass in sequence and the commit is accepted.
+
 Source: `.husky/pre-commit`, `.husky/pre-push`
 
 ## Key Rules Enforced
@@ -107,6 +132,8 @@ sonar.python.coverage.reportPaths=apps/api/coverage.xml
 ```
 
 Both coverage reports (Python XML + JS LCOV) flow into a single SonarQube project at `sonarqube.cs.ui.ac.id`. The SonarQube MCP server is also configured in `.mcp.json` for AI-assisted quality inspection directly from the editor.
+
+![SonarQube dashboard — SIRA project with 0 issues](/images/ppl/sonarqube.png)
 
 ## Beyond Style — Runtime Failure Prevention
 
