@@ -55,6 +55,29 @@
             });
         });
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.highlight pre code .line').forEach(function(lineEl) {
+                var text = lineEl.textContent;
+                var indent = 0;
+                for (var j = 0; j < text.length; j++) {
+                    if (text[j] === ' ') indent++;
+                    else if (text[j] === '\t') indent += 4;
+                    else break;
+                }
+                // Remove trailing \n from last text node so display:block doesn't add blank line
+                var walker = document.createTreeWalker(lineEl, NodeFilter.SHOW_TEXT);
+                var lastText;
+                while (walker.nextNode()) lastText = walker.currentNode;
+                if (lastText && lastText.data.endsWith('\n')) {
+                    lastText.data = lastText.data.slice(0, -1);
+                }
+                lineEl.style.display = 'block';
+                lineEl.style.paddingLeft = indent + 'ch';
+                lineEl.style.textIndent = '-' + indent + 'ch';
+            });
+        });
+    </script>
     {{ if not hugo.IsServer }}
     {{ template "_internal/google_analytics.html" . }}
     {{ end }}

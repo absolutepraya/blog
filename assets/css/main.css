@@ -592,6 +592,8 @@ article.post {
   border: 0;
   background-color: transparent;
   padding: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .highlight code {
