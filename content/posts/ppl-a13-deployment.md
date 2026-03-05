@@ -112,6 +112,12 @@ The 120-second polling loop on `GET /api/health` means a silent startup failure 
 
 **Migrate stage** runs `supabase db push` before build. Schema changes land before the new code that depends on them.
 
+![GitLab CI pipeline — all 5 stages passing on main branch](/images/ppl/green-pipeline.png)
+
+**Build stage** pushes all three images to GitHub Container Registry (GHCR), each tagged with both `:latest` and the immutable `:sha-<commit>` tag:
+
+![GHCR packages — web, api, and worker images in ghcr.io/absolutepraya/smart-invoice-reminder-ai](/images/ppl/ghcr-packages.png)
+
 ## Evidence
 
 - [MR !25 - SIRA-55 GitLab CI pipeline](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/25)
