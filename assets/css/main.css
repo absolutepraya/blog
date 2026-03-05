@@ -99,7 +99,7 @@ img, video {
 }
 
 .post-content img {
-  width: 100%;
+  width: 100% !important;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
