@@ -143,7 +143,7 @@ Alert rules configured on both projects:
 
 Here's what the email looks like when an error fires — a real `KeyError` caught in the `check_overdue_invoices` Celery task, sent from `sira@noreply.abhipraya.dev` via Resend SMTP:
 
-![GlitchTip email notification — KeyError in sira-api project with "View on GlitchTip" link](/images/ppl/glitchtip-email-notification.jpg)
+![GlitchTip email notification — KeyError in sira-api project with "View on GlitchTip" link](/images/ppl/glitchtip-email-notification.png)
 
 ## Uptime Monitoring
 
