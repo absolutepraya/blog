@@ -68,29 +68,25 @@ Five stages in `.gitlab-ci.yml`, with clear dependency boundaries:
 
 ```mermaid
 flowchart LR
-    subgraph ci [ci - parallel]
-        WL[web:lint]
-        WT[web:test]
-        WB[web:build]
-        AL[api:lint]
-        AT[api:test]
-        ATC[api:typecheck]
-        WTC[web:typecheck]
-    end
+    CI[ci] --> Q[quality] --> DC[deploy chain]
+```
 
-    subgraph quality [quality - parallel]
-        SQ[sonar-scan]
-        SS[security:sast]
-        LN[linear:notify]
-    end
+**ci - parallel**
+```mermaid
+flowchart LR
+    WL[web:lint] ~~~ WT[web:test] ~~~ WB[web:build] ~~~ WTC[web:typecheck] ~~~ AL[api:lint] ~~~ AT[api:test] ~~~ ATC[api:typecheck]
+```
 
-    subgraph deploy_chain [main branch only]
-        MG[migrate\nsupabase db push]
-        BD[build\n3 Docker images]
-        DP[deploy\ndocker compose up]
-    end
+**quality - parallel**
+```mermaid
+flowchart LR
+    SQ[sonar-scan] ~~~ SS[security:sast] ~~~ LN[linear:notify]
+```
 
-    ci --> quality --> MG --> BD --> DP
+**deploy chain - main branch only**
+```mermaid
+flowchart LR
+    MG[migrate\nsupabase db push] --> BD[build\n3 Docker images] --> DP[deploy\ndocker compose up]
 ```
 
 **Build stage** creates three images tagged with both `:latest` and `:sha-$CI_COMMIT_SHA`. The SHA tag is immutable — it never moves. If a broken release ships, rolling back is `docker pull image:sha-<previous>` + `docker compose up -d`.
