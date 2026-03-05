@@ -86,7 +86,7 @@ flowchart LR
 **deploy chain - main branch only**
 ```mermaid
 flowchart LR
-    MG[migrate\nsupabase db push] --> BD[build\n3 Docker images] --> DP[deploy\ndocker compose up]
+    MG["migrate<br>supabase db push"] --> BD["build<br>3 Docker images"] --> DP["deploy<br>docker compose up"]
 ```
 
 **Build stage** creates three images tagged with both `:latest` and `:sha-$CI_COMMIT_SHA`. The SHA tag is immutable — it never moves. If a broken release ships, rolling back is `docker pull image:sha-<previous>` + `docker compose up -d`.

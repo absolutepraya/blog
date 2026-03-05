@@ -90,6 +90,7 @@ These cause silent render failures — the diagram just won't appear:
 | `method() Type$` (static marker) | Remove `$` |
 | Comma in method params `(a, b)` | Use `(a b)` or simplify |
 | Complex class diagrams with many features | Keep it simple — use colon syntax (`Class : +field`) over curly brace blocks if having issues |
+| `\n` in node labels | Use `<br>` inside quoted labels — `["line1<br>line2"]` |
 
 ## CSS / Theming
 

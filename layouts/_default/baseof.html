@@ -206,7 +206,8 @@
         mermaid.initialize({
             startOnLoad: false,
             theme: 'base',
-            themeVariables: themeVars
+            themeVariables: themeVars,
+            htmlLabels: true
         });
         await mermaid.run();
 
@@ -226,7 +227,8 @@
                 mermaid.initialize({
                     startOnLoad: false,
                     theme: 'base',
-                    themeVariables: buildThemeVars(nowDark)
+                    themeVariables: buildThemeVars(nowDark),
+                    htmlLabels: true
                 });
                 await mermaid.run();
             });

@@ -25,8 +25,8 @@ The authentication feature ([SIRA-26](https://linear.app/ppl-sira/issue/SIRA-26)
 
 ```mermaid
 flowchart LR
-    R[RED\nwrite failing test] --> G[GREEN\nminimum implementation]
-    G --> RF[REFACTOR\nclean up]
+    R["RED<br>write failing test"] --> G["GREEN<br>minimum implementation"]
+    G --> RF["REFACTOR<br>clean up"]
     RF --> R
     style R fill:#c0392b,color:#fff
     style G fill:#27ae60,color:#fff

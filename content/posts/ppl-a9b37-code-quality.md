@@ -23,11 +23,11 @@ Five checks run sequentially on every `git commit`. A failure at any step blocks
 
 ```mermaid
 flowchart LR
-    C([git commit]) --> B[Biome\nlint + format]
-    B --> R[Ruff\nlint + format]
-    R --> T[tsc\ntypecheck]
-    T --> M[mypy\ntypecheck]
-    M --> K[Knip\ndead code]
+    C([git commit]) --> B["Biome<br>lint + format"]
+    B --> R["Ruff<br>lint + format"]
+    R --> T["tsc<br>typecheck"]
+    T --> M["mypy<br>typecheck"]
+    M --> K["Knip<br>dead code"]
     K --> OK([commit accepted])
 
     B -->|fail| X([blocked])
@@ -106,9 +106,9 @@ SonarQube runs as a dedicated `quality` stage in the GitLab CI pipeline, after a
 flowchart TB
     subgraph ci [ci stage - parallel]
         WL[web:lint]
-        WT[web:test\ngenerates lcov.info]
+        WT["web:test<br>generates lcov.info"]
         AL[api:lint]
-        AT[api:test\ngenerates coverage.xml]
+        AT["api:test<br>generates coverage.xml"]
     end
 
     subgraph quality [quality stage]

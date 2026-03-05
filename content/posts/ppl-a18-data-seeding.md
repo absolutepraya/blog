@@ -217,10 +217,10 @@ flowchart LR
         SQ[SonarQube]
         SAST[Security SAST]
     end
-    MG[migrate\nauto + dry-run]
-    BD[build\n3 Docker images]
-    DP[deploy\ndocker compose up]
-    RB["rollback ▶\n(manual trigger)"]
+    MG["migrate<br>auto + dry-run"]
+    BD["build<br>3 Docker images"]
+    DP["deploy<br>docker compose up"]
+    RB["rollback<br>(manual trigger)"]
     ci --> quality --> MG --> BD --> DP
     MG -.->|if issues| RB
 ```

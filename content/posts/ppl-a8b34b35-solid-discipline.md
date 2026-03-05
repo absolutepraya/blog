@@ -13,9 +13,9 @@ The backend is organized into four strict layers:
 ```mermaid
 graph TD
     Client([HTTP Client]) --> Router
-    Router["Router\nHTTP in/out only"] --> Service["Service\nbusiness logic"]
-    Service --> DB["DB / Queries\npure data access"]
-    Router --> Models["Pydantic Models\nvalidation + serialization"]
+    Router["Router<br>HTTP in/out only"] --> Service["Service<br>business logic"]
+    Service --> DB["DB / Queries<br>pure data access"]
+    Router --> Models["Pydantic Models<br>validation + serialization"]
 
     style Router fill:#2980b9,color:#fff
     style Service fill:#e67e22,color:#fff

@@ -13,11 +13,11 @@ The SIRA project has a comprehensive AI development setup built around Claude Co
 ```mermaid
 graph TB
     subgraph claude [Claude Code]
-        CM[CLAUDE.md\n3 files, 19 commits]
-        MCP[MCP Servers\n4 integrations]
-        CMD[Commands\n3 slash commands]
-        SK[Skills\n3 project skills]
-        PL[Plugins\n3 enabled]
+        CM["CLAUDE.md<br>3 files, 19 commits"]
+        MCP["MCP Servers<br>4 integrations"]
+        CMD["Commands<br>3 slash commands"]
+        SK["Skills<br>3 project skills"]
+        PL["Plugins<br>3 enabled"]
     end
 
     subgraph ext [External Services]
