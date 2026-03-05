@@ -299,6 +299,24 @@ The rollback flow:
 
 `supabase db push` compares the local migration files against the production database's `supabase_migrations.schema_migrations` table and applies only new migrations — it never re-runs already-applied ones.
 
+### Rollback Limitations and Trade-offs
+
+Our rollback uses **reverse DDL** — the rollback file contains the inverse SQL of the original migration (e.g., `CREATE TABLE` becomes `DROP TABLE`). This is the standard approach used by most migration frameworks (Rails, Django, Flyway), but it has known limitations:
+
+| Scenario | What happens on rollback |
+|----------|------------------------|
+| New table with data | `DROP TABLE` deletes the table **and all its data** — no recovery |
+| New column on existing table | `DROP COLUMN` removes the column and all values stored in it |
+| FK from existing table → new table | Rollback **fails** unless the FK is dropped first, then the table |
+| Data backfilled after migration | Lost — reverse DDL only reverses schema, not data changes |
+
+For production systems that need zero-downtime rollbacks, the industry uses more advanced patterns:
+
+- **Expand-Contract** — add new column alongside old, backfill, switch reads, then drop old. Allows safe rollback at any step.
+- **Point-in-Time Recovery (PITR)** — restore the entire database to an exact timestamp before the migration. Available on Supabase Pro and AWS RDS.
+
+For SIRA's current stage (pre-launch, small team), reverse DDL rollbacks are the right trade-off — simple, predictable, and sufficient. The rollback files serve as documented "undo" procedures even if they aren't always safe to run blindly.
+
 ## Developer Workflow: Local Database Commands
 
 Developers use Makefile targets for local database operations:
