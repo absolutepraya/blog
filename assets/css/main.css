@@ -953,6 +953,10 @@ pre.mermaid {
   .smallcap {
     font-size: 1.75rem;
   }
+  .smallcap a {
+    padding: 0.2rem 0.4rem;
+    letter-spacing: 1px;
+  }
   .toggle-switch {
     height: 18px;
     width: 2rem;
