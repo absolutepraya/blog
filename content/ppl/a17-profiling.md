@@ -4,11 +4,12 @@ date: 2026-03-05
 description: "Using Sentry SDK as a distributed tracer, structured JSON logs for latency analysis, PostgREST join queries to avoid N+1 patterns, and TanStack Query caching."
 tags: ["ppl", "profiling", "performance", "fastapi", "python"]
 toc: true
+aliases: ["/posts/ppl-a17-profiling/"]
 ---
 
 ## Sentry as a Distributed Tracer
 
-`traces_sample_rate=1.0` is set in both the FastAPI app and the Celery worker — 100% of requests and tasks are traced.
+`traces_sample_rate=1.0` is set in both the FastAPI app and the Celery worker - 100% of requests and tasks are traced.
 
 **FastAPI** (`apps/api/src/app/main.py`):
 
@@ -60,17 +61,17 @@ docker logs sira-api | jq -s '
 
 Source: [MR !37](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/37), [Linear SIRA-70](https://linear.app/ppl-sira/issue/SIRA-70)
 
-## PostgREST Joins — No N+1
+## PostgREST Joins - No N+1
 
 The Supabase Python client supports embedded resources via PostgREST's `select` syntax. All queries that need related data use this pattern to fetch everything in one round-trip:
 
 ```python
-# payments.py — invoice_number joined in one query
+# payments.py - invoice_number joined in one query
 async def get_all_payments(db: Client) -> list[dict[str, Any]]:
     response = db.table("payments").select("*, invoices(invoice_number)").execute()
     return cast(list[dict[str, Any]], response.data)
 
-# invoices.py — company_name joined in one query
+# invoices.py - company_name joined in one query
 async def get_overdue_invoices(db: Client) -> list[dict[str, Any]]:
     response = (
         db.table("invoices")

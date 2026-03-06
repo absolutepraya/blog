@@ -4,6 +4,7 @@ date: 2026-03-04
 description: "44 backend tests, red-green-refactor discipline, and mock/stub isolation patterns in the Smart Invoice Reminder AI API."
 tags: ["ppl", "tdd", "testing", "python", "fastapi"]
 toc: true
+aliases: ["/posts/ppl-a7b33-tdd/"]
 ---
 
 TDD forces you to think about the interface before the implementation. This post covers how it was applied in the Smart Invoice Reminder AI (SIRA) backend for Sprint 1.

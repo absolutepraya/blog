@@ -4,6 +4,7 @@ date: 2026-03-05
 description: "How SIRA manages database schema evolution and test data across environments using Supabase migrations, structured seed data, and automated CI/CD pipelines."
 tags: ["ppl", "database", "migration", "seeding", "ci-cd", "supabase"]
 toc: true
+aliases: ["/posts/ppl-a18-data-seeding/"]
 ---
 
 ## Overview
@@ -12,7 +13,7 @@ Smart Invoice Reminder AI (SIRA) uses **Supabase migrations** for schema evoluti
 
 ## Migration Strategy: Layered Schema Evolution
 
-Our migrations follow a layered approach — each migration builds on the previous one, separated by concern:
+Our migrations follow a layered approach - each migration builds on the previous one, separated by concern:
 
 ```
 supabase/migrations/
@@ -23,7 +24,7 @@ supabase/migrations/
 
 ### Layer 1: Core Domain Tables
 
-The initial migration creates the business domain — clients, invoices, payments, risk scoring, and reminder audit logs:
+The initial migration creates the business domain - clients, invoices, payments, risk scoring, and reminder audit logs:
 
 ```sql
 -- Core tables for the invoice reminder domain
@@ -84,7 +85,7 @@ Source: `supabase/migrations/20260302090000_add_app_users.sql`
 
 ### Layer 3: Security Policies (RLS)
 
-The third migration enforces row-level security — users can only read their own profile, while admins have full access:
+The third migration enforces row-level security - users can only read their own profile, while admins have full access:
 
 ```sql
 ALTER TABLE app_users ENABLE ROW LEVEL SECURITY;
@@ -110,7 +111,7 @@ This layered approach means each migration can be reviewed and tested independen
 
 ## Seed Data: Realistic Test Environments
 
-Our seed data isn't placeholder data — it's structured to cover all three risk categories with realistic payment patterns that the ML model uses for training.
+Our seed data isn't placeholder data - it's structured to cover all three risk categories with realistic payment patterns that the ML model uses for training.
 
 ### Clients Across Risk Levels
 
@@ -123,7 +124,7 @@ INSERT INTO clients (id, company_name, pic_email, pic_phone, current_risk_catego
 
 ### Invoices with Varied Statuses
 
-Each client has invoices matching their risk profile — LOW-risk clients have paid invoices, MEDIUM-risk have partial payments and overdue, HIGH-risk have multiple overdue:
+Each client has invoices matching their risk profile - LOW-risk clients have paid invoices, MEDIUM-risk have partial payments and overdue, HIGH-risk have multiple overdue:
 
 ```sql
 -- PT Maju Bersama (LOW risk) -- one paid, one pending
@@ -170,9 +171,9 @@ Source: `supabase/seed.sql`
 
 Supabase separates `auth.users` (managed by GoTrue) from application data. Our seeding handles this with a two-phase approach:
 
-**Phase 1** — `supabase db reset` runs `seed.sql`, which inserts `app_users` rows with `auth_user_id = NULL`.
+**Phase 1** - `supabase db reset` runs `seed.sql`, which inserts `app_users` rows with `auth_user_id = NULL`.
 
-**Phase 2** — `scripts/seed-auth-users.py` creates actual Supabase Auth entries and links them:
+**Phase 2** - `scripts/seed-auth-users.py` creates actual Supabase Auth entries and links them:
 
 ```python
 # Creates auth.users with bcrypt-hashed passwords and links to app_users
@@ -201,7 +202,7 @@ Source: `scripts/seed-auth-users.py`
 
 ## CI/CD: Automatic Migration with Rollback
 
-Migrations run **automatically** on every merge to `main` — with a dry-run preview in the job log and a manual rollback job for recovery.
+Migrations run **automatically** on every merge to `main` - with a dry-run preview in the job log and a manual rollback job for recovery.
 
 ![Pipeline showing automatic migrate and manual rollback button](/images/ppl/pipeline-with-button.png)
 
@@ -280,7 +281,7 @@ supabase/migrations/rollbacks/
   20260302090000_add_app_users.rollback.sql
 ```
 
-Example rollback — reversing the RLS migration:
+Example rollback - reversing the RLS migration:
 
 ```sql
 -- Rollback: 20260302100000_app_users_rls_and_fk
@@ -297,25 +298,25 @@ The rollback flow:
 3. Job executes the rollback SQL against production via `psql`
 4. `supabase migration repair` marks the migration as reverted in the tracking table
 
-`supabase db push` compares the local migration files against the production database's `supabase_migrations.schema_migrations` table and applies only new migrations — it never re-runs already-applied ones.
+`supabase db push` compares the local migration files against the production database's `supabase_migrations.schema_migrations` table and applies only new migrations - it never re-runs already-applied ones.
 
 ### Rollback Limitations and Trade-offs
 
-Our rollback uses **reverse DDL** — the rollback file contains the inverse SQL of the original migration (e.g., `CREATE TABLE` becomes `DROP TABLE`). This is the standard approach used by most migration frameworks (Rails, Django, Flyway), but it has known limitations:
+Our rollback uses **reverse DDL** - the rollback file contains the inverse SQL of the original migration (e.g., `CREATE TABLE` becomes `DROP TABLE`). This is the standard approach used by most migration frameworks (Rails, Django, Flyway), but it has known limitations:
 
 | Scenario | What happens on rollback |
 |----------|------------------------|
-| New table with data | `DROP TABLE` deletes the table **and all its data** — no recovery |
+| New table with data | `DROP TABLE` deletes the table **and all its data** - no recovery |
 | New column on existing table | `DROP COLUMN` removes the column and all values stored in it |
-| FK from existing table → new table | Rollback **fails** unless the FK is dropped first, then the table |
-| Data backfilled after migration | Lost — reverse DDL only reverses schema, not data changes |
+| FK from existing table -> new table | Rollback **fails** unless the FK is dropped first, then the table |
+| Data backfilled after migration | Lost - reverse DDL only reverses schema, not data changes |
 
 For production systems that need zero-downtime rollbacks, the industry uses more advanced patterns:
 
-- **Expand-Contract** — add new column alongside old, backfill, switch reads, then drop old. Allows safe rollback at any step.
-- **Point-in-Time Recovery (PITR)** — restore the entire database to an exact timestamp before the migration. Available on Supabase Pro and AWS RDS.
+- **Expand-Contract** - add new column alongside old, backfill, switch reads, then drop old. Allows safe rollback at any step.
+- **Point-in-Time Recovery (PITR)** - restore the entire database to an exact timestamp before the migration. Available on Supabase Pro and AWS RDS.
 
-For SIRA's current stage (pre-launch, small team), reverse DDL rollbacks are the right trade-off — simple, predictable, and sufficient. The rollback files serve as documented "undo" procedures even if they aren't always safe to run blindly.
+For SIRA's current stage (pre-launch, small team), reverse DDL rollbacks are the right trade-off - simple, predictable, and sufficient. The rollback files serve as documented "undo" procedures even if they aren't always safe to run blindly.
 
 ## Developer Workflow: Local Database Commands
 
@@ -335,9 +336,9 @@ db-seed: ## Wipe local DB + migrations + seed test data
 
 The typical developer flow:
 
-1. `make dev-infra-start` — Start local Supabase + Redis
-2. `make db-seed` — Reset database with migrations + test data
-3. `make dev` — Start all services
+1. `make dev-infra-start` - Start local Supabase + Redis
+2. `make db-seed` - Reset database with migrations + test data
+3. `make dev` - Start all services
 
 When a teammate adds a new migration, pulling `main` and running `make db-migrate` applies it without losing local data.
 
@@ -360,8 +361,8 @@ Environment-specific configuration lives in `.env.local` (local) and GitLab CI/C
 - [MR !25 - SIRA-55 chore(ci): add GitLab CI/CD pipeline](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/25)
 - [MR !41 - SIRA-76 feat(ci): add manual trigger & rollback for production migrations](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/41)
 - [MR !42 - SIRA-76 fix(ci): restore automatic migration, keep rollback as manual](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/42)
-- [Linear SIRA-47](https://linear.app/ppl-sira/issue/SIRA-47) — User DB Schema & Seeding
-- [Linear SIRA-53](https://linear.app/ppl-sira/issue/SIRA-53) — Production Supabase Setup
-- [Linear SIRA-55](https://linear.app/ppl-sira/issue/SIRA-55) — GitLab CI/CD Pipeline
-- [Linear SIRA-76](https://linear.app/ppl-sira/issue/SIRA-76) — Manual Trigger & Rollback for Migrations
+- [Linear SIRA-47](https://linear.app/ppl-sira/issue/SIRA-47) - User DB Schema & Seeding
+- [Linear SIRA-53](https://linear.app/ppl-sira/issue/SIRA-53) - Production Supabase Setup
+- [Linear SIRA-55](https://linear.app/ppl-sira/issue/SIRA-55) - GitLab CI/CD Pipeline
+- [Linear SIRA-76](https://linear.app/ppl-sira/issue/SIRA-76) - Manual Trigger & Rollback for Migrations
 - Source: `supabase/migrations/`, `supabase/migrations/rollbacks/`, `supabase/seed.sql`, `scripts/seed-auth-users.py`, `.gitlab-ci.yml`

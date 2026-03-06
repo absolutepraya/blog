@@ -1,14 +1,15 @@
 ---
-title: "PPL: AI-Augmented Development with Claude Code — CLAUDE.md, MCP, Commands, Skills, and Plugins"
+title: "PPL: AI-Augmented Development with Claude Code - CLAUDE.md, MCP, Commands, Skills, and Plugins"
 date: 2026-03-05
 description: "The full AI development setup in SIRA: 3 CLAUDE.md files evolved through 19 commits, 4 MCP servers, 3 custom slash commands, 3 project skills, 3 plugins, and AI-assisted code review with CI automation."
 tags: ["ppl", "ai", "claude-code", "mcp", "developer-tools"]
 toc: true
+aliases: ["/posts/ppl-b39-ai-literacy/"]
 ---
 
 ## Overview
 
-The SIRA project has a comprehensive AI development setup built around Claude Code. Rather than using AI as a one-off assistant, the project treats AI tooling as infrastructure — versioned, tested, and evolved alongside the codebase.
+The SIRA project has a comprehensive AI development setup built around Claude Code. Rather than using AI as a one-off assistant, the project treats AI tooling as infrastructure - versioned, tested, and evolved alongside the codebase.
 
 ```mermaid
 graph TB
@@ -42,7 +43,7 @@ graph TB
 | Project skills | 3 | frontend-design, vercel-react-best-practices, web-design-guidelines |
 | Plugins | 3 | GitLab, PR review toolkit, CLAUDE.md management |
 
-## CLAUDE.md — Three Files, 19 Commits
+## CLAUDE.md - Three Files, 19 Commits
 
 `CLAUDE.md` is the AI instruction document for the SIRA project. It was not written once and left static. It evolved through **19 commits**, each one a direct response to a real friction point encountered during development.
 
@@ -54,9 +55,9 @@ The project uses **three CLAUDE.md files** at different scopes:
 |------|-------|------|----------------|
 | `CLAUDE.md` (root) | Entire monorepo | ~430 lines | Architecture patterns, Git policy, naming conventions, package manager enforcement, development workflow |
 | `apps/web/CLAUDE.md` | Frontend | ~160 lines | React 19 + Vite, TanStack Router/Query, Biome linting, Tailwind, Sentry ErrorBoundary |
-| `apps/api/CLAUDE.md` | Backend | ~215 lines | FastAPI, Pydantic, Celery conventions, Ruff/mypy, Router → Service → DB pattern |
+| `apps/api/CLAUDE.md` | Backend | ~215 lines | FastAPI, Pydantic, Celery conventions, Ruff/mypy, Router -> Service -> DB pattern |
 
-When Claude Code works inside `apps/web/`, it sees both the root CLAUDE.md and the web-specific one — getting monorepo-wide rules plus framework-specific conventions. Same for `apps/api/`.
+When Claude Code works inside `apps/web/`, it sees both the root CLAUDE.md and the web-specific one - getting monorepo-wide rules plus framework-specific conventions. Same for `apps/api/`.
 
 ### AGENTS.md symlinks
 
@@ -68,7 +69,7 @@ apps/web/AGENTS.md -> CLAUDE.md
 apps/api/AGENTS.md -> CLAUDE.md
 ```
 
-`AGENTS.md` is the convention used by other AI tools (Cursor, GitHub Copilot, OpenAI Codex). By symlinking instead of duplicating, the project maintains **one source of truth** — updating CLAUDE.md automatically updates the instructions for all AI tools.
+`AGENTS.md` is the convention used by other AI tools (Cursor, GitHub Copilot, OpenAI Codex). By symlinking instead of duplicating, the project maintains **one source of truth** - updating CLAUDE.md automatically updates the instructions for all AI tools.
 
 ### Evolution through 19 commits
 
@@ -102,9 +103,9 @@ Selected commits and what triggered them:
 
 The root document is now ~430 lines and covers architecture patterns, naming conventions, Git policy, package manager enforcement (`pnpm`, `uv`), and explicit anti-patterns ("NEVER auto-commit", "NEVER use `any` type").
 
-{{< figure src="/images/ppl/claude-code.png" alt="Claude Code terminal session — working with CLAUDE.md and MCP servers in the SIRA project" caption="Split pane setup: Claude Code on the left to talk to the LLM agent, and process-compose on the right running all dev processes and containers in one terminal - making it easy to check logs during development." >}}
+{{< figure src="/images/ppl/claude-code.png" alt="Claude Code terminal session - working with CLAUDE.md and MCP servers in the SIRA project" caption="Split pane setup: Claude Code on the left to talk to the LLM agent, and process-compose on the right running all dev processes and containers in one terminal - making it easy to check logs during development." >}}
 
-## MCP Servers — Live Project Context
+## MCP Servers - Live Project Context
 
 Claude Code connects to four MCP servers via `.mcp.json` at the repo root:
 
@@ -144,9 +145,9 @@ Claude Code connects to four MCP servers via `.mcp.json` at the repo root:
 
 This setup means queries like "what tests are currently failing in SonarQube?" or "what is the current schema for `app_users`?" are answered from live data, not from the model's training data.
 
-The same `.mcp.json` file is consumed by Cursor, Copilot, and Codex via the AGENTS.md symlinks — one configuration for all AI tools.
+The same `.mcp.json` file is consumed by Cursor, Copilot, and Codex via the AGENTS.md symlinks - one configuration for all AI tools.
 
-## Slash Commands — Custom Git Workflows
+## Slash Commands - Custom Git Workflows
 
 Three custom commands in `.claude/commands/` automate the Git workflow with strict quality enforcement:
 
@@ -155,9 +156,9 @@ Three custom commands in `.claude/commands/` automate the Git workflow with stri
 Creates a git commit following conventional commits format. The command:
 
 1. Analyzes staged changes and drafts a commit message
-2. Runs through 5 pre-commit hooks: Biome → Ruff → tsc → mypy → Knip
+2. Runs through 5 pre-commit hooks: Biome -> Ruff -> tsc -> mypy -> Knip
 3. **If hooks fail**: auto-fixes safe issues (formatting), then retries
-4. **Iterates until all hooks pass** — never skips with `--no-verify`
+4. **Iterates until all hooks pass** - never skips with `--no-verify`
 
 ```
 <type>[optional scope]: <description>
@@ -174,7 +175,7 @@ Same as `/commit` plus push to origin, with additional pre-push hooks:
 - mypy strict check
 - Backend tests (pytest)
 
-If **tests fail**, the command blocks and reports the failure to the user — it never bypasses with `--no-verify`.
+If **tests fail**, the command blocks and reports the failure to the user - it never bypasses with `--no-verify`.
 
 ### `/create-pr`
 
@@ -189,7 +190,7 @@ Source: `.claude/commands/commit.md`, `commit-and-push.md`, `create-pr.md`
 
 {{< figure src="/images/ppl/claude-code-lazygit.png" alt="Claude Code with lazygit on a split pane" caption="Using lazygit to manage MRs, branches, pushing, pulling, and more - directly from the terminal without opening an IDE." >}}
 
-## Project Skills — Reusable AI Capabilities
+## Project Skills - Reusable AI Capabilities
 
 Three skills in `.claude/skills/` give Claude specialized knowledge for specific tasks:
 
@@ -198,9 +199,9 @@ Three skills in `.claude/skills/` give Claude specialized knowledge for specific
 A design skill that enforces distinctive, production-grade aesthetics. It pushes Claude to:
 
 - Choose bold aesthetic directions (brutalist, retro-futuristic, editorial, etc.)
-- Use distinctive typography — **never** generic fonts (Inter, Roboto, Arial)
+- Use distinctive typography - **never** generic fonts (Inter, Roboto, Arial)
 - Add depth through motion, spatial composition, and textures
-- Avoid "AI slop" — cookie-cutter patterns and cliched purple gradients
+- Avoid "AI slop" - cookie-cutter patterns and cliched purple gradients
 
 This skill triggers whenever the user asks to build or style web components, pages, or dashboards.
 
@@ -230,7 +231,7 @@ Triggers on "review my UI", "check accessibility", "audit design", or "check my 
 
 Source: `.claude/skills/frontend-design/SKILL.md`, `.claude/skills/vercel-react-best-practices/SKILL.md`, `.claude/skills/web-design-guidelines/SKILL.md`
 
-## Plugins — Extended Integrations
+## Plugins - Extended Integrations
 
 Three Claude Code plugins enabled in `.claude/settings.json`:
 
@@ -246,9 +247,9 @@ Three Claude Code plugins enabled in `.claude/settings.json`:
 
 | Plugin | What it does |
 |--------|-------------|
-| **gitlab** | Native GitLab integration — browse MRs, issues, and pipelines without leaving the CLI |
+| **gitlab** | Native GitLab integration - browse MRs, issues, and pipelines without leaving the CLI |
 | **pr-review-toolkit** | Automated PR review with specialized agents for code review, silent failure hunting, type design analysis, and test coverage |
-| **claude-md-management** | Audit and improve CLAUDE.md files — ensures AI instructions stay current as the project evolves |
+| **claude-md-management** | Audit and improve CLAUDE.md files - ensures AI instructions stay current as the project evolves |
 
 ## AI in Code Review
 
@@ -277,12 +278,12 @@ This runs in the CI `quality` stage on every MR pipeline.
 ## Evidence
 
 - `CLAUDE.md` at repo root (`git log --follow --oneline CLAUDE.md` shows 19 commits)
-- `apps/web/CLAUDE.md`, `apps/api/CLAUDE.md` — app-specific AI instructions
-- `AGENTS.md` — symlinks to CLAUDE.md (multi-tool compatibility with Cursor, Copilot, Codex)
-- `.mcp.json` — 4 MCP server configurations (Linear, Supabase, Context7, SonarQube)
-- `.claude/commands/` — 3 custom slash commands (commit, commit-and-push, create-pr)
-- `.claude/skills/` — 3 project skills (frontend-design, vercel-react-best-practices, web-design-guidelines)
-- `.claude/settings.json` — 3 enabled plugins (GitLab, PR review toolkit, CLAUDE.md management)
+- `apps/web/CLAUDE.md`, `apps/api/CLAUDE.md` - app-specific AI instructions
+- `AGENTS.md` - symlinks to CLAUDE.md (multi-tool compatibility with Cursor, Copilot, Codex)
+- `.mcp.json` - 4 MCP server configurations (Linear, Supabase, Context7, SonarQube)
+- `.claude/commands/` - 3 custom slash commands (commit, commit-and-push, create-pr)
+- `.claude/skills/` - 3 project skills (frontend-design, vercel-react-best-practices, web-design-guidelines)
+- `.claude/settings.json` - 3 enabled plugins (GitLab, PR review toolkit, CLAUDE.md management)
 - [MR !31 - SIRA-67 Linear auto-tagger CI job](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/31)
 - [Linear SIRA-67](https://linear.app/ppl-sira/issue/SIRA-67)
 - Code review notes: MR !10 (Note 4378), !12 (Note 4383), !17 (Note 4579), !20 (Note 4601)

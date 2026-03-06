@@ -4,6 +4,7 @@ date: 2026-03-04
 description: "How SOLID principles shaped the Router-Service-DB-Model architecture of Smart Invoice Reminder AI, and how commit discipline was maintained across the sprint."
 tags: ["ppl", "solid", "architecture", "fastapi", "python"]
 toc: true
+aliases: ["/posts/ppl-a8b34b35-solid-discipline/"]
 ---
 
 ## Architecture: Router - Service - DB - Model

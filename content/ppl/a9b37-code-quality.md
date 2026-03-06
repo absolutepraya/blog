@@ -4,6 +4,7 @@ date: 2026-03-04
 description: "The complete static analysis stack for Smart Invoice Reminder AI: Biome, Ruff, mypy, Knip, Husky pre-commit hooks, and SonarQube integrated into GitLab CI."
 tags: ["ppl", "code-quality", "sonarqube", "ci", "devops"]
 toc: true
+aliases: ["/posts/ppl-a9b37-code-quality/"]
 ---
 
 ## The Tool Stack
@@ -39,7 +40,7 @@ flowchart LR
 
 `git push` additionally runs the full test suite (vitest + pytest).
 
-Here's what a blocked commit looks like — Biome catches `any` type and an unused variable in the same line:
+Here's what a blocked commit looks like - Biome catches `any` type and an unused variable in the same line:
 
 ```
 $ git commit -m "test: deliberate lint error"
@@ -62,7 +63,7 @@ Checked 41 files in 42ms. Found 3 errors.
 husky - pre-commit script failed (code 1)
 ```
 
-After removing the line, the same commit succeeds — all 5 checks pass in sequence and the commit is accepted.
+After removing the line, the same commit succeeds - all 5 checks pass in sequence and the commit is accepted.
 
 Source: `.husky/pre-commit`, `.husky/pre-push`
 
@@ -133,9 +134,9 @@ sonar.python.coverage.reportPaths=apps/api/coverage.xml
 
 Both coverage reports (Python XML + JS LCOV) flow into a single SonarQube project at `sonarqube.cs.ui.ac.id`. The SonarQube MCP server is also configured in `.mcp.json` for AI-assisted quality inspection directly from the editor.
 
-![SonarQube dashboard — SIRA project with 0 issues](/images/ppl/sonarqube.png)
+![SonarQube dashboard - SIRA project with 0 issues](/images/ppl/sonarqube.png)
 
-## Beyond Style — Runtime Failure Prevention
+## Beyond Style - Runtime Failure Prevention
 
 Static analysis in SIRA is not limited to formatting and import order. The configuration catches issues that would manifest as runtime failures in production.
 
@@ -145,22 +146,22 @@ Static analysis in SIRA is not limited to formatting and import order. The confi
 
 | mypy flag | What it prevents |
 |-----------|-----------------|
-| `--disallow-untyped-defs` | Functions with no type annotations — callers can't reason about null safety |
-| `--disallow-any-generics` | `list` without `list[str]` — type-erased collections that collapse to `Any` |
-| `--warn-return-any` | Functions returning `Any` — propagates type unsafety to every caller |
-| `--strict-optional` | Unenforced `Optional` checks — missed `None` dereferences become `AttributeError` at runtime |
+| `--disallow-untyped-defs` | Functions with no type annotations - callers can't reason about null safety |
+| `--disallow-any-generics` | `list` without `list[str]` - type-erased collections that collapse to `Any` |
+| `--warn-return-any` | Functions returning `Any` - propagates type unsafety to every caller |
+| `--strict-optional` | Unenforced `Optional` checks - missed `None` dereferences become `AttributeError` at runtime |
 
 The last is the most critical: any `T | None` return must be narrowed before use. mypy surfaces these as type errors before CI, not as production crashes.
 
 ### Biome `noExplicitAny`: Blocking the Type Escape Hatch
 
-TypeScript's `any` type disables all type inference — any method call or property access on `any` is unchecked:
+TypeScript's `any` type disables all type inference - any method call or property access on `any` is unchecked:
 
 ```typescript
-// ❌ blocked — data.amount is unchecked; typos and wrong shapes pass silently
+// ❌ blocked - data.amount is unchecked; typos and wrong shapes pass silently
 function process(data: any) { return data.amount }
 
-// ✅ required — TypeScript verifies .amount_paid exists on PaymentCreate
+// ✅ required - TypeScript verifies .amount_paid exists on PaymentCreate
 function process(data: PaymentCreate) { return data.amount_paid }
 ```
 
@@ -168,7 +169,7 @@ With `any`, `data.typo` compiles and crashes at runtime. With typed parameters, 
 
 ### Knip: Dead Code as a Behavioral Risk
 
-Unused exports are not just style noise — they represent a behavioral risk:
+Unused exports are not just style noise - they represent a behavioral risk:
 
 - Unused functions accumulate bugs that tests never exercise
 - Dead branches can drift out of sync with the active codebase's assumptions
@@ -178,7 +179,7 @@ Unused exports are not just style noise — they represent a behavioral risk:
 
 ### SonarQube: Complexity as a Bug Predictor
 
-SonarQube's cognitive complexity metric flags functions with high branching depth — a reliable predictor of off-by-one and conditional logic errors. This catches behavioral issues that type checkers miss: not "what type is this value" but "is this branching logic reachable and correct."
+SonarQube's cognitive complexity metric flags functions with high branching depth - a reliable predictor of off-by-one and conditional logic errors. This catches behavioral issues that type checkers miss: not "what type is this value" but "is this branching logic reachable and correct."
 
 ---
 

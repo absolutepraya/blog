@@ -1,16 +1,17 @@
 ---
 title: "PPL: Secure Programming - OWASP Coverage and CI Security Scanning"
 date: 2026-03-05
-description: "Five OWASP Top 10 categories addressed through JWT auth, RBAC, RLS, Pydantic validation, and CORS hardening — plus a security:sast CI job with Bandit and pnpm audit."
+description: "Five OWASP Top 10 categories addressed through JWT auth, RBAC, RLS, Pydantic validation, and CORS hardening - plus a security:sast CI job with Bandit and pnpm audit."
 tags: ["ppl", "security", "owasp", "ci", "sast", "fastapi"]
 toc: true
+aliases: ["/posts/ppl-a12b38-security/"]
 ---
 
-## Security Implementation — OWASP Coverage
+## Security Implementation - OWASP Coverage
 
 Five of the OWASP Top 10 are addressed by design across the stack.
 
-### A01 — Broken Access Control
+### A01 - Broken Access Control
 
 **Backend:** `require_admin` FastAPI dependency chains on `get_current_user` without modifying it. Adding a new role = new function, zero changes to existing code (OCP):
 
@@ -35,9 +36,9 @@ ALTER TABLE app_users ENABLE ROW LEVEL SECURITY;
 
 Source: `supabase/migrations/20260302100000_app_users_rls_and_fk.sql`
 
-### A02 — Cryptographic Failures
+### A02 - Cryptographic Failures
 
-JWT verification supports both HS256 (legacy) and asymmetric algorithms (ES256 via JWKS) in `apps/api/src/app/dependencies.py`. The algorithm is read from the token header — no hardcoded assumption:
+JWT verification supports both HS256 (legacy) and asymmetric algorithms (ES256 via JWKS) in `apps/api/src/app/dependencies.py`. The algorithm is read from the token header - no hardcoded assumption:
 
 ```python
 def _decode_jwt(token: str) -> dict[str, object]:
@@ -52,7 +53,7 @@ def _decode_jwt(token: str) -> dict[str, object]:
 
 HTTPS enforced in production. `send_default_pii=False` in Sentry init prevents tokens from leaking into error reports.
 
-### A03 — Injection
+### A03 - Injection
 
 All API input validated through Pydantic models before reaching the database:
 
@@ -62,9 +63,9 @@ class PaymentCreate(BaseModel):
     payment_date: date
 ```
 
-No raw SQL anywhere — all queries use the Supabase Python client's parameterized builder. No string concatenation in query construction.
+No raw SQL anywhere - all queries use the Supabase Python client's parameterized builder. No string concatenation in query construction.
 
-### A05 — Security Misconfiguration
+### A05 - Security Misconfiguration
 
 ```python
 app.add_middleware(
@@ -78,11 +79,11 @@ app.add_middleware(
 
 All secrets in `.env.local`, never committed. CI/CD injects from GitLab CI Variables at deploy time. `.env.example` uses placeholder values only.
 
-### A07 — Authentication Failures
+### A07 - Authentication Failures
 
-JWT is decoded and verified locally on every request (no network round-trip to Supabase Auth). Invalid tokens raise `PyJWTError` → 401. Token expiry is enforced by the JWT `exp` claim.
+JWT is decoded and verified locally on every request (no network round-trip to Supabase Auth). Invalid tokens raise `PyJWTError` -> 401. Token expiry is enforced by the JWT `exp` claim.
 
-Frontend Axios interceptor handles 401 responses by calling `supabase.auth.signOut()` + redirecting to `/login` — prevents infinite-loop token refresh cycles.
+Frontend Axios interceptor handles 401 responses by calling `supabase.auth.signOut()` + redirecting to `/login` - prevents infinite-loop token refresh cycles.
 
 Email fallback (SIRA-69): if `auth_user_id` is missing from `app_users`, match by email and auto-link on first login. This handles users who signed up before the linkage field existed.
 
@@ -116,11 +117,11 @@ security:sast:
   allow_failure: true
 ```
 
-`--exit-zero` and `|| true` make findings non-blocking. The job always runs and its output is visible in the pipeline log — findings are reviewed, not silently ignored.
+`--exit-zero` and `|| true` make findings non-blocking. The job always runs and its output is visible in the pipeline log - findings are reviewed, not silently ignored.
 
 ## Scan Results
 
-### Bandit — Python SAST
+### Bandit - Python SAST
 
 ```
 $ cd apps/api && uv run bandit -r src/
@@ -145,13 +146,13 @@ Files skipped (0):
 
 Zero findings across 656 lines. The clean result reflects the architecture:
 - No subprocess calls in production code
-- No hardcoded credentials — all secrets via Pydantic Settings from env vars
+- No hardcoded credentials - all secrets via Pydantic Settings from env vars
 - JWT decoded with `PyJWT` + `PyJWKClient` (secure key handling)
-- No raw SQL — all DB access via Supabase Python client
+- No raw SQL - all DB access via Supabase Python client
 
-### pnpm audit — Frontend Dependencies
+### pnpm audit - Frontend Dependencies
 
-#### Before — 2 CVEs Found
+#### Before - 2 CVEs Found
 
 Initial scan found two vulnerabilities in transitive dependencies:
 
@@ -160,11 +161,11 @@ Initial scan found two vulnerabilities in transitive dependencies:
 | **High** | `rollup` 4.57.1 | [GHSA-mw96-cpmx-2vgc](https://github.com/advisories/GHSA-mw96-cpmx-2vgc) | `vite > rollup` |
 | **Moderate** | `esbuild` ≤0.24.2 | [GHSA-67mh-4wv8-2f99](https://github.com/advisories/GHSA-67mh-4wv8-2f99) | `vitest > vite > esbuild` |
 
-**Rollup** (High): Arbitrary file write via path traversal — an attacker controlling build input could escape the output directory. Patched in ≥4.59.0.
+**Rollup** (High): Arbitrary file write via path traversal - an attacker controlling build input could escape the output directory. Patched in ≥4.59.0.
 
-**esbuild** (Moderate): Dev server CORS bypass — any website could make requests to the local esbuild dev server and read responses. Dev-only, not a production risk, but patched in ≥0.25.0.
+**esbuild** (Moderate): Dev server CORS bypass - any website could make requests to the local esbuild dev server and read responses. Dev-only, not a production risk, but patched in ≥0.25.0.
 
-Both are transitive dependencies of `vite`/`vitest` — not directly declared in `package.json`, so a standard upgrade would have missed them.
+Both are transitive dependencies of `vite`/`vitest` - not directly declared in `package.json`, so a standard upgrade would have missed them.
 
 #### Remediation
 
@@ -179,7 +180,7 @@ Both are transitive dependencies of `vite`/`vitest` — not directly declared in
 }
 ```
 
-#### After — Clean
+#### After - Clean
 
 ```
 $ pnpm --dir apps/web audit
