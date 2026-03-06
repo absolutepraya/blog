@@ -108,6 +108,14 @@
         });
     </script>
     <script>
+        document.querySelectorAll('.post-content table').forEach(function(t) {
+            var wrap = document.createElement('div');
+            wrap.className = 'table-wrap';
+            t.parentNode.insertBefore(wrap, t);
+            wrap.appendChild(t);
+        });
+    </script>
+    <script>
         (function() {
             var progressBar = document.getElementById('reading-progress');
             var thumb = document.getElementById('custom-scrollbar-thumb');
