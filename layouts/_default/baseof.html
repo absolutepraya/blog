@@ -213,6 +213,139 @@
             document.body.appendChild(viewer);
         })();
     </script>
+    <script>
+        (function() {
+            var zoom = 1, panX = 0, panY = 0;
+            var dragging = false, dragStartX, dragStartY, panStartX, panStartY;
+            var lastTouchDist = null;
+            var ZOOM_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>';
+
+            function applyTransform() {
+                var wrap = document.getElementById('diagram-viewer-svg-wrap');
+                if (wrap) wrap.style.transform = 'translate(calc(-50% + ' + panX + 'px), calc(-50% + ' + panY + 'px)) scale(' + zoom + ')';
+            }
+            function resetTransform() { zoom = 1; panX = 0; panY = 0; applyTransform(); }
+
+            function openViewer(el, w, h) {
+                var wrap = document.getElementById('diagram-viewer-svg-wrap');
+                if (!wrap) return;
+                wrap.innerHTML = '';
+                var clone = el.cloneNode(true);
+                clone.style.display = 'block';
+                clone.style.maxWidth = 'none';
+                clone.style.width = w + 'px';
+                clone.style.height = h + 'px';
+                wrap.appendChild(clone);
+                var hMargin = 16, vMargin = 64, pad = 12;
+                zoom = Math.min(
+                    (window.innerWidth  - hMargin * 2) / (w + pad * 2),
+                    (window.innerHeight - vMargin * 2) / (h + pad * 2)
+                );
+                panX = 0; panY = 0;
+                applyTransform();
+                document.getElementById('diagram-viewer').classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeViewer() {
+                var v = document.getElementById('diagram-viewer');
+                if (v) v.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+
+            // Global: called by mermaid module after each render
+            window.attachDiagramClicks = function() {
+                document.querySelectorAll('pre.mermaid').forEach(function(pre) {
+                    pre.onclick = function() {
+                        var svg = pre.querySelector('svg');
+                        if (svg) {
+                            var rect = svg.getBoundingClientRect();
+                            openViewer(svg, rect.width || 800, rect.height || 600);
+                        }
+                    };
+                    if (!pre.querySelector('.diagram-zoom-icon')) {
+                        var icon = document.createElement('span');
+                        icon.className = 'diagram-zoom-icon';
+                        icon.innerHTML = ZOOM_ICON;
+                        pre.appendChild(icon);
+                    }
+                });
+            };
+
+            // Canvas event listeners
+            var canvas = document.getElementById('diagram-viewer-canvas');
+            if (canvas) {
+                canvas.addEventListener('wheel', function(e) {
+                    e.preventDefault();
+                    zoom = Math.min(Math.max(zoom * (e.deltaY > 0 ? 0.9 : 1.1), 0.2), 10);
+                    applyTransform();
+                }, { passive: false });
+                canvas.addEventListener('mousedown', function(e) {
+                    dragging = true;
+                    dragStartX = e.clientX; dragStartY = e.clientY;
+                    panStartX = panX; panStartY = panY;
+                    canvas.classList.add('grabbing');
+                });
+                document.addEventListener('mousemove', function(e) {
+                    if (!dragging) return;
+                    panX = panStartX + (e.clientX - dragStartX);
+                    panY = panStartY + (e.clientY - dragStartY);
+                    applyTransform();
+                });
+                document.addEventListener('mouseup', function() {
+                    dragging = false;
+                    canvas.classList.remove('grabbing');
+                });
+                canvas.addEventListener('touchstart', function(e) {
+                    if (e.touches.length === 2) {
+                        lastTouchDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+                    } else if (e.touches.length === 1) {
+                        dragStartX = e.touches[0].clientX; dragStartY = e.touches[0].clientY;
+                        panStartX = panX; panStartY = panY;
+                    }
+                }, { passive: true });
+                canvas.addEventListener('touchmove', function(e) {
+                    e.preventDefault();
+                    if (e.touches.length === 2) {
+                        var dist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+                        if (lastTouchDist) zoom = Math.min(Math.max(zoom * (dist / lastTouchDist), 0.2), 10);
+                        lastTouchDist = dist;
+                        applyTransform();
+                    } else if (e.touches.length === 1) {
+                        panX = panStartX + (e.touches[0].clientX - dragStartX);
+                        panY = panStartY + (e.touches[0].clientY - dragStartY);
+                        applyTransform();
+                    }
+                }, { passive: false });
+                canvas.addEventListener('touchend', function() { lastTouchDist = null; }, { passive: true });
+                canvas.addEventListener('dblclick', resetTransform);
+            }
+
+            var closeBtn = document.getElementById('diagram-viewer-close');
+            if (closeBtn) closeBtn.addEventListener('click', closeViewer);
+            document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeViewer(); });
+
+            // Image viewer
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('.post-content img').forEach(function(img) {
+                    if (img.closest('.img-zoom-wrap')) return;
+                    var wrap = document.createElement('div');
+                    wrap.className = 'img-zoom-wrap';
+                    img.parentNode.insertBefore(wrap, img);
+                    wrap.appendChild(img);
+                    var icon = document.createElement('span');
+                    icon.className = 'diagram-zoom-icon';
+                    icon.innerHTML = ZOOM_ICON;
+                    wrap.appendChild(icon);
+                    wrap.addEventListener('click', function() {
+                        var w = img.naturalWidth  || img.offsetWidth  || 800;
+                        var h = img.naturalHeight || img.offsetHeight || 600;
+                        openViewer(img, w, h);
+                    });
+                });
+            });
+        })();
+    </script>
     {{ if .Page.Store.Get "hasMermaid" }}
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';
@@ -257,7 +390,6 @@
             var pie6 = cssVar('--mermaid-pie6', '#6c71c4');
             var pie7 = cssVar('--mermaid-pie7', '#d33682');
             var pie8 = cssVar('--mermaid-pie8', '#dc322f');
-            // Gantt-specific derived colors
             var taskFill   = colorMix(fg, bg, 15);
             var doneFill   = colorMix(fg, bg, 25);
             var activeFill = colorMix(accent, bg, 30);
@@ -294,7 +426,6 @@
                 labelTextColor: fg,
                 loopTextColor: fg,
                 sequenceNumberColor: muted,
-                // Gantt chart
                 taskBkgColor: taskFill,
                 taskBorderColor: nodeStroke,
                 taskTextColor: fg,
@@ -310,7 +441,6 @@
                 altSectionBkgColor: altSectionBg,
                 gridColor: innerStroke,
                 todayLineColor: cssVar('--mermaid-pie8', '#dc322f'),
-                // Pie chart
                 pie1: pie1, pie2: pie2, pie3: pie3, pie4: pie4,
                 pie5: pie5, pie6: pie6, pie7: pie7, pie8: pie8,
                 pieTitleTextColor: fg,
@@ -319,155 +449,27 @@
                 pieStrokeColor: bg,
                 pieStrokeWidth: '2px',
                 pieOpacity: '0.9',
-                // Journey / fillType
                 fillType0: pie1, fillType1: pie2, fillType2: pie3, fillType3: pie4,
                 fillType4: pie5, fillType5: pie6, fillType6: pie7, fillType7: pie8,
                 fontFamily: '"Ubuntu", sans-serif'
             };
         }
-        var isDark = root.classList.contains('dark-theme');
-        var themeVars = buildThemeVars(isDark);
 
-        // Store original diagram source before first render
+        var isDark = root.classList.contains('dark-theme');
         var originals = {};
         document.querySelectorAll('pre.mermaid').forEach(function(el, i) {
             originals[i] = el.textContent;
             el.setAttribute('data-idx', i);
         });
 
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: 'base',
-            themeVariables: themeVars,
-            htmlLabels: true
-        });
+        mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: buildThemeVars(isDark), htmlLabels: true });
         await mermaid.run();
-
-        // --- Diagram Viewer ---
-        var zoom = 1, panX = 0, panY = 0;
-        var dragging = false, dragStartX, dragStartY, panStartX, panStartY;
-        var lastTouchDist = null;
-
-        function applyTransform() {
-            var wrap = document.getElementById('diagram-viewer-svg-wrap');
-            if (wrap) wrap.style.transform = 'translate(calc(-50% + ' + panX + 'px), calc(-50% + ' + panY + 'px)) scale(' + zoom + ')';
-        }
-        function resetTransform() { zoom = 1; panX = 0; panY = 0; applyTransform(); }
-
-        function openViewer(svgEl) {
-            var wrap = document.getElementById('diagram-viewer-svg-wrap');
-            if (!wrap) return;
-            wrap.innerHTML = '';
-            var clone = svgEl.cloneNode(true);
-            // Get actual rendered dimensions
-            var rect = svgEl.getBoundingClientRect();
-            var svgW = rect.width  || 800;
-            var svgH = rect.height || 600;
-            clone.style.display = 'block';
-            clone.style.maxWidth = 'none';
-            clone.style.width = svgW + 'px';
-            clone.style.height = svgH + 'px';
-            wrap.appendChild(clone);
-            // Fit-to-contain: whichever dimension fills first
-            var hMargin = 16;  // 1rem each side
-            var vMargin = 64;  // 4rem each side (bigger vertical margin)
-            var pad = 12;      // 0.75rem wrapper padding each side
-            var availW = window.innerWidth  - hMargin * 2;
-            var availH = window.innerHeight - vMargin * 2;
-            zoom = Math.min(availW / (svgW + pad * 2), availH / (svgH + pad * 2));
-            panX = 0; panY = 0;
-            applyTransform();
-            document.getElementById('diagram-viewer').classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeViewer() {
-            var v = document.getElementById('diagram-viewer');
-            if (v) v.classList.remove('open');
-            document.body.style.overflow = '';
-        }
-
-        function attachDiagramClicks() {
-            document.querySelectorAll('pre.mermaid').forEach(function(pre) {
-                pre.onclick = function() {
-                    var svg = pre.querySelector('svg');
-                    if (svg) openViewer(svg);
-                };
-                if (!pre.querySelector('.diagram-zoom-icon')) {
-                    var icon = document.createElement('span');
-                    icon.className = 'diagram-zoom-icon';
-                    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>';
-                    pre.appendChild(icon);
-                }
-            });
-        }
-
-        // Zoom
-        var canvas = document.getElementById('diagram-viewer-canvas');
-        if (canvas) {
-            canvas.addEventListener('wheel', function(e) {
-                e.preventDefault();
-                zoom = Math.min(Math.max(zoom * (e.deltaY > 0 ? 0.9 : 1.1), 0.2), 10);
-                applyTransform();
-            }, { passive: false });
-
-            // Pan — mouse
-            canvas.addEventListener('mousedown', function(e) {
-                dragging = true;
-                dragStartX = e.clientX; dragStartY = e.clientY;
-                panStartX = panX; panStartY = panY;
-                canvas.classList.add('grabbing');
-            });
-            document.addEventListener('mousemove', function(e) {
-                if (!dragging) return;
-                panX = panStartX + (e.clientX - dragStartX);
-                panY = panStartY + (e.clientY - dragStartY);
-                applyTransform();
-            });
-            document.addEventListener('mouseup', function() {
-                dragging = false;
-                canvas.classList.remove('grabbing');
-            });
-
-            // Pan + pinch — touch
-            canvas.addEventListener('touchstart', function(e) {
-                if (e.touches.length === 2) {
-                    lastTouchDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
-                } else if (e.touches.length === 1) {
-                    dragStartX = e.touches[0].clientX; dragStartY = e.touches[0].clientY;
-                    panStartX = panX; panStartY = panY;
-                }
-            }, { passive: true });
-            canvas.addEventListener('touchmove', function(e) {
-                e.preventDefault();
-                if (e.touches.length === 2) {
-                    var dist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
-                    if (lastTouchDist) zoom = Math.min(Math.max(zoom * (dist / lastTouchDist), 0.2), 10);
-                    lastTouchDist = dist;
-                    applyTransform();
-                } else if (e.touches.length === 1) {
-                    panX = panStartX + (e.touches[0].clientX - dragStartX);
-                    panY = panStartY + (e.touches[0].clientY - dragStartY);
-                    applyTransform();
-                }
-            }, { passive: false });
-            canvas.addEventListener('touchend', function() { lastTouchDist = null; }, { passive: true });
-
-            // Double-click to reset
-            canvas.addEventListener('dblclick', resetTransform);
-        }
-
-        var closeBtn = document.getElementById('diagram-viewer-close');
-        if (closeBtn) closeBtn.addEventListener('click', closeViewer);
-        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeViewer(); });
-
         attachDiagramClicks();
 
-        // Re-render on dark mode toggle
         var toggle = document.getElementById('dark-mode-toggle');
         if (toggle) {
             toggle.addEventListener('change', async function() {
                 var nowDark = document.documentElement.classList.contains('dark-theme');
-                // Restore original source text
                 document.querySelectorAll('pre.mermaid').forEach(function(el) {
                     var idx = el.getAttribute('data-idx');
                     if (idx !== null && originals[idx]) {
@@ -475,12 +477,7 @@
                         el.innerHTML = originals[idx];
                     }
                 });
-                mermaid.initialize({
-                    startOnLoad: false,
-                    theme: 'base',
-                    themeVariables: buildThemeVars(nowDark),
-                    htmlLabels: true
-                });
+                mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: buildThemeVars(nowDark), htmlLabels: true });
                 await mermaid.run();
                 attachDiagramClicks();
             });
