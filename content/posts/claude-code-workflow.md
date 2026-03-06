@@ -32,11 +32,11 @@ Claude Code runs in your terminal. It reads your entire codebase, runs shell com
 
 IDE tools help you write code faster. Claude Code helps you *develop* faster - planning, debugging, testing, reviewing, and shipping included.
 
-On a startup project I work on (aiccountant, an AI expense tracker), the setup includes an 800-line CLAUDE.md, 9 custom slash commands, post-edit hooks, session-end hooks that extract learnings, and 14 per-package instruction files across the monorepo. Not "AI writes code" - a structured engineering environment where the AI understands the project.
+On one project I work on, the setup includes an 800-line CLAUDE.md, 9 custom slash commands, post-edit hooks, session-end hooks that extract learnings, and 14 per-package instruction files across the monorepo. Not "AI writes code" - a structured engineering environment where the AI understands the project.
 
 ## The Workflow: Idea to Shipped Code
 
-Before I walk through the workflow, I need to mention superpowers. It's a Claude Code plugin that provides 14 skills covering the entire development lifecycle - from brainstorming to debugging to code review. Each skill enforces a specific discipline: brainstorming won't let you skip to code without a design, TDD won't let you write production code without a failing test, debugging won't let you guess at fixes without investigating root cause.
+Before I walk through the workflow, I need to mention [superpowers](https://github.com/obra/superpowers). It's a Claude Code plugin that provides 14 skills covering the entire development lifecycle - from brainstorming to debugging to code review. Each skill enforces a specific discipline: brainstorming won't let you skip to code without a design, TDD won't let you write production code without a failing test, debugging won't let you guess at fixes without investigating root cause.
 
 I use it on every project. Without superpowers, Claude is a capable assistant that does what you ask. With it, Claude follows a structured engineering process whether you remember to ask or not. The skills activate automatically based on context - start describing a feature, brainstorming kicks in. Hit a bug, systematic-debugging takes over. It's the difference between having a smart tool and having a disciplined workflow.
 
@@ -126,7 +126,7 @@ The workflow above doesn't happen by magic. Here's what powers it.
 
 CLAUDE.md is the single most important file in any Claude Code project. It's a markdown file at your project root that tells Claude everything about how to work in your codebase - conventions, patterns, common pitfalls, preferred tools, architecture decisions.
 
-But a good CLAUDE.md goes beyond rules. On the aiccountant project, it includes:
+But a good CLAUDE.md goes beyond rules. On one of my projects, it includes:
 
 - **Development philosophy** - "Leave it better than you found it," YAGNI, complexity estimates over time estimates
 - **Critical practices** - never use `any` in TypeScript, prefer integration tests, always use typed translations for UI text
@@ -135,7 +135,7 @@ But a good CLAUDE.md goes beyond rules. On the aiccountant project, it includes:
 - **Slash command documentation** - what each command does and when to use it
 - **Subagent descriptions** - how to use the progress-validator and docs-librarian agents
 
-The layered approach is powerful for monorepos. The root CLAUDE.md covers project-wide conventions. Each package gets its own CLAUDE.md with specific patterns for that part of the codebase. When Claude works on a file, it reads the relevant CLAUDE.md files and follows them. This scales - the aiccountant monorepo has 14+ package-level CLAUDE.md files.
+The layered approach is powerful for monorepos. The root CLAUDE.md covers project-wide conventions. Each package gets its own CLAUDE.md with specific patterns for that part of the codebase. When Claude works on a file, it reads the relevant CLAUDE.md files and follows them. This scales - one monorepo I work on has 14+ package-level CLAUDE.md files.
 
 These files aren't static. They evolve with the project. You add a pitfall when you discover it, update conventions when they change, document decisions when you make them. On one project, CLAUDE.md accumulated 19 commits over a few months, each one capturing something that went wrong or a pattern that worked well.
 
