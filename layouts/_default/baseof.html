@@ -359,9 +359,10 @@
             if (!wrap) return;
             wrap.innerHTML = '';
             var clone = svgEl.cloneNode(true);
-            // Get natural dimensions before stripping attributes
-            var svgW = parseFloat(svgEl.getAttribute('width')) || 800;
-            var svgH = parseFloat(svgEl.getAttribute('height')) || 600;
+            // Get actual rendered dimensions
+            var rect = svgEl.getBoundingClientRect();
+            var svgW = rect.width  || 800;
+            var svgH = rect.height || 600;
             clone.style.display = 'block';
             clone.style.maxWidth = 'none';
             clone.style.width = svgW + 'px';
