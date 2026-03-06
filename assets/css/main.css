@@ -198,7 +198,26 @@ img, video {
 }
 /* --- Mermaid Diagram Viewer --- */
 pre.mermaid {
+  position: relative;
   cursor: zoom-in;
+}
+
+.diagram-zoom-icon {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  padding: 0.2rem;
+  line-height: 0;
+}
+
+pre.mermaid:hover .diagram-zoom-icon {
+  opacity: 1;
 }
 
 .diagram-viewer {
