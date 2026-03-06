@@ -412,6 +412,11 @@ blockquote > :last-child {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--text-primary) 50%, transparent) color-mix(in srgb, var(--text-muted) 15%, transparent);
+  margin-bottom: 1rem;
+}
+
+.table-wrap table {
+  margin-bottom: 0;
 }
 
 .table-wrap::-webkit-scrollbar {
