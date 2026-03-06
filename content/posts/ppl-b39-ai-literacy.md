@@ -187,7 +187,7 @@ Creates a GitLab Merge Request using `glab` CLI:
 
 Source: `.claude/commands/commit.md`, `commit-and-push.md`, `create-pr.md`
 
-{{< figure src="/images/ppl/claude-code-lazygit.png" alt="Claude Code with lazygit on a split pane" caption="Using lazygit on a split pane to manage MRs, branches, pushing, pulling, and more - directly from the terminal." >}}
+{{< figure src="/images/ppl/claude-code-lazygit.png" alt="Claude Code with lazygit on a split pane" caption="Split pane setup: Claude Code on the left to talk to the LLM agent, and process-compose on the right running all dev processes and containers in one terminal - making it easy to check logs during development." >}}
 
 ## Project Skills — Reusable AI Capabilities
 

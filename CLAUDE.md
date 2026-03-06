@@ -56,7 +56,18 @@ Store images in `static/images/`. Reference in posts as:
 ![Alt text](/images/my-image.png)
 ```
 
+
 For post-specific images, use subdirectories: `static/images/post-slug/`.
+
+### Image with Caption
+
+Use Hugo's `figure` shortcode to add a subtitle/caption below an image:
+
+```
+{{</* figure src="/images/my-image.png" alt="Alt text" caption="Caption shown below the image." */>}}
+```
+
+The caption renders as italic muted text centered below the image.
 
 ## Mermaid Diagrams
 
@@ -143,3 +154,4 @@ When writing blog post content:
 - Hardcode hex colors in Mermaid diagram source — let the theme handle it
 - Use em dashes (`—`) in post content — ever
 - Use emoji in post content — ever
+
