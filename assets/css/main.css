@@ -184,6 +184,8 @@ pre.mermaid {
   background: var(--mermaid-bg);
   border-radius: 4px;
   padding: 0.75rem;
+  display: flex;
+  justify-content: center;
 }
 
 .diagram-viewer-close {
@@ -812,6 +814,7 @@ article.post {
 pre.mermaid svg {
   max-width: 100%;
   height: auto;
+  margin: 0 auto;
 }
 
 pre.mermaid {
