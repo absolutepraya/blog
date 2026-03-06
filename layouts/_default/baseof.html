@@ -133,6 +133,15 @@
     {{ if not hugo.IsServer }}
     {{ template "_internal/google_analytics.html" . }}
     {{ end }}
+    <script>
+        (function() {
+            var viewer = document.createElement('div');
+            viewer.id = 'diagram-viewer';
+            viewer.className = 'diagram-viewer';
+            viewer.innerHTML = '<div class="diagram-viewer-canvas" id="diagram-viewer-canvas"><div class="diagram-viewer-svg-wrap" id="diagram-viewer-svg-wrap"></div></div><button class="diagram-viewer-close" id="diagram-viewer-close">&#x2715; close</button><div class="diagram-viewer-hint">scroll to zoom &middot; drag to pan &middot; esc to close &middot; double-click to reset</div>';
+            document.body.appendChild(viewer);
+        })();
+    </script>
     {{ if .Page.Store.Get "hasMermaid" }}
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';
@@ -263,6 +272,107 @@
         });
         await mermaid.run();
 
+        // --- Diagram Viewer ---
+        var zoom = 1, panX = 0, panY = 0;
+        var dragging = false, dragStartX, dragStartY, panStartX, panStartY;
+        var lastTouchDist = null;
+
+        function applyTransform() {
+            var wrap = document.getElementById('diagram-viewer-svg-wrap');
+            if (wrap) wrap.style.transform = 'translate(calc(-50% + ' + panX + 'px), calc(-50% + ' + panY + 'px)) scale(' + zoom + ')';
+        }
+        function resetTransform() { zoom = 1; panX = 0; panY = 0; applyTransform(); }
+
+        function openViewer(svgEl) {
+            var wrap = document.getElementById('diagram-viewer-svg-wrap');
+            if (!wrap) return;
+            wrap.innerHTML = '';
+            var clone = svgEl.cloneNode(true);
+            clone.removeAttribute('width');
+            clone.removeAttribute('height');
+            clone.style.maxWidth = '90vw';
+            clone.style.maxHeight = '90vh';
+            wrap.appendChild(clone);
+            resetTransform();
+            document.getElementById('diagram-viewer').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeViewer() {
+            var v = document.getElementById('diagram-viewer');
+            if (v) v.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function attachDiagramClicks() {
+            document.querySelectorAll('pre.mermaid').forEach(function(pre) {
+                pre.onclick = function() {
+                    var svg = pre.querySelector('svg');
+                    if (svg) openViewer(svg);
+                };
+            });
+        }
+
+        // Zoom
+        var canvas = document.getElementById('diagram-viewer-canvas');
+        if (canvas) {
+            canvas.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                zoom = Math.min(Math.max(zoom * (e.deltaY > 0 ? 0.9 : 1.1), 0.2), 10);
+                applyTransform();
+            }, { passive: false });
+
+            // Pan — mouse
+            canvas.addEventListener('mousedown', function(e) {
+                dragging = true;
+                dragStartX = e.clientX; dragStartY = e.clientY;
+                panStartX = panX; panStartY = panY;
+                canvas.classList.add('grabbing');
+            });
+            document.addEventListener('mousemove', function(e) {
+                if (!dragging) return;
+                panX = panStartX + (e.clientX - dragStartX);
+                panY = panStartY + (e.clientY - dragStartY);
+                applyTransform();
+            });
+            document.addEventListener('mouseup', function() {
+                dragging = false;
+                canvas.classList.remove('grabbing');
+            });
+
+            // Pan + pinch — touch
+            canvas.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 2) {
+                    lastTouchDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+                } else if (e.touches.length === 1) {
+                    dragStartX = e.touches[0].clientX; dragStartY = e.touches[0].clientY;
+                    panStartX = panX; panStartY = panY;
+                }
+            }, { passive: true });
+            canvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                if (e.touches.length === 2) {
+                    var dist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+                    if (lastTouchDist) zoom = Math.min(Math.max(zoom * (dist / lastTouchDist), 0.2), 10);
+                    lastTouchDist = dist;
+                    applyTransform();
+                } else if (e.touches.length === 1) {
+                    panX = panStartX + (e.touches[0].clientX - dragStartX);
+                    panY = panStartY + (e.touches[0].clientY - dragStartY);
+                    applyTransform();
+                }
+            }, { passive: false });
+            canvas.addEventListener('touchend', function() { lastTouchDist = null; }, { passive: true });
+
+            // Double-click to reset
+            canvas.addEventListener('dblclick', resetTransform);
+        }
+
+        var closeBtn = document.getElementById('diagram-viewer-close');
+        if (closeBtn) closeBtn.addEventListener('click', closeViewer);
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeViewer(); });
+
+        attachDiagramClicks();
+
         // Re-render on dark mode toggle
         var toggle = document.getElementById('dark-mode-toggle');
         if (toggle) {
@@ -283,6 +393,7 @@
                     htmlLabels: true
                 });
                 await mermaid.run();
+                attachDiagramClicks();
             });
         }
     </script>

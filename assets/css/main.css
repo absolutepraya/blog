@@ -144,6 +144,76 @@ img, video {
   margin-top: 0.5rem;
   font-style: italic;
 }
+/* --- Mermaid Diagram Viewer --- */
+pre.mermaid {
+  cursor: zoom-in;
+}
+
+.diagram-viewer {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.75);
+  align-items: center;
+  justify-content: center;
+}
+
+.diagram-viewer.open {
+  display: flex;
+}
+
+.diagram-viewer-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.diagram-viewer-canvas.grabbing {
+  cursor: grabbing;
+}
+
+.diagram-viewer-svg-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+}
+
+.diagram-viewer-close {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1001;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  font-family: var(--font-family-mono);
+  font-size: 0.875rem;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.diagram-viewer-close:hover {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.diagram-viewer-hint {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-family-mono);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
 
 /* --- Typography --- */
 body {
