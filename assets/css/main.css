@@ -133,6 +133,18 @@ img, video {
   border-radius: 8px;
 }
 
+.post-content figure {
+  margin: 0;
+}
+
+.post-content figcaption p {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
 /* --- Typography --- */
 body {
   font-family: var(--font-family-sans);
