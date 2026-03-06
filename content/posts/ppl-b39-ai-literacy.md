@@ -102,7 +102,7 @@ Selected commits and what triggered them:
 
 The root document is now ~430 lines and covers architecture patterns, naming conventions, Git policy, package manager enforcement (`pnpm`, `uv`), and explicit anti-patterns ("NEVER auto-commit", "NEVER use `any` type").
 
-![Claude Code terminal session — working with CLAUDE.md and MCP servers in the SIRA project](/images/ppl/claude-code.png)
+{{< figure src="/images/ppl/claude-code.png" alt="Claude Code terminal session — working with CLAUDE.md and MCP servers in the SIRA project" caption="A Claude Code terminal session in the SIRA project - CLAUDE.md and MCP servers provide live project context directly in the AI workflow." >}}
 
 ## MCP Servers — Live Project Context
 
