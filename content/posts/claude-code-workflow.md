@@ -44,7 +44,11 @@ Here's what a real feature dev session looks like.
 
 ### Brainstorming (`/superpowers:brainstorming`)
 
-Everything starts with a conversation. I describe what I want to build - sometimes a vague idea, sometimes a specific feature. Claude doesn't just start writing code. The brainstorming skill kicks in and asks me questions, one at a time.
+Everything starts with a conversation. I describe what I want to build - sometimes a vague idea, sometimes a specific feature. Something like:
+
+> i want my whatsapp cs agent to not only work as a cs and just fetching knowledge base and creating ticket for eng team if there's a bug, a feat req, or knowledge gap in knowledge base. i want it to also be able to pass eng ticket for bug and knowledge gap types of ticket to our coding agent, so it can automatically propose a fix and open a pr in repo
+
+That's it. No formal spec, no structured prompt. Claude doesn't just start writing code. The brainstorming skill kicks in and asks me questions, one at a time.
 
 "Who's the target audience for this?"
 "Should it support X or is that out of scope?"
