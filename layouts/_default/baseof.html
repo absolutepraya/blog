@@ -359,13 +359,23 @@
             if (!wrap) return;
             wrap.innerHTML = '';
             var clone = svgEl.cloneNode(true);
+            // Get natural dimensions before stripping attributes
+            var svgW = parseFloat(svgEl.getAttribute('width')) || 800;
+            var svgH = parseFloat(svgEl.getAttribute('height')) || 600;
             clone.style.display = 'block';
-            clone.style.maxWidth = '100%';
-            clone.style.height = 'auto';
+            clone.style.maxWidth = 'none';
             clone.removeAttribute('width');
             clone.removeAttribute('height');
             wrap.appendChild(clone);
-            resetTransform();
+            // Fit-to-contain: whichever dimension fills first
+            var hMargin = 16;  // 1rem each side
+            var vMargin = 64;  // 4rem each side (bigger vertical margin)
+            var pad = 12;      // 0.75rem wrapper padding each side
+            var availW = window.innerWidth  - hMargin * 2;
+            var availH = window.innerHeight - vMargin * 2;
+            zoom = Math.min(availW / (svgW + pad * 2), availH / (svgH + pad * 2));
+            panX = 0; panY = 0;
+            applyTransform();
             document.getElementById('diagram-viewer').classList.add('open');
             document.body.style.overflow = 'hidden';
         }
