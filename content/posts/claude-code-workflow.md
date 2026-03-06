@@ -18,27 +18,23 @@ Three reasons: the model, the economics, and the workflow.
 
 ### The Model
 
-Claude Code runs on Opus 4.6, which is currently the best coding model available. It scores 79.2% on SWE-bench Verified (with thinking) - the highest of any AI model. It leads Terminal-Bench 2.0 for agentic coding tasks and outperforms GPT-5.2 by 144 Elo points on real-world knowledge work. It has a 1M token context window in beta, which means it can hold your entire codebase in context for large projects.
-
-These aren't just benchmark numbers. In practice, it means the model can navigate a monorepo, understand how services connect, trace bugs across files, and make changes that are architecturally consistent. It plans before it codes, catches its own mistakes, and sustains multi-step tasks for longer than previous models.
+Claude Code runs on Opus 4.6 - currently the best coding model available. 79.2% on SWE-bench Verified (thinking), leads Terminal-Bench 2.0, outperforms GPT-5.2 by 144 Elo on real-world work tasks. 1M token context window in beta.
 
 ### The Economics
 
-Claude Max 20x costs $200/month. That sounds like a lot until you compare it to API pricing. One developer tracked their usage over 8 months and estimated roughly $15,000 worth of API tokens consumed, all covered by about $800 in Max subscription fees. That's a 93% saving.
+Claude Max 20x costs $200/month. One developer tracked 8 months of usage and estimated ~$15,000 in API token costs, covered by ~$800 in Max fees. 93% savings.
 
-For comparison: Cursor Ultra is also $200/month but splits across multiple models. Claude Max gives you 20x the Pro usage limit on Opus 4.6 specifically - the best coding model, with no per-token billing. You don't think about cost mid-session. You don't stop a refactor because you're watching your token count. That friction removal matters more than people expect.
-
-Even the $100/month Max 5x tier is solid if you're not coding all day. The rule of thumb: if you hit "message limit reached" more than twice a week on Pro, Max pays for itself in productivity alone.
+Cursor Ultra is also $200/month but splits across multiple models. Max gives you 20x Pro usage on Opus 4.6 specifically, no per-token billing. You don't stop a refactor because you're watching your token count.
 
 ### The Workflow
 
-Most AI coding tools live inside your editor. Copilot gives you autocomplete. Cursor gives you inline edits and chat. They're good at what they do, but they're fundamentally constrained to your IDE.
+Most AI coding tools live inside your editor. Copilot gives you autocomplete. Cursor gives you inline edits and chat. They work, but they're constrained to your IDE.
 
-Claude Code is different. It runs in your terminal. It's not suggesting code in a sidebar - it's an agent that can read your entire codebase, run shell commands, manage git, create files, and talk to external services through MCP (Model Context Protocol). Think of it less as "AI autocomplete" and more as a junior engineer that lives in your terminal, follows your project's conventions, and gets better the more context you give it.
+Claude Code runs in your terminal. It reads your entire codebase, runs shell commands, manages git, creates files, and talks to external services through MCP. Less "AI autocomplete", more a junior engineer that lives in your terminal and follows your project's conventions.
 
-The key distinction: IDE tools help you write code faster. Claude Code helps you *develop* faster - and that includes planning, debugging, testing, reviewing, and shipping.
+IDE tools help you write code faster. Claude Code helps you *develop* faster - planning, debugging, testing, reviewing, and shipping included.
 
-Here's what that looks like in practice. On a startup project I work on (aiccountant, an AI expense tracker), the Claude Code setup includes an 800-line CLAUDE.md with development philosophy and conventions, 9 custom slash commands for common workflows, post-edit hooks that validate code after every change, session-end hooks that extract learnings, and 14 per-package instruction files across the monorepo. It's not just "AI writes code" - it's a structured engineering environment where the AI understands the project deeply.
+On a startup project I work on (aiccountant, an AI expense tracker), the setup includes an 800-line CLAUDE.md, 9 custom slash commands, post-edit hooks, session-end hooks that extract learnings, and 14 per-package instruction files across the monorepo. Not "AI writes code" - a structured engineering environment where the AI understands the project.
 
 ## The Workflow: Idea to Shipped Code
 
