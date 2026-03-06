@@ -747,7 +747,7 @@ pre.mermaid {
     gap: 0.5rem;
   }
   .smallcap {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
   .toggle-switch {
     height: 18px;
@@ -791,7 +791,7 @@ pre.mermaid {
     font-size: 0.75rem;
   }
   .smallcap {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
   nav {
     gap: 0.5rem;
@@ -855,7 +855,7 @@ pre.mermaid {
     padding-block: 1.5rem;
   }
   .smallcap {
-    font-size: 1.75rem;
+    font-size: 1.25rem;
   }
   .smallcap a {
     padding: 0.15rem 0.3rem;
