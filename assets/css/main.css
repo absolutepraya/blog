@@ -241,6 +241,8 @@ pre.mermaid:hover .diagram-zoom-icon,
   height: 100%;
   overflow: hidden;
   cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .diagram-viewer-canvas.grabbing {

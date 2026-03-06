@@ -240,6 +240,7 @@
                 clone.style.maxWidth = 'none';
                 clone.style.width = w + 'px';
                 clone.style.height = h + 'px';
+                if (clone.tagName === 'IMG') clone.setAttribute('draggable', 'false');
                 wrap.appendChild(clone);
                 var hMargin = 16, vMargin = 64, pad = 12;
                 zoom = Math.min(
@@ -324,6 +325,7 @@
                 }, { passive: false });
                 canvas.addEventListener('touchend', function() { lastTouchDist = null; }, { passive: true });
                 canvas.addEventListener('dblclick', resetTransform);
+                canvas.addEventListener('dragstart', function(e) { e.preventDefault(); });
             }
 
             var closeBtn = document.getElementById('diagram-viewer-close');
