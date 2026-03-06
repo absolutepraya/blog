@@ -364,8 +364,8 @@
             var svgH = parseFloat(svgEl.getAttribute('height')) || 600;
             clone.style.display = 'block';
             clone.style.maxWidth = 'none';
-            clone.removeAttribute('width');
-            clone.removeAttribute('height');
+            clone.style.width = svgW + 'px';
+            clone.style.height = svgH + 'px';
             wrap.appendChild(clone);
             // Fit-to-contain: whichever dimension fills first
             var hMargin = 16;  // 1rem each side
