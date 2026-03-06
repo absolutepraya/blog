@@ -216,7 +216,8 @@ pre.mermaid {
   line-height: 0;
 }
 
-pre.mermaid:hover .diagram-zoom-icon {
+pre.mermaid:hover .diagram-zoom-icon,
+.img-zoom-wrap:hover .diagram-zoom-icon {
   opacity: 1;
 }
 
@@ -244,6 +245,12 @@ pre.mermaid:hover .diagram-zoom-icon {
 
 .diagram-viewer-canvas.grabbing {
   cursor: grabbing;
+}
+
+.diagram-viewer-svg-wrap.image-mode {
+  background: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 .diagram-viewer-svg-wrap {

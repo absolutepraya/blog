@@ -230,6 +230,11 @@
                 var wrap = document.getElementById('diagram-viewer-svg-wrap');
                 if (!wrap) return;
                 wrap.innerHTML = '';
+                if (el.tagName === 'IMG') {
+                    wrap.classList.add('image-mode');
+                } else {
+                    wrap.classList.remove('image-mode');
+                }
                 var clone = el.cloneNode(true);
                 clone.style.display = 'block';
                 clone.style.maxWidth = 'none';
