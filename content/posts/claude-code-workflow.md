@@ -170,12 +170,11 @@ Each command is a markdown file with structured instructions. Writing your own i
 MCP (Model Context Protocol) is how Claude Code talks to external services. Instead of copy-pasting context from other tools, Claude just... uses them directly. My setup includes:
 
 - **Linear** - Creates issues, updates statuses, reads project boards. When Claude finds a bug during development, it can file a Linear ticket without me switching windows.
-- **Todoist** - Task management with custom formatting rules (course abbreviations, priority mapping, deadline offsets).
 - **Context7** - Looks up library and framework documentation on the fly. Claude resolves the package, queries the docs, and gets current API references. No more "as of my training cutoff" guessing.
 - **Exa** - Web search for when Claude needs to research something.
-- **Telegram and Gmail** - Reads messages and threads. Useful for morning briefs and catching up on notifications.
-- **Google Calendar** - Checks schedule, finds free time, creates events.
 - **Firecrawl** - Scrapes web pages when Claude needs to read documentation or reference material that isn't in Context7.
+- **Todoist** - Task management with custom formatting and priority rules.
+- **Google Calendar** - Checks schedule, finds free time, creates events.
 
 The key thing about MCPs is that Claude uses them autonomously when relevant. If it's working on a feature and needs to check the current API docs for a library, it just does it. If it finds something that should be tracked, it creates a Linear issue. The integrations compound - each one makes the others more useful.
 
