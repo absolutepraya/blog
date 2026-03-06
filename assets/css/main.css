@@ -216,9 +216,6 @@ pre.mermaid {
   transition: opacity 0.2s ease;
   pointer-events: none;
   color: var(--text-muted);
-  background: var(--bg-secondary);
-  border-radius: 4px;
-  padding: 0.2rem;
   line-height: 0;
 }
 
