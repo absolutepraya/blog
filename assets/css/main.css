@@ -365,6 +365,7 @@ code {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 1em;
+  word-break: break-all;
 }
 
 pre {
