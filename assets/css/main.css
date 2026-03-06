@@ -416,9 +416,12 @@ nav a:hover {
 }
 
 .section-link {
-  margin-top: 1.5rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+  margin-top: 0;
+}
+
+.section-link-label {
+  color: var(--text-muted);
+  opacity: 0.7;
 }
 
 .post-list > li {
