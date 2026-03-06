@@ -415,6 +415,12 @@ nav a:hover {
   margin-left: 0;
 }
 
+.section-link {
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
 .post-list > li {
   margin-bottom: 0.5rem;
   display: flex;
