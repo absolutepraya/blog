@@ -185,6 +185,12 @@ img, video {
   border-radius: 4px;
 }
 
+.img-zoom-wrap {
+  position: relative;
+  display: block;
+  cursor: zoom-in;
+}
+
 .post-content figure {
   margin: 0;
 }
