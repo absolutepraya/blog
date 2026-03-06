@@ -10,6 +10,7 @@ copyright = "© Daffa Abhipraya"
   author = "Daffa Abhipraya"
   mainSections = ["posts"]
   showTagsOnHomepage = false
+  showReadingProgress = false
 
 [pagination]
   pagerSize = 10

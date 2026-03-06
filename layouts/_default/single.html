@@ -1,4 +1,10 @@
 {{ define "main" }}
+{{ if .Site.Params.showReadingProgress }}<div class="reading-progress" id="reading-progress"></div>{{ end }}
+<div class="custom-scrollbar" id="custom-scrollbar">
+    <div class="custom-scrollbar-track">
+        <div class="custom-scrollbar-thumb" id="custom-scrollbar-thumb"></div>
+    </div>
+</div>
 <section class="site-header">
     <h1 class="smallcap"><a class="site-title" href="/">~/abhipraya</a></h1>
     {{ partial "nav.html" . }}

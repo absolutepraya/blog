@@ -108,6 +108,77 @@
         });
     </script>
     <script>
+        (function() {
+            var progressBar = document.getElementById('reading-progress');
+            var thumb = document.getElementById('custom-scrollbar-thumb');
+            var scrollbar = document.getElementById('custom-scrollbar');
+            if (!thumb || !scrollbar) return;
+
+            document.documentElement.classList.add('custom-scroll');
+
+            function updateScroll() {
+                var scrollTop = window.scrollY;
+                var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                if (docHeight <= 0) {
+                    if (progressBar) progressBar.style.width = '0%';
+                    thumb.style.display = 'none';
+                    return;
+                }
+                var pct = Math.min(scrollTop / docHeight, 1);
+
+                if (progressBar) progressBar.style.width = (pct * 100) + '%';
+
+                var viewRatio = window.innerHeight / document.documentElement.scrollHeight;
+                var thumbHeight = Math.max(viewRatio * window.innerHeight, 30);
+                var maxTop = window.innerHeight - thumbHeight;
+                thumb.style.height = thumbHeight + 'px';
+                thumb.style.top = (pct * maxTop) + 'px';
+                thumb.style.display = 'block';
+            }
+
+            window.addEventListener('scroll', updateScroll, { passive: true });
+            window.addEventListener('resize', updateScroll);
+            updateScroll();
+
+            scrollbar.addEventListener('click', function(e) {
+                if (e.target === thumb) return;
+                var rect = scrollbar.getBoundingClientRect();
+                var clickRatio = (e.clientY - rect.top) / rect.height;
+                var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                window.scrollTo({ top: clickRatio * docHeight, behavior: 'smooth' });
+            });
+
+            var dragging = false;
+            var dragStartY, scrollStart;
+
+            thumb.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                dragging = true;
+                dragStartY = e.clientY;
+                scrollStart = window.scrollY;
+                document.body.style.userSelect = 'none';
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!dragging) return;
+                var deltaY = e.clientY - dragStartY;
+                var viewRatio = window.innerHeight / document.documentElement.scrollHeight;
+                var thumbHeight = Math.max(viewRatio * window.innerHeight, 30);
+                var maxTop = window.innerHeight - thumbHeight;
+                var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                var scrollDelta = (deltaY / maxTop) * docHeight;
+                window.scrollTo(0, scrollStart + scrollDelta);
+            });
+
+            document.addEventListener('mouseup', function() {
+                if (dragging) {
+                    dragging = false;
+                    document.body.style.userSelect = '';
+                }
+            });
+        })();
+    </script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.highlight pre code .line').forEach(function(lineEl) {
                 var text = lineEl.textContent;
