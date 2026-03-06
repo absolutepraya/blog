@@ -289,15 +289,12 @@
             wrap.innerHTML = '';
             var clone = svgEl.cloneNode(true);
             clone.style.display = 'block';
-            clone.style.maxWidth = 'none';
+            clone.style.width = '100%';
+            clone.style.height = 'auto';
+            clone.removeAttribute('width');
+            clone.removeAttribute('height');
             wrap.appendChild(clone);
-            // Fit diagram to viewport on open
-            var w = parseFloat(clone.getAttribute('width')) || 800;
-            var h = parseFloat(clone.getAttribute('height')) || 600;
-            var fitZoom = Math.min(window.innerWidth * 0.88 / w, window.innerHeight * 0.88 / h);
-            zoom = Math.min(fitZoom, 2);
-            panX = 0; panY = 0;
-            applyTransform();
+            resetTransform();
             document.getElementById('diagram-viewer').classList.add('open');
             document.body.style.overflow = 'hidden';
         }
