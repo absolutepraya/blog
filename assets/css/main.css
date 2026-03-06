@@ -442,7 +442,7 @@ nav a:hover {
   bottom: 0;
   left: 0;
   cursor: pointer;
-  border-radius: 18px;
+  border-radius: 4px;
   background-color: var(--text-muted);
   transition: all 0.3s;
 }
@@ -453,7 +453,7 @@ nav a:hover {
   left: 2px;
   height: 1.25rem;
   width: 1.25rem;
-  border-radius: 50%;
+  border-radius: 3px;
   background-color: var(--bg-primary);
   transition: all 0.3s;
   content: "";
