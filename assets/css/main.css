@@ -365,7 +365,14 @@ code {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 1em;
+}
+
+.post-content code {
   word-break: break-all;
+}
+
+.table-wrap code {
+  word-break: normal;
 }
 
 pre {
