@@ -102,7 +102,7 @@ Selected commits and what triggered them:
 
 The root document is now ~430 lines and covers architecture patterns, naming conventions, Git policy, package manager enforcement (`pnpm`, `uv`), and explicit anti-patterns ("NEVER auto-commit", "NEVER use `any` type").
 
-{{< figure src="/images/ppl/claude-code.png" alt="Claude Code terminal session — working with CLAUDE.md and MCP servers in the SIRA project" caption="A Claude Code terminal session in the SIRA project - CLAUDE.md and MCP servers provide live project context directly in the AI workflow." >}}
+{{< figure src="/images/ppl/claude-code.png" alt="Claude Code terminal session — working with CLAUDE.md and MCP servers in the SIRA project" caption="Split pane setup: Claude Code on the left to talk to the LLM agent, and process-compose on the right running all dev processes and containers in one terminal - making it easy to check logs during development." >}}
 
 ## MCP Servers — Live Project Context
 
@@ -187,7 +187,7 @@ Creates a GitLab Merge Request using `glab` CLI:
 
 Source: `.claude/commands/commit.md`, `commit-and-push.md`, `create-pr.md`
 
-{{< figure src="/images/ppl/claude-code-lazygit.png" alt="Claude Code with lazygit on a split pane" caption="Split pane setup: Claude Code on the left to talk to the LLM agent, and process-compose on the right running all dev processes and containers in one terminal - making it easy to check logs during development." >}}
+{{< figure src="/images/ppl/claude-code-lazygit.png" alt="Claude Code with lazygit on a split pane" caption="Using lazygit to manage MRs, branches, pushing, pulling, and more - directly from the terminal without opening an IDE." >}}
 
 ## Project Skills — Reusable AI Capabilities
 
