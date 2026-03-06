@@ -997,6 +997,10 @@ pre.mermaid {
   .smallcap {
     font-size: 1.5rem;
   }
+  .smallcap a {
+    padding: 0.2rem 0.35rem;
+    letter-spacing: 1px;
+  }
   nav {
     gap: 0.5rem;
   }
@@ -1062,7 +1066,7 @@ pre.mermaid {
     font-size: 1.25rem;
   }
   .smallcap a {
-    padding: 0.15rem 0.3rem;
+    padding: 0.1rem 0.25rem;
     letter-spacing: 1px;
   }
   nav {
