@@ -38,11 +38,15 @@ On a startup project I work on (aiccountant, an AI expense tracker), the setup i
 
 ## The Workflow: Idea to Shipped Code
 
-This is the core of how I work. The superpowers plugin provides a set of skills that chain together into a complete development lifecycle. Here's what a real feature dev session looks like.
+Before I walk through the workflow, I need to mention superpowers. It's a Claude Code plugin that provides 14 skills covering the entire development lifecycle - from brainstorming to debugging to code review. Each skill enforces a specific discipline: brainstorming won't let you skip to code without a design, TDD won't let you write production code without a failing test, debugging won't let you guess at fixes without investigating root cause.
 
-### Brainstorming
+I use it on every project. Without superpowers, Claude is a capable assistant that does what you ask. With it, Claude follows a structured engineering process whether you remember to ask or not. The skills activate automatically based on context - start describing a feature, brainstorming kicks in. Hit a bug, systematic-debugging takes over. It's the difference between having a smart tool and having a disciplined workflow.
 
-Everything starts with a conversation. I describe what I want to build - sometimes a vague idea, sometimes a specific feature. Claude doesn't just start writing code. Instead, the brainstorming skill kicks in and it asks me questions, one at a time.
+Here's what a real feature dev session looks like.
+
+### Brainstorming (`/superpowers:brainstorming`)
+
+Everything starts with a conversation. I describe what I want to build - sometimes a vague idea, sometimes a specific feature. Claude doesn't just start writing code. The brainstorming skill kicks in and asks me questions, one at a time.
 
 "Who's the target audience for this?"
 "Should it support X or is that out of scope?"
@@ -52,9 +56,9 @@ It explores the project context first (reads files, checks recent commits, looks
 
 Once we align on an approach, it writes a design document and walks me through it section by section - architecture, components, data flow, error handling. I approve or revise each section. There's a hard gate here: no implementation begins until the design is approved. Even for things that seem simple. Especially for things that seem simple - that's where unexamined assumptions waste the most time.
 
-### Planning
+### Planning (`/superpowers:writing-plans`)
 
-With an approved design, Claude generates a detailed implementation plan. Each task is broken down to be completable in 2-5 minutes - one atomic action per task. And these aren't vague bullets like "implement the auth system." Each task specifies:
+With an approved design, the writing-plans skill generates a detailed implementation plan. Each task is broken down to be completable in 2-5 minutes - one atomic action per task. These aren't vague bullets like "implement the auth system." Each task specifies:
 
 - The exact files to create or modify
 - Complete code snippets (not pseudocode)
@@ -65,9 +69,9 @@ The plan is written so that someone with zero context on the project could pick 
 
 The plan gets saved as a markdown doc in `docs/plans/`. From here, I choose how to execute: in the current session or hand it off to a parallel session.
 
-### Execution
+### Execution (`/superpowers:subagent-driven-development`)
 
-This is where it gets interesting. The subagent-driven development skill dispatches a fresh agent for each task in the plan. Each agent:
+This is where it gets interesting. The subagent-driven-development skill dispatches a fresh agent for each task in the plan. Each agent:
 
 1. Gets the full task text with all the context it needs
 2. Writes a failing test first (TDD - the skill enforces this, no skipping)
@@ -80,9 +84,9 @@ The two-stage review is intentional. Spec compliance first prevents building the
 
 For bigger features, agents can work in isolated git worktrees - separate copies of the repo where changes don't interfere with your main branch until you're ready to merge.
 
-### Debugging
+### Debugging (`/superpowers:systematic-debugging`)
 
-When something breaks - and things always break - the systematic debugging skill takes over. This one has saved me more times than I can count.
+When something breaks - and things always break - the systematic-debugging skill takes over. This one has saved me more times than I can count.
 
 The process follows four phases, and the order is strict:
 
@@ -96,7 +100,7 @@ The process follows four phases, and the order is strict:
 
 The real power is in the discipline it enforces. If three attempted fixes fail, the skill tells you to stop and reconsider - maybe it's an architectural problem, not an implementation bug. I had a case with a Vite build error that produced no useful error message at all. Without this systematic approach, I would have been randomly changing configs for hours. Instead, the investigation traced through the build pipeline step by step and found the actual root cause.
 
-### Finishing
+### Finishing (`/superpowers:verification-before-completion`)
 
 Before anything gets marked as done, the verification-before-completion skill requires actual proof. Not "should work now." Not "probably passes." You run the command, read the full output, check the exit code, and only then claim success.
 
