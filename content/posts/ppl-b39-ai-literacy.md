@@ -187,6 +187,8 @@ Creates a GitLab Merge Request using `glab` CLI:
 
 Source: `.claude/commands/commit.md`, `commit-and-push.md`, `create-pr.md`
 
+![Claude Code with lazygit on a split pane — managing git history and diffs directly from the terminal without opening an IDE](/images/ppl/claude-code-lazygit.png)
+
 ## Project Skills — Reusable AI Capabilities
 
 Three skills in `.claude/skills/` give Claude specialized knowledge for specific tasks:
