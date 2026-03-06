@@ -487,5 +487,51 @@
         }
     </script>
     {{ end }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inject toast element
+            var toast = document.createElement('div');
+            toast.id = 'copy-toast';
+            toast.className = 'copy-toast';
+            toast.textContent = 'Link copied';
+            document.body.appendChild(toast);
+
+            function copyToClipboard(text) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    return navigator.clipboard.writeText(text);
+                }
+                // Fallback for older/non-secure browsers
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                try { document.execCommand('copy'); } catch(e) {}
+                document.body.removeChild(ta);
+                return Promise.resolve();
+            }
+
+            function showToast() {
+                toast.classList.add('visible');
+                clearTimeout(toast._t);
+                toast._t = setTimeout(function() {
+                    toast.classList.remove('visible');
+                }, 2000);
+            }
+
+            // Handle clicks on anchor links and headings
+            document.querySelectorAll('.post-content h1, .post-content h2, .post-content h3, .post-content h4, .post-content h5, .post-content h6').forEach(function(h) {
+                h.addEventListener('click', function(e) {
+                    var anchor = h.querySelector('.anchor');
+                    if (!anchor) return;
+                    e.preventDefault();
+                    var id = anchor.getAttribute('data-anchor') || anchor.getAttribute('href').replace('#', '');
+                    var url = location.origin + location.pathname + '#' + id;
+                    copyToClipboard(url).then(showToast);
+                });
+            });
+        });
+    </script>
 </body>
 </html>

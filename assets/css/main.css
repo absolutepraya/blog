@@ -678,6 +678,35 @@ article.post {
 .post-content h5 { font-size: 1.05rem; font-weight: 600; }
 .post-content h6 { font-size: 1rem; font-weight: 600; }
 
+.post-content h1, .post-content h2, .post-content h3,
+.post-content h4, .post-content h5, .post-content h6 {
+  scroll-margin-top: 2rem;
+}
+
+/* Copy link toast */
+.copy-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(0.5rem);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+  z-index: 2000;
+}
+
+.copy-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* --- Heading Anchors --- */
 .post-content .anchor {
   position: absolute;
