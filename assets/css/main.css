@@ -130,7 +130,7 @@ img, video {
 
 .post-content img {
   width: 100% !important;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
 .post-content figure {
@@ -214,6 +214,7 @@ pre.mermaid {
   color: rgba(255, 255, 255, 0.5);
   pointer-events: none;
 }
+
 
 /* --- Typography --- */
 body {
@@ -671,7 +672,7 @@ article.post {
 .highlight {
   margin: 1rem 0;
   overflow-x: auto;
-  border-radius: 3px;
+  border-radius: 4px;
   background-color: var(--bg-secondary);
   padding: 1rem;
   color: var(--text-secondary);
@@ -811,6 +812,7 @@ pre.mermaid svg {
 
 pre.mermaid {
   overflow-x: auto;
+  border-radius: 4px;
 }
 
 @media (max-width: 768px) {
