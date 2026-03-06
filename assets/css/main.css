@@ -118,6 +118,58 @@ html {
   tab-size: 4;
 }
 
+/* --- Hide Native Scrollbar (post pages only, JS adds class) --- */
+html.custom-scroll {
+  scrollbar-width: none;
+}
+html.custom-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- Reading Progress Bar --- */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background-color: var(--color-blue);
+  z-index: 999;
+  transition: width 0.1s linear;
+}
+
+/* --- Custom Vertical Scrollbar --- */
+.custom-scrollbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100vh;
+  z-index: 998;
+  cursor: pointer;
+}
+
+.custom-scrollbar-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+}
+
+.custom-scrollbar-thumb {
+  position: absolute;
+  width: 100%;
+  min-height: 30px;
+  background-color: var(--text-muted);
+  border-radius: 4px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.custom-scrollbar:hover .custom-scrollbar-thumb {
+  opacity: 0.8;
+}
+
 img, svg, video, canvas, audio, iframe, embed, object {
   display: block;
   vertical-align: middle;
@@ -181,7 +233,7 @@ pre.mermaid {
   left: 50%;
   transform-origin: center center;
   width: calc(100vw - 2rem);
-  background: var(--mermaid-bg);
+  background: var(--bg-secondary);
   border-radius: 4px;
   padding: 0.75rem;
   display: flex;
