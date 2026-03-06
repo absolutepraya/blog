@@ -69,22 +69,33 @@ With an approved design, the writing-plans skill generates a detailed implementa
 
 The plan is written so that someone with zero context on the project could pick it up and execute it. That matters because the executor might be a subagent, a different Claude session, or future-me who forgot the context.
 
-The plan gets saved as a markdown doc in `docs/plans/`. From here, I choose how to execute: in the current session or hand it off to a parallel session.
+The plan gets saved as a markdown doc in `docs/plans/`. From here, I choose how to execute.
 
-### Execution (`/superpowers:subagent-driven-development`)
+### Execution (`/superpowers:executing-plans`)
 
-This is where it gets interesting. The subagent-driven-development skill dispatches a fresh agent for each task in the plan. Each agent:
+My default is executing-plans in a separate session. I open a new Claude Code session, point it at the plan doc, and it works through the tasks in batches (usually 3 at a time). After each batch, it reports what was done with verification output, waits for my feedback, and continues. This keeps me in the loop without micromanaging every step.
 
-1. Gets the full task text with all the context it needs
-2. Writes a failing test first (TDD - the skill enforces this, no skipping)
-3. Implements the minimal code to make the test pass
-4. Runs verification to confirm it works
+Each task follows TDD - write a failing test first, implement the minimal code to pass it, verify. The skill enforces this, no skipping. After implementation, two review stages happen automatically. A spec compliance reviewer checks: did this match what the plan asked for? Then a code quality reviewer checks: is it good code? If either finds issues, the implementer fixes and the reviewer re-checks.
 
-After implementation, two review stages happen automatically. First, a spec compliance reviewer checks: did this actually match what the plan asked for? Then a code quality reviewer checks: is this good code? If either reviewer finds issues, the implementer fixes them and the reviewer checks again. This loop continues until both reviewers are satisfied.
+The two-stage review is intentional. Spec compliance first prevents building the wrong thing. Code quality second prevents building the right thing badly.
 
-The two-stage review is intentional. Spec compliance first prevents building the wrong thing. Code quality second prevents building the right thing badly. Order matters.
+For tasks that are independent of each other, I use subagent-driven development (`/superpowers:subagent-driven-development`) instead. This dispatches multiple agents in parallel, each working on a separate task. Say the plan has 4 unrelated tasks - set up the database schema, build the API endpoint, write the frontend component, and add the notification handler. Instead of doing them one by one, Claude spins up 4 subagents that work simultaneously:
 
-For bigger features, agents can work in isolated git worktrees - separate copies of the repo where changes don't interfere with your main branch until you're ready to merge.
+```mermaid
+graph TD
+    A["Main Agent<br>reads plan, dispatches tasks"] --> B["Subagent 1<br>Database schema"]
+    A --> C["Subagent 2<br>API endpoint"]
+    A --> D["Subagent 3<br>Frontend component"]
+    A --> E["Subagent 4<br>Notification handler"]
+    B --> F["Review + Merge"]
+    C --> F
+    D --> F
+    E --> F
+```
+
+Each subagent gets the full task context, does TDD, and goes through both review stages independently. The main agent coordinates everything and merges the results. This is significantly faster for plans where tasks don't depend on each other.
+
+Both modes can work in isolated git worktrees - separate copies of the repo where changes don't interfere with your main branch until you're ready to merge.
 
 ### Debugging (`/superpowers:systematic-debugging`)
 
