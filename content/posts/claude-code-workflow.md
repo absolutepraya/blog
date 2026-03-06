@@ -8,9 +8,7 @@ toc: true
 
 People keep asking me how I work with Claude Code. Friends, classmates, engineers I meet - the question always comes up: "Can you walk me through your dev workflow with it?"
 
-So here it is. Not a feature comparison, not a tutorial. Just how I actually work day to day - the workflow, the tools, the setup. I use Claude Code for pretty much everything: personal projects, internship work at a startup, managing my VPS, even writing from my phone over SSH. This post walks through all of it.
-
-If you're already using something like GitHub Copilot or Cursor and wondering what a CLI-first AI workflow looks like when you go deeper, this is for you.
+I use Claude Code for pretty much everything: personal projects, internship work at a startup, managing my VPS, even writing from my phone over SSH (more on that in a separate post). If you're already using something like GitHub Copilot or Cursor and wondering what a CLI-first AI workflow looks like when you go deeper, this is for you.
 
 ## Why Claude Code
 
@@ -184,17 +182,9 @@ Hooks run automatically at specific points in the Claude Code lifecycle:
 - **Session-end** - When a session ends, a hook extracts learnings from the transcript and posts them to an internal API. This is the "compound engineering" idea - every session makes the system smarter.
 - **Session-start** - Initializes the superpowers workflow context so skills activate properly from the start.
 
-## Bonus: Working from My Phone
+## Bonus: I Do All This from My Phone Too
 
-Here's something people don't expect: I do a lot of this from my phone.
-
-The setup is simple. I have a Debian VPS (just a basic server, nothing fancy) that runs Claude Code directly. Tailscale connects my devices through a private VPN - my phone, my laptop, the VPS, all on the same network. No public SSH exposure, no port forwarding.
-
-I use Termius (an SSH app) on my phone with mosh instead of regular SSH. Mosh keeps the session alive even when I switch between WiFi and mobile data, or when my connection drops for a few seconds. The session is always there when I come back.
-
-So the flow is: open Termius, connect to the VPS through Tailscale, pick up my Claude Code session where I left off. The notification-go plugin pings my phone when Claude needs input, I respond, and keep going. I've reviewed PRs, debugged issues, and written parts of blog posts (including this one) entirely from my phone while commuting or waiting in line.
-
-You don't need a powerful local machine to use Claude Code effectively. A cheap VPS and a phone is enough.
+I also run Claude Code from my phone over SSH - Tailscale VPN to a Debian VPS, mosh for persistent sessions, Termius as the terminal app. I've debugged issues, reviewed PRs, and written blog posts from my phone while commuting. I'll write a separate post on that setup.
 
 ## Getting Started
 
