@@ -63,6 +63,14 @@ Two completely separate Compose files - no shared state, no accidental cross-con
 
 Development uses `process-compose.yaml` to orchestrate the full local stack (hot-reload servers + Redis + Supabase). Production uses Docker Compose with `restart: unless-stopped` on all services.
 
+### Dev Environment DX Improvements (MR !50 - SIRA-64)
+
+Three fixes to make the local dev experience smoother:
+
+- **Pre-flight checks** — `make dev` now verifies `node_modules/`, `.venv/`, and Docker images exist before starting. Missing deps print a clear "run `make install` first" message instead of failing mid-startup.
+- **Stale process cleanup** — auto-kills leftover process-compose holding port 8080 from a previous session that didn't exit cleanly.
+- **Clean Ctrl+C** — infra daemons (Redis, Supabase) use no-op shutdown commands (`true`) so process-compose detaches instantly without hanging, while keeping infra alive for fast restarts.
+
 ## CI/CD Pipeline
 
 Five stages in `.gitlab-ci.yml`, with clear dependency boundaries:
