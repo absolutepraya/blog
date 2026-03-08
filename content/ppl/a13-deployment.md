@@ -63,7 +63,7 @@ Two completely separate Compose files - no shared state, no accidental cross-con
 
 Development uses `process-compose.yaml` to orchestrate the full local stack (hot-reload servers + Redis + Supabase). Production uses Docker Compose with `restart: unless-stopped` on all services.
 
-### Dev Environment DX Improvements (MR !50 - SIRA-64)
+### Dev Environment DX Improvements ([MR !50](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/50) - SIRA-64)
 
 Three fixes to make the local dev experience smoother:
 
