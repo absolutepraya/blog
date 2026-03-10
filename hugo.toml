@@ -2,7 +2,6 @@ baseURL = "https://blog.abhipraya.dev/"
 languageCode = "en-us"
 title = "Daffa Abhipraya"
 timeZone = "Asia/Jakarta"
-theme = "archie-solarized"
 copyright = "© Daffa Abhipraya"
 
 [params]

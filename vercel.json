@@ -4,3 +4,4 @@
   "buildCommand": "hugo --minify",
   "outputDirectory": "public"
 }
+
