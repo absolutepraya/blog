@@ -15,6 +15,8 @@ In a professional environment, a single commit can trigger a cascade: CI runs te
 
 This blog covers how we built that integration layer for SIRA (Smart Invoice Reminder AI), a 9-person team building a full-stack invoice management system with React, FastAPI, Celery, and Supabase. The tools themselves aren't novel. **The way we connected them is.**
 
+> **Note:** Our project is hosted on an internal GitLab instance, so we use the term **MR (Merge Request)** throughout this blog. If you're coming from GitHub, MRs are the equivalent of **Pull Requests (PRs)**.
+
 ## The Tool Landscape
 
 Before diving into integrations, here's what we work with and why each tool exists:
@@ -77,7 +79,7 @@ pnpm --dir apps/web lint
 
 The `pnpm --dir` flag handles path resolution cross-platform. Similarly, `uv --directory apps/api` replaced `cd apps/api && uv run ...` for Python tools. We also added `.gitattributes` to enforce LF line endings, because without this, Windows Git's auto-CRLF would cause phantom diffs and pre-commit failures on unchanged files.
 
-**The Celery issue.** Windows doesn't support Celery's `--beat` flag combined with the worker process. When a teammate tried `make dev`, the worker crashed silently. The fix ([SIRA-62](https://linear.app/ppl-sira/issue/SIRA-62)) was separating `sira-worker` and `sira-beat` into dedicated processes in `process-compose.yaml`. This actually improved the architecture on all platforms, since beat and worker have different scaling profiles and should be independent.
+**The Celery issue.** Windows doesn't support Celery's `--beat` flag combined with the worker process. When a teammate tried `make dev`, the worker crashed silently. The fix was separating `sira-worker` and `sira-beat` into dedicated processes in `process-compose.yaml`. This actually improved the architecture on all platforms, since beat and worker have different scaling profiles and should be independent.
 
 **Takeaway for other teams:** Cross-platform support isn't just "does the code compile?" It's about every script, hook, and automation working identically. Test your dev setup on the least common platform before anyone hits a wall.
 
@@ -133,7 +135,7 @@ Now `make dev` is the only command needed: one TUI showing all services with liv
 
 We also added a pre-flight validation script (`scripts/check-deps.sh`) that runs before process-compose and checks for Docker, Supabase CLI, Node, Python, and pnpm. If anything is missing, it tells you exactly what to install and how. Separately, `scripts/setup-env.sh` auto-populates `.env.local` by reading Supabase's output after `supabase start`, eliminating manual key copying.
 
-**Later improvement (SIRA-104):** When we adopted Conductor for multi-worktree development (multiple branches running simultaneously), we made ports configurable via `DEV_PORT` and `API_PORT` environment variables. Each workspace gets its own web/API ports while sharing the same Redis and Supabase instance.
+**Later improvement:** When we adopted Conductor for multi-worktree development (multiple branches running simultaneously), we made ports configurable via `DEV_PORT` and `API_PORT` environment variables. Each workspace gets its own web/API ports while sharing the same Redis and Supabase instance.
 
 **Takeaway:** Developer environment setup is the first impression your project makes on every teammate. If it takes more than one command and five minutes, you'll lose people.
 
@@ -177,7 +179,7 @@ The result: no one on the team manually updates Linear ticket status. Opening an
 
 ### Problem 4: "The Migration Broke Production" (CI Safety Nets)
 
-Database migrations are the scariest part of deployment. One bad migration can take down the entire application. We learned this the hard way when out-of-order migration timestamps blocked `supabase db push` in CI ([SIRA-97](https://linear.app/ppl-sira/issue/SIRA-97)). A teammate had created a migration with a timestamp earlier than existing ones, and Supabase rejected the entire migration set.
+Database migrations are the scariest part of deployment. One bad migration can take down the entire application. We learned this the hard way when out-of-order migration timestamps blocked `supabase db push` in CI. A teammate had created a migration with a timestamp earlier than existing ones, and Supabase rejected the entire migration set.
 
 **Three layers of protection:**
 
@@ -347,18 +349,3 @@ Hoegl and Gemuenden's **Teamwork Quality (TWQ)** framework identifies six facets
 **Mutual support** shows up in cross-platform fixes. When I (Abhip) spent time building Windows compatibility, it wasn't just a DX improvement. It was removing a blocker that prevented half the team from working locally. The justfile, Celery separation, and `.gitattributes` changes were infrastructure investments that paid dividends in team velocity.
 
 The broader lesson: **tooling is a leadership activity, not a DevOps task.** Someone on the team needs to care about the developer experience of their teammates, not just the code but the entire workflow from pulling the repo to deploying to production. In our case, 36 of 71 total MRs (roughly half the project's Git history) are developer experience work. That ratio might seem high, but every one of those MRs made the other 35 easier to ship.
-
-## Evidence
-
-- [MR !9 - SIRA-36 cross-platform dev scripts](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/9)
-- [MR !13 - SIRA-54 process-compose dev environment](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/13)
-- [MR !21 - SIRA-62 separate celery worker/beat](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/21)
-- [MR !25 - SIRA-55 GitLab CI/CD pipeline](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/25)
-- [MR !26 - SIRA-60 SonarQube integration](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/26)
-- [MR !31 - SIRA-67 Linear auto-tagger](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/31)
-- [MR !41 - SIRA-76 migration rollback](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/41)
-- [MR !50 - SIRA-64 process-compose termination fix](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/50)
-- [MR !67 - SIRA-98 migration dry-run validation](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/67)
-- [MR !74 - SIRA-104 Conductor workspace support](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/74)
-- [Linear SIRA-36](https://linear.app/ppl-sira/issue/SIRA-36), [SIRA-54](https://linear.app/ppl-sira/issue/SIRA-54), [SIRA-55](https://linear.app/ppl-sira/issue/SIRA-55), [SIRA-60](https://linear.app/ppl-sira/issue/SIRA-60), [SIRA-62](https://linear.app/ppl-sira/issue/SIRA-62), [SIRA-67](https://linear.app/ppl-sira/issue/SIRA-67), [SIRA-76](https://linear.app/ppl-sira/issue/SIRA-76), [SIRA-98](https://linear.app/ppl-sira/issue/SIRA-98), [SIRA-104](https://linear.app/ppl-sira/issue/SIRA-104)
-- Source: `.gitlab-ci.yml`, `process-compose.yaml`, `Makefile`, `justfile`, `.husky/pre-commit`, `.husky/pre-push`, `scripts/linear-notify.sh`, `.mcp.json`, `.claude/settings.json`, `CLAUDE.md`, `apps/web/CLAUDE.md`, `apps/api/CLAUDE.md`
