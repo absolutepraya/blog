@@ -10,12 +10,18 @@
 
 <section class="home">
     <ul class="post-list">
-        {{ range .Pages }}
+        {{ $pages := .Pages }}
+        {{ if eq (.Params.sort_by | default "date") "title" }}
+            {{ $pages = .Pages.ByTitle }}
+        {{ end }}
+        {{ range $pages }}
         <li>
             <div class="post-title-container">
                 <a href="{{ .Permalink }}" class="post-title-link">{{ .Title }}</a>
             </div>
+            {{ if ne ($.Params.show_date | default true) false }}
             <time datetime="{{ .Date.Format "2006-01-02" }}" class="post-date">{{ .Date.Format "Jan 02, 2006" }}</time>
+            {{ end }}
         </li>
         {{ end }}
     </ul>

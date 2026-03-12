@@ -25,6 +25,13 @@ The `archive/` directory sits outside `content/`, so Hugo ignores it entirely. A
 |-------|---------|-------------|
 | `showTagsOnHomepage` | `false` | Show tag pills below post titles on the homepage |
 
+## Section List Options (front matter in `_index.md`)
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `sort_by` | `"date"` | Sort order for pages: `"date"` or `"title"` |
+| `show_date` | `true` | Show date next to each post in the list |
+
 ## Creating a Blog Post
 
 Create a new `.md` file in `content/posts/`:
