@@ -6,7 +6,9 @@ Hugo static site with Solarized theme (light/dark), Mermaid diagram support, dep
 
 ```
 content/posts/       — Blog posts (Markdown)
+content/ppl/         — PPL course blogs (part-a/, part-b/, part-c/)
 content/about.md     — About page
+archive/ppl/part-a/  — Archived Part A evidence-text drafts (NOT rendered by Hugo)
 static/images/       — Images (referenced as /images/filename.png)
 assets/css/main.css  — All custom CSS (Solarized palette, layout, responsive)
 layouts/_default/baseof.html  — Base template (dark mode, Mermaid init)
@@ -14,6 +16,8 @@ layouts/_default/_markup/render-codeblock-mermaid.html — Mermaid render hook
 hugo.toml            — Hugo config
 static/fonts/        — Self-hosted Ubuntu/Ubuntu Mono woff2 fonts
 ```
+
+The `archive/` directory sits outside `content/`, so Hugo ignores it entirely. Archived files are old evidence-style drafts kept as reference material for writing proper blogs.
 
 ## Feature Toggles (hugo.toml `[params]`)
 
