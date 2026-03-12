@@ -139,6 +139,19 @@ hugo --minify        # Minified production build
 
 Output goes to `public/`. Site is served at `https://blog.abhipraya.dev/`.
 
+## Commit Messages
+
+Use **capitalized imperative sentences** with no prefix/scope. Start with a verb.
+
+```
+Add dark mode toggle to navbar
+Fix table overflow on mobile viewports
+Update PPL blog for Sprint 2 Week 1
+Remove unused CSS variables
+```
+
+Do NOT use conventional commit prefixes (`fix:`, `feat(scope):`, `test:`, etc.).
+
 ## Writing Style
 
 When writing blog post content:
