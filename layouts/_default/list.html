@@ -26,8 +26,8 @@
         {{ end }}
     </ul>
 
-    {{ with .Parent }}
-    <p><a href="{{ .RelPermalink }}">&larr; Back to {{ .Title }}</a></p>
+    {{ if and .Parent (not .Parent.IsHome) }}
+    <p><a href="{{ .Parent.RelPermalink }}">&larr; Back to {{ .Parent.Title }}</a></p>
     {{ else }}
     <p><a href="/">&larr; Back to all posts</a></p>
     {{ end }}
