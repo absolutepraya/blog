@@ -8,6 +8,8 @@ toc: true
 aliases: ["/ppl/a18-data-seeding/"]
 ---
 
+> **Note:** Our project is hosted on an internal GitLab instance, so we use the term **MR (Merge Request)** throughout this blog. If you're coming from GitHub, MRs are the equivalent of **Pull Requests (PRs)**.
+
 ## Why Database Migrations Need Safety Nets
 
 Imagine this scenario: a developer adds a new column to the invoices table, pushes to `main`, and the CI/CD pipeline deploys it to production. Everything looks fine until the next morning, when the team discovers that the migration also dropped a constraint that was silently relied on by another service. Rolling back means manually writing SQL against the production database at 2 AM.
@@ -35,7 +37,7 @@ INSERT INTO invoices (amount, status) VALUES (100.00, 'UNPAID');
 
 This works for a todo app. It fails spectacularly for a system like SIRA, where the core feature is an ML model that predicts payment risk based on historical patterns. If every test client pays on time (or never pays at all), the model can't learn meaningful risk thresholds. The seed data needs to represent the **full distribution** of real-world behavior.
 
-Our seed data covers three risk profiles:
+Our seed data covers three risk profiles (company names below are fictional, used for illustration):
 
 | Client | Risk Category | Payment Pattern | `days_late` Values |
 |--------|:---:|----------------|:---:|
@@ -51,7 +53,7 @@ The `days_late` field (calculated as `payment_date - due_date`) is the primary f
 
 Here's a problem most seeding tutorials skip entirely: what happens when your seed data contains personally identifiable information?
 
-SIRA manages real client contact information (emails, phone numbers). Even in development, we encrypt these fields using AES-256-GCM before they enter the database. This isn't paranoia; it's a design constraint. Our `ClientService._decrypt_row()` method decrypts data on every read, so if the database contains plaintext, the API crashes with a `Data Integrity Error` (which is exactly what happened when we first got this wrong, see [MR !80](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/80)).
+SIRA manages real client contact information (emails, phone numbers). Even in development, we encrypt these fields using AES-256-GCM before they enter the database. This isn't paranoia; it's a design constraint. Our `ClientService._decrypt_row()` method decrypts data on every read, so if the database contains plaintext, the API crashes with a `Data Integrity Error` (which is exactly what happened when we first got this wrong).
 
 ### The Pipeline: CSV to Encrypted SQL
 
@@ -273,7 +275,7 @@ migrate:check:
     - npx supabase db push --dry-run
 ```
 
-This catches problems **before code review even begins**: SQL syntax errors, out-of-order migration timestamps, and conflicts with the remote schema. It's two lines of YAML, but it prevented at least one bad migration from reaching main (see [SIRA-97](https://linear.app/ppl-sira/issue/SIRA-97), where a timestamp conflict would have blocked the entire pipeline).
+This catches problems **before code review even begins**: SQL syntax errors, out-of-order migration timestamps, and conflicts with the remote schema. It's two lines of YAML, but it prevented at least one bad migration from reaching main, where a timestamp conflict would have blocked the entire pipeline.
 
 ### Tier 2: Automatic Migration on Main
 
@@ -294,7 +296,7 @@ migrate:
 
 The dry-run runs again here (belt and suspenders), then the actual migration applies. Supabase tracks applied migrations in `supabase_migrations.schema_migrations`, so `db push` only applies new ones. The `build` and `deploy` stages wait for this to succeed.
 
-We initially made this a manual trigger ([MR !41](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/41)), requiring an operator to click "play" before migrations ran. After a week, we reversed that decision ([MR !42](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/42)). The manual gate was adding friction to every deploy without catching issues that `migrate:check` hadn't already caught. Automatic forward, manual rollback turned out to be the right balance.
+We initially made this a manual trigger, requiring an operator to click "play" before migrations ran. After a week, we reversed that decision. The manual gate was adding friction to every deploy without catching issues that `migrate:check` hadn't already caught. Automatic forward, manual rollback turned out to be the right balance.
 
 ![Migrate job log showing dry-run preview followed by the actual push](/images/ppl/migrate-log.png)
 
@@ -419,19 +421,4 @@ The production pipeline is fully automated: push to `main`, `migrate:check` vali
 
 **Seeder scripts should have been a single CLI tool from the start.** We ended up with three separate seeders (`client_seeder.py`, `invoice_seeder.py`, `payment_seeder.py`) plus a shared `utils.py`. They all follow the same pattern (load CSV, transform, generate SQL), and they need to run in a specific order (clients first, then invoices, then payments, because of FK dependencies). A single `seed` CLI command with subcommands would have been cleaner.
 
-**The PII encryption constraint was a blessing in disguise.** When the API crashed because we seeded plaintext into encrypted columns ([MR !80](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/80)), it forced us to build the encryption into the seeder pipeline rather than treating it as an afterthought. The resulting system is more robust: it's impossible to seed unencrypted PII because the seeder won't generate SQL without the encryption key.
-
-## Evidence
-
-- [MR !11 - SIRA-53 production Supabase setup](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/11)
-- [MR !15 - SIRA-47 user DB schema and seeding](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/15)
-- [MR !16 - SIRA-47 auth FK seed fix](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/16)
-- [MR !25 - SIRA-55 GitLab CI/CD pipeline](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/25)
-- [MR !41 - SIRA-76 manual trigger and rollback](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/41)
-- [MR !42 - SIRA-76 restore automatic migration](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/42)
-- [MR !47 - SIRA-87 production user seeding](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/47)
-- [MR !52 - SIRA-50 payment schema and seeder](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/52)
-- [MR !67 - SIRA-98 migration dry-run validation](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/67)
-- [MR !80 - SIRA-107 encrypt client PII in seeder](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/80)
-- [Linear SIRA-47](https://linear.app/ppl-sira/issue/SIRA-47), [SIRA-50](https://linear.app/ppl-sira/issue/SIRA-50), [SIRA-53](https://linear.app/ppl-sira/issue/SIRA-53), [SIRA-55](https://linear.app/ppl-sira/issue/SIRA-55), [SIRA-76](https://linear.app/ppl-sira/issue/SIRA-76), [SIRA-87](https://linear.app/ppl-sira/issue/SIRA-87), [SIRA-98](https://linear.app/ppl-sira/issue/SIRA-98), [SIRA-107](https://linear.app/ppl-sira/issue/SIRA-107)
-- Source: `supabase/migrations/`, `supabase/migrations/rollbacks/`, `supabase/seed.sql`, `apps/api/src/app/seed/`, `apps/api/src/app/lib/encryption.py`, `scripts/seed-auth-users.py`, `scripts/seed-prod-users.py`, `.gitlab-ci.yml`
+**The PII encryption constraint was a blessing in disguise.** When the API crashed because we seeded plaintext into encrypted columns, it forced us to build the encryption into the seeder pipeline rather than treating it as an afterthought. The resulting system is more robust: it's impossible to seed unencrypted PII because the seeder won't generate SQL without the encryption key.
