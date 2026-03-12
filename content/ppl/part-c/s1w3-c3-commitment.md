@@ -1,14 +1,15 @@
 ---
-title: "PPL: Work Ethic and Commitment -- 13 MRs, 15 Reviews, Cross-Domain Output"
+title: "PPL: Work Ethic and Commitment: 13 MRs, 15 Reviews, Cross-Domain Output"
 date: 2026-03-10
 description: "Quantitative and qualitative breakdown of Sprint 1 Week 3 contributions: 13 MRs authored, 15 MRs reviewed, ~25 MRs merged as maintainer, spanning CI/CD, infrastructure, backend, frontend, and database."
 tags: ["ppl", "commitment", "work-ethic", "productivity"]
+slug: s1w3-commitment
 toc: true
 ---
 
 ## Overview
 
-Sprint 1 Week 3 (Mar 4--10) output summary:
+Sprint 1 Week 3 (Mar 4 to 10) output summary:
 
 | Metric | Count |
 |--------|-------|
@@ -54,7 +55,7 @@ Plus [!68](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIR
 
 ## Cross-Domain Coverage
 
-Not limited to a single domain -- this week's work spanned five areas:
+Not limited to a single domain, this week's work spanned five areas:
 
 ### CI/CD (4 MRs)
 - Security SAST job with Bandit + pnpm audit ([!38](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/38))
@@ -97,11 +98,11 @@ SIRA-76 (migration management) demonstrates iterative refinement:
 1. First attempt: all migrations as manual trigger ([!41](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/41))
 2. After evaluating tradeoffs: switched to auto-migrate on deploy with manual rollback only ([!42](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/42))
 
-Not just shipping the first thing that works -- evaluating and refining the approach.
+Not just shipping the first thing that works, but evaluating and refining the approach.
 
 ### Code Reviews Beyond Surface Level
 
-Reviews are not boilerplate. MR !17 found 9 issues including runtime crashes, schema mismatches, and encryption failures -- each with a concrete fix. MR !64 provided sample code patches the teammate could directly apply.
+Reviews are not boilerplate. MR !17 found 9 issues including runtime crashes, schema mismatches, and encryption failures, each with a concrete fix. MR !64 provided sample code patches the teammate could directly apply.
 
 ---
 
@@ -119,7 +120,7 @@ Reviews are not boilerplate. MR !17 found 9 issues including runtime crashes, sc
 - [!31](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/31), [!34](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/34), [!35](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/35), [!37](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/37), [!38](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/38), [!39](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/39), [!41](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/41), [!42](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/42), [!44](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/44), [!47](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/47), [!54](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/54), [!66](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/66), [!67](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/67), [!68](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/68)
 
 ### Linear Tickets
-- 69/98 total project tickets created -- [full board](https://linear.app/ppl-sira)
+- 69/98 total project tickets created: [full board](https://linear.app/ppl-sira)
 - Key tickets this week: [SIRA-57](https://linear.app/ppl-sira/issue/SIRA-57), [SIRA-67](https://linear.app/ppl-sira/issue/SIRA-67), [SIRA-70](https://linear.app/ppl-sira/issue/SIRA-70), [SIRA-71](https://linear.app/ppl-sira/issue/SIRA-71), [SIRA-75](https://linear.app/ppl-sira/issue/SIRA-75), [SIRA-76](https://linear.app/ppl-sira/issue/SIRA-76), [SIRA-87](https://linear.app/ppl-sira/issue/SIRA-87), [SIRA-89](https://linear.app/ppl-sira/issue/SIRA-89), [SIRA-97](https://linear.app/ppl-sira/issue/SIRA-97), [SIRA-98](https://linear.app/ppl-sira/issue/SIRA-98)
 
 ### Merged MR List

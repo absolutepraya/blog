@@ -1,14 +1,15 @@
 ---
-title: "PPL: New Learnings Applied -- Nginx, SMTP Alerting, Migration Validation, and More"
+title: "PPL: New Learnings Applied: Nginx, SMTP Alerting, Migration Validation, and More"
 date: 2026-03-10
 description: "Seven new technologies and concepts learned outside standard coursework and applied directly to the SIRA project during Sprint 1 Week 3."
 tags: ["ppl", "aptitude", "learning", "devops", "infrastructure"]
+slug: s1w3-aptitude
 toc: true
 ---
 
 ## Overview
 
-Sprint 1 Week 3 (Mar 4--10) was infrastructure-heavy. The project needed production-grade tooling that goes well beyond standard coursework: reverse proxies, email alerting, migration safety nets, security scanning, structured logging, and AI-integrated code quality analysis. Each of these required learning a new technology from scratch and applying it directly to the project.
+Sprint 1 Week 3 (Mar 4 to 10) was infrastructure-heavy. The project needed production-grade tooling that goes well beyond standard coursework: reverse proxies, email alerting, migration safety nets, security scanning, structured logging, and AI-integrated code quality analysis. Each of these required learning a new technology from scratch and applying it directly to the project.
 
 ---
 
@@ -16,9 +17,9 @@ Sprint 1 Week 3 (Mar 4--10) was infrastructure-heavy. The project needed product
 
 SIRA runs three services on a single Nashta VM, each needing its own subdomain:
 
-- `sira.nashtagroup.co.id` -- web frontend
-- `sira-api.nashtagroup.co.id` -- FastAPI backend
-- `sira-glitchtip.nashtagroup.co.id` -- error monitoring
+- `sira.nashtagroup.co.id`: web frontend
+- `sira-api.nashtagroup.co.id`: FastAPI backend
+- `sira-glitchtip.nashtagroup.co.id`: error monitoring
 
 Instead of exposing multiple ports, I configured Nginx as a reverse proxy that routes based on `Host` header:
 
@@ -48,14 +49,14 @@ server {
 This is not taught in any Fasilkom course. I learned Nginx proxy configuration, Docker networking (containers communicating via service names), and DNS setup from scratch.
 
 **Evidence:**
-- [MR !44 -- Nginx reverse proxy](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/44)
+- [MR !44: Nginx reverse proxy](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/44)
 - [Linear SIRA-57](https://linear.app/ppl-sira/issue/SIRA-57)
 
 ---
 
 ## 2. Resend SMTP for GlitchTip Email Alerting
 
-GlitchTip (our self-hosted error monitoring) needed email alerts so the team gets notified when production errors occur. I integrated [Resend](https://resend.com/emails) -- a third-party transactional email service -- as the SMTP relay.
+GlitchTip (our self-hosted error monitoring) needed email alerts so the team gets notified when production errors occur. I integrated [Resend](https://resend.com/emails), a third-party transactional email service, as the SMTP relay.
 
 Setup involved:
 - Configuring Resend SMTP credentials in GlitchTip's Docker environment
@@ -65,7 +66,7 @@ Setup involved:
 The team can now receive email notifications for production errors without manually checking the GlitchTip dashboard.
 
 **Evidence:**
-- [MR !39 -- GlitchTip email alerting](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/39)
+- [MR !39: GlitchTip email alerting](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/39)
 - [Linear SIRA-75](https://linear.app/ppl-sira/issue/SIRA-75)
 
 ---
@@ -85,10 +86,10 @@ migrate:check:
 
 `supabase db push --dry-run` simulates applying pending migrations without actually touching the database. If timestamps conflict or SQL is invalid, the MR pipeline fails before it can reach `main`.
 
-This concept -- dry-run validation as a CI gate -- is not standard coursework. I learned it from Supabase CLI docs and applied it to prevent the exact class of deployment failures we experienced.
+This concept (dry-run validation as a CI gate) is not standard coursework. I learned it from Supabase CLI docs and applied it to prevent the exact class of deployment failures we experienced.
 
 **Evidence:**
-- [MR !67 -- migration dry-run CI](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/67)
+- [MR !67: migration dry-run CI](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/67)
 - [Linear SIRA-98](https://linear.app/ppl-sira/issue/SIRA-98)
 
 ---
@@ -101,7 +102,7 @@ Production migrations can fail. I implemented a manual rollback mechanism in the
 2. The CI `migrate:rollback` job (manual trigger) executes the rollback SQL
 3. `supabase migration repair --status reverted` marks the migration as rolled back in Supabase's migration history
 
-This went through an iteration: initially I made ALL migrations manual-trigger (MR !41), then realized that was too conservative -- auto-migrate on deploy with manual rollback only (MR !42) was the right tradeoff.
+This went through an iteration: initially I made ALL migrations manual-trigger (MR !41), then realized that was too conservative; auto-migrate on deploy with manual rollback only (MR !42) was the right tradeoff.
 
 ```
 supabase/migrations/
@@ -110,8 +111,8 @@ supabase/migrations/
 ```
 
 **Evidence:**
-- [MR !41 -- manual trigger & rollback](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/41)
-- [MR !42 -- restore auto-migrate](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/42)
+- [MR !41: manual trigger & rollback](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/41)
+- [MR !42: restore auto-migrate](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/42)
 - [Linear SIRA-76](https://linear.app/ppl-sira/issue/SIRA-76)
 
 ---
@@ -134,7 +135,7 @@ security:sast:
 ```
 
 **Evidence:**
-- [MR !38 -- security SAST job](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/38)
+- [MR !38: security SAST job](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/38)
 - [Linear SIRA-71](https://linear.app/ppl-sira/issue/SIRA-71)
 
 ---
@@ -161,17 +162,17 @@ async def log_requests(request: Request, call_next):
     return response
 ```
 
-Each log line is a JSON object with `method`, `path`, `status`, `duration_ms`, and `client` fields -- queryable, filterable, and ready for production observability tools.
+Each log line is a JSON object with `method`, `path`, `status`, `duration_ms`, and `client` fields, queryable, filterable, and ready for production observability tools.
 
 **Evidence:**
-- [MR !37 -- structured HTTP access logging](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/37)
+- [MR !37: structured HTTP access logging](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/37)
 - [Linear SIRA-70](https://linear.app/ppl-sira/issue/SIRA-70)
 
 ---
 
 ## 7. SonarQube MCP Server for AI-Integrated Code Quality
 
-I set up SonarQube as an MCP (Model Context Protocol) server for Claude Code, the AI assistant used in development. This allows the AI to directly query code quality metrics, issues, and coverage from SonarQube during development sessions -- bridging AI tooling with code quality infrastructure.
+I set up SonarQube as an MCP (Model Context Protocol) server for Claude Code, the AI assistant used in development. This allows the AI to directly query code quality metrics, issues, and coverage from SonarQube during development sessions, bridging AI tooling with code quality infrastructure.
 
 This is a novel integration: most teams use SonarQube as a standalone dashboard. By making it accessible to the AI agent, code quality checks happen inline during development, not as an afterthought.
 
@@ -182,11 +183,11 @@ This is a novel integration: most teams use SonarQube as a standalone dashboard.
 
 ## Evidence
 
-- [MR !37](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/37) -- structured HTTP access logging
-- [MR !38](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/38) -- security SAST CI job
-- [MR !39](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/39) -- GlitchTip email alerting
-- [MR !41](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/41) -- migration rollback CI
-- [MR !42](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/42) -- restore auto-migrate
-- [MR !44](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/44) -- Nginx reverse proxy
-- [MR !67](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/67) -- migration dry-run CI
+- [MR !37](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/37): structured HTTP access logging
+- [MR !38](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/38): security SAST CI job
+- [MR !39](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/39): GlitchTip email alerting
+- [MR !41](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/41): migration rollback CI
+- [MR !42](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/42): restore auto-migrate
+- [MR !44](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/44): Nginx reverse proxy
+- [MR !67](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/67): migration dry-run CI
 - [Linear SIRA-57](https://linear.app/ppl-sira/issue/SIRA-57), [SIRA-60](https://linear.app/ppl-sira/issue/SIRA-60), [SIRA-70](https://linear.app/ppl-sira/issue/SIRA-70), [SIRA-71](https://linear.app/ppl-sira/issue/SIRA-71), [SIRA-75](https://linear.app/ppl-sira/issue/SIRA-75), [SIRA-76](https://linear.app/ppl-sira/issue/SIRA-76), [SIRA-98](https://linear.app/ppl-sira/issue/SIRA-98)

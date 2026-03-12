@@ -3,8 +3,8 @@ title: "PPL: Automatic Data Seeding & Migration with CI/CD"
 date: 2026-03-05
 description: "How SIRA manages database schema evolution and test data across environments using Supabase migrations, structured seed data, and automated CI/CD pipelines."
 tags: ["ppl", "database", "migration", "seeding", "ci-cd", "supabase"]
+slug: data-seeding
 toc: true
-aliases: ["/posts/ppl-a18-data-seeding/"]
 ---
 
 ## Overview

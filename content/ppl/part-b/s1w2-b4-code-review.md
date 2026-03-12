@@ -3,8 +3,8 @@ title: "PPL: Code Review - Architecture Violations, Performance Bugs, and Runtim
 date: 2026-03-04
 description: "Detailed breakdown of code review contributions across 4 teammates' merge requests, covering architecture violations, performance patterns, and runtime bugs."
 tags: ["ppl", "code-review", "collaboration", "fastapi"]
+slug: s1w2-code-review
 toc: true
-aliases: ["/posts/ppl-b36-code-review/"]
 ---
 
 ## Overview

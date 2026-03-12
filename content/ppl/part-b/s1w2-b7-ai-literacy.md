@@ -3,8 +3,8 @@ title: "PPL: AI-Augmented Development with Claude Code - CLAUDE.md, MCP, Command
 date: 2026-03-05
 description: "The full AI development setup in SIRA: 3 CLAUDE.md files evolved through 19 commits, 4 MCP servers, 3 custom slash commands, 3 project skills, 3 plugins, and AI-assisted code review with CI automation."
 tags: ["ppl", "ai", "claude-code", "mcp", "developer-tools"]
+slug: s1w2-ai-literacy
 toc: true
-aliases: ["/posts/ppl-b39-ai-literacy/"]
 ---
 
 ## Overview

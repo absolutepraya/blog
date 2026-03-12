@@ -3,8 +3,8 @@ title: "PPL: Profiling and Performance - Tracing, Structured Logging, and Query 
 date: 2026-03-05
 description: "Using Sentry SDK as a distributed tracer, structured JSON logs for latency analysis, PostgREST join queries to avoid N+1 patterns, and TanStack Query caching."
 tags: ["ppl", "profiling", "performance", "fastapi", "python"]
+slug: profiling
 toc: true
-aliases: ["/posts/ppl-a17-profiling/"]
 ---
 
 ## Sentry as a Distributed Tracer

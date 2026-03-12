@@ -3,8 +3,8 @@ title: "PPL: Static Analysis in SIRA - Biome, Ruff, mypy, and SonarQube"
 date: 2026-03-04
 description: "The complete static analysis stack for Smart Invoice Reminder AI: Biome, Ruff, mypy, Knip, Husky pre-commit hooks, and SonarQube integrated into GitLab CI."
 tags: ["ppl", "code-quality", "sonarqube", "ci", "devops"]
+slug: code-quality
 toc: true
-aliases: ["/posts/ppl-a9b37-code-quality/"]
 ---
 
 ## The Tool Stack

@@ -3,8 +3,8 @@ title: "PPL: Software Deployment - Docker, GitLab CI/CD, and Multi-Stage Builds"
 date: 2026-03-05
 description: "Three multi-stage Dockerfiles, separate dev/prod Docker Compose configs, and a 5-stage GitLab CI/CD pipeline with immutable SHA tags and automated health checks."
 tags: ["ppl", "deployment", "docker", "ci", "devops"]
+slug: deployment
 toc: true
-aliases: ["/posts/ppl-a13-deployment/"]
 ---
 
 ## Three Multi-Stage Dockerfiles

@@ -3,8 +3,8 @@ title: "PPL: Platform Monitoring - GlitchTip, Sentry SDK, and Structured Logging
 date: 2026-03-05
 description: "How SIRA monitors three services (FastAPI, Celery, React) with a self-hosted GlitchTip deployment, Sentry SDK integration, and structured JSON HTTP access logging."
 tags: ["ppl", "monitoring", "sentry", "glitchtip", "devops"]
+slug: monitoring
 toc: true
-aliases: ["/posts/ppl-a11-monitoring/"]
 ---
 
 ## Why Self-Hosted

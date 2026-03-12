@@ -3,8 +3,8 @@ title: "PPL: Secure Programming - OWASP Coverage and CI Security Scanning"
 date: 2026-03-05
 description: "Five OWASP Top 10 categories addressed through JWT auth, RBAC, RLS, Pydantic validation, and CORS hardening - plus a security:sast CI job with Bandit and pnpm audit."
 tags: ["ppl", "security", "owasp", "ci", "sast", "fastapi"]
+slug: security
 toc: true
-aliases: ["/posts/ppl-a12b38-security/"]
 ---
 
 ## Security Implementation - OWASP Coverage

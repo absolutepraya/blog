@@ -3,6 +3,7 @@ title: "PPL: Building an Integrated Tool Ecosystem for a 9-Person University Tea
 date: 2026-03-12
 description: "How we connected Linear, GitLab CI/CD, SonarQube, GlitchTip, and AI-assisted development into one automated pipeline, and what that did for a team split across macOS and Windows."
 tags: ["ppl", "devops", "teamwork", "ci-cd", "developer-experience"]
+slug: teamwork-tools
 toc: true
 ---
 
