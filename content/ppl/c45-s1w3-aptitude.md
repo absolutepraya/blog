@@ -55,7 +55,7 @@ This is not taught in any Fasilkom course. I learned Nginx proxy configuration, 
 
 ## 2. Resend SMTP for GlitchTip Email Alerting
 
-GlitchTip (our self-hosted error monitoring) needed email alerts so the team gets notified when production errors occur. I integrated Resend -- a third-party transactional email service -- as the SMTP relay.
+GlitchTip (our self-hosted error monitoring) needed email alerts so the team gets notified when production errors occur. I integrated [Resend](https://resend.com/emails) -- a third-party transactional email service -- as the SMTP relay.
 
 Setup involved:
 - Configuring Resend SMTP credentials in GlitchTip's Docker environment
