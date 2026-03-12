@@ -1,3 +1,3 @@
 ---
-title: "Part A: Teaching Blogs"
+title: "Part A: Cognitive Blogs"
 ---
