@@ -8,8 +8,6 @@ toc: true
 aliases: ["/ppl/a18-data-seeding/"]
 ---
 
-> **Note:** Our project is hosted on an internal GitLab instance, so we use the term **MR (Merge Request)** throughout this blog. If you're coming from GitHub, MRs are the equivalent of **Pull Requests (PRs)**.
-
 ## Why Database Migrations Need Safety Nets
 
 Imagine this scenario: a developer adds a new column to the invoices table, pushes to `main`, and the CI/CD pipeline deploys it to production. Everything looks fine until the next morning, when the team discovers that the migration also dropped a constraint that was silently relied on by another service. Rolling back means manually writing SQL against the production database at 2 AM.
@@ -244,6 +242,8 @@ The Admin API handles all the GoTrue internals (password hashing, identity creat
 **Takeaway:** If your auth provider manages its own tables (Supabase, Firebase, Auth0), you'll likely need different seeding strategies for local development vs. production. Local gives you database-level access; production gives you API-level access. Build both.
 
 ## The Three-Tier Migration Safety Net
+
+> **Note:** Our project is hosted on an internal GitLab instance, so we use the term **MR (Merge Request)** in this section. If you're coming from GitHub, MRs are the equivalent of **Pull Requests (PRs)**.
 
 Now for the core of the pipeline. Our migrations flow through three tiers of validation before (and after) reaching production:
 
