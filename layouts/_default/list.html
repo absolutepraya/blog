@@ -26,7 +26,11 @@
         {{ end }}
     </ul>
 
+    {{ with .Parent }}
+    <p><a href="{{ .RelPermalink }}">&larr; Back to {{ .Title }}</a></p>
+    {{ else }}
     <p><a href="/">&larr; Back to all posts</a></p>
+    {{ end }}
 </section>
 
 <hr>
