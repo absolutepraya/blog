@@ -1,5 +1,5 @@
 ---
-title: "PPL: Building an Integrated Tool Ecosystem for a 7-Person University Team"
+title: "PPL: Building an Integrated Tool Ecosystem for a 9-Person University Team"
 date: 2026-03-12
 description: "How we connected Linear, GitLab CI/CD, SonarQube, GlitchTip, and AI-assisted development into one automated pipeline, and what that did for a team split across macOS and Windows."
 tags: ["ppl", "devops", "teamwork", "ci-cd", "developer-experience"]
@@ -12,7 +12,7 @@ Most university software engineering courses teach you *which* tools to use (Git
 
 In a professional environment, a single commit can trigger a cascade: CI runs tests, a Slack bot notifies the team, a coverage report lands in SonarQube, and the ticket moves to "In Review" on the project board. This doesn't happen by accident. Someone has to build that integration layer, and in a university team, that someone is usually whoever cares enough about developer experience to do it.
 
-This blog covers how we built that integration layer for SIRA (Smart Invoice Reminder AI), a 7-person team building a full-stack invoice management system with React, FastAPI, Celery, and Supabase. The tools themselves aren't novel. **The way we connected them is.**
+This blog covers how we built that integration layer for SIRA (Smart Invoice Reminder AI), a 9-person team building a full-stack invoice management system with React, FastAPI, Celery, and Supabase. The tools themselves aren't novel. **The way we connected them is.**
 
 ## The Tool Landscape
 
@@ -245,8 +245,9 @@ Here's what happens when a developer pushes code, from start to finish:
 ```mermaid
 flowchart TB
     subgraph local [Local Machine]
-        DEV[Developer pushes code]
+        DEV[Developer writes code]
         HC["Husky pre-commit<br>5 checks in sequence"]
+        HP["Husky pre-push<br>4 checks in sequence"]
     end
 
     subgraph ci [GitLab CI/CD Pipeline]
@@ -267,13 +268,14 @@ flowchart TB
     end
 
     DEV --> HC
-    HC -->|"blocked if<br>any check fails"| quality
+    HC -->|"blocked if<br>any check fails"| HP
+    HP -->|"blocked if<br>any test fails"| quality
     quality --> MIG --> BUILD --> DEPLOY
     DEPLOY --> GT
     DEPLOY --> LN_D
 ```
 
-**Five pre-commit checks** run locally before code even reaches CI:
+**Five pre-commit checks** run locally before code is even committed:
 
 1. **Biome** (frontend lint + format)
 2. **Ruff** (backend lint + format)
@@ -281,9 +283,18 @@ flowchart TB
 4. **mypy** (Python type check)
 5. **Knip** (dead code detection)
 
-If any check fails, the commit is blocked. This catches 80% of issues locally, saving CI minutes and reducing the feedback loop from "wait 5 minutes for CI" to "see the error in 10 seconds."
+If any check fails, the commit is blocked. This catches formatting and type errors in seconds rather than waiting for CI.
 
-After local checks pass, **eight parallel CI jobs** run more thorough checks (tests, build validation, and security scanning), followed by sequential migration, build, and deploy stages.
+**Four pre-push checks** add a second layer of defense before code leaves the developer's machine:
+
+1. **TypeScript type check** (full `tsc --noEmit` on the frontend)
+2. **Vitest** (frontend test suite)
+3. **mypy** (full backend type check)
+4. **pytest** (backend test suite)
+
+The distinction matters: pre-commit checks are fast (lint and type checks finish in seconds), so they run on every commit without slowing developers down. Pre-push checks are slower (running full test suites takes longer), so they only run when code is about to leave the local machine. This two-layer design catches style/type issues immediately and logic/regression issues before they consume CI minutes.
+
+After both local gates pass, **eight parallel CI jobs** run more thorough checks (tests with coverage, build validation, and security scanning), followed by sequential migration, build, and deploy stages.
 
 The key insight: **every tool in the chain produces output that feeds into the next tool.** Vitest and pytest generate coverage reports consumed by SonarQube. Bandit and pnpm audit produce security findings visible in CI logs. The Linear auto-tagger reads branch names and writes to Linear's API. GlitchTip receives errors from the deployed application and sends email alerts to the team.
 
@@ -310,13 +321,13 @@ One way to evaluate whether tools are serving the team is whether everyone can c
 
 | Author | Merged MRs |
 |--------|-----------|
-| absolutepraya (Daffa) | 33 |
-| froklax (Bertrand) | 4 |
-| halizaarfa (Haliza) | 7 |
-| dafandikri (Erdafa) | 4 |
-| qenthm (Rifqi) | 6 |
-| nadhif (Nadhif) | 3 |
-| valen (Valentino) | 2 |
+| absolutepraya (Abhip) | 25 |
+| halizaarfa (Haliza) | 9 |
+| qenthm (Rifqi) | 7 |
+| froklax (Bertrand) | 6 |
+| dafandikri (Erdafa) | 5 |
+| nadhif (Nadhif) | 4 |
+| valen (Valentino) | 3 |
 | dzaki (Dzaki) | 2 |
 | fadhli (Fadhli) | 1 |
 
@@ -332,7 +343,7 @@ Hoegl and Gemuenden's **Teamwork Quality (TWQ)** framework identifies six facets
 
 **Balance of contributions** improved through guardrails. When pre-commit hooks and CI catch style/type issues automatically, code reviewers can focus on logic and architecture rather than formatting nits. This makes reviews more equitable, because you end up reviewing the idea, not the indentation.
 
-**Mutual support** shows up in cross-platform fixes. When I (Daffa) spent time building Windows compatibility, it wasn't just a DX improvement. It was removing a blocker that prevented half the team from working locally. The justfile, Celery separation, and `.gitattributes` changes were infrastructure investments that paid dividends in team velocity.
+**Mutual support** shows up in cross-platform fixes. When I (Abhip) spent time building Windows compatibility, it wasn't just a DX improvement. It was removing a blocker that prevented half the team from working locally. The justfile, Celery separation, and `.gitattributes` changes were infrastructure investments that paid dividends in team velocity.
 
 The broader lesson: **tooling is a leadership activity, not a DevOps task.** Someone on the team needs to care about the developer experience of their teammates, not just the code but the entire workflow from pulling the repo to deploying to production. In our case, 36 of 71 total MRs (roughly half the project's Git history) are developer experience work. That ratio might seem high, but every one of those MRs made the other 35 easier to ship.
 
@@ -349,4 +360,4 @@ The broader lesson: **tooling is a leadership activity, not a DevOps task.** Som
 - [MR !67 - SIRA-98 migration dry-run validation](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/67)
 - [MR !74 - SIRA-104 Conductor workspace support](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/74)
 - [Linear SIRA-36](https://linear.app/ppl-sira/issue/SIRA-36), [SIRA-54](https://linear.app/ppl-sira/issue/SIRA-54), [SIRA-55](https://linear.app/ppl-sira/issue/SIRA-55), [SIRA-60](https://linear.app/ppl-sira/issue/SIRA-60), [SIRA-62](https://linear.app/ppl-sira/issue/SIRA-62), [SIRA-67](https://linear.app/ppl-sira/issue/SIRA-67), [SIRA-76](https://linear.app/ppl-sira/issue/SIRA-76), [SIRA-98](https://linear.app/ppl-sira/issue/SIRA-98), [SIRA-104](https://linear.app/ppl-sira/issue/SIRA-104)
-- Source: `.gitlab-ci.yml`, `process-compose.yaml`, `Makefile`, `justfile`, `.husky/pre-commit`, `scripts/linear-notify.sh`, `.mcp.json`, `.claude/settings.json`, `CLAUDE.md`, `apps/web/CLAUDE.md`, `apps/api/CLAUDE.md`
+- Source: `.gitlab-ci.yml`, `process-compose.yaml`, `Makefile`, `justfile`, `.husky/pre-commit`, `.husky/pre-push`, `scripts/linear-notify.sh`, `.mcp.json`, `.claude/settings.json`, `CLAUDE.md`, `apps/web/CLAUDE.md`, `apps/api/CLAUDE.md`
