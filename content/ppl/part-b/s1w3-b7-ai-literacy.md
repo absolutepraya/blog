@@ -22,6 +22,29 @@ The project's AI instruction document (`CLAUDE.md`) was updated this week to ref
 
 This seems minor, but it's an example of the feedback loop: during MR !78 (UI polishing), the AI generated code that referenced `user.name` instead of `user.full_name` because the CLAUDE.md didn't list the exact field names. After correcting the code, I updated the docs so future AI sessions don't repeat the mistake.
 
+### CLAUDE.md as a Learning Journal
+
+Beyond giving the AI instructions, CLAUDE.md also became a place to **document learnings** so future sessions (and future developers) benefit immediately.
+
+A good example from this week: while running `git pull`, a merge conflict appeared in `supabase/seed_clients.sql`. Every row of encrypted client data had changed, even though nobody had modified the source CSV. I asked Claude Code to investigate, and it traced through `apps/api/src/app/lib/encryption.py` to find the answer:
+
+```python
+nonce = os.urandom(NONCE_SIZE)  # 12 random bytes, different each call
+```
+
+AES-256-GCM uses a random 12-byte nonce prepended to the ciphertext. Same key, same plaintext, but every encryption produces a different output because the nonce is unique each time. This is by design (nonce reuse would be a serious vulnerability), but it means every developer who re-runs `make db-seed` generates an entirely different `seed_clients.sql`, even with the same `ENCRYPTION_KEY`.
+
+The fix was two things: gitignore the generated file (since each dev generates it locally anyway), and document the behavior in CLAUDE.md so no one wastes time debugging the same "why did my seed file change?" confusion again:
+
+```markdown
+> **Note:** `make db-seed` regenerates `supabase/seed_clients.sql` from
+> `data/klien.csv` with AES-256-GCM encryption. Because each encryption
+> uses a random nonce, the output differs every run even with the same
+> key. This file is **gitignored** — each dev generates it locally.
+```
+
+This is a pattern that repeats: you learn something non-obvious while working, and instead of just fixing the immediate problem, you encode the knowledge into CLAUDE.md. Future AI sessions can then explain this to other developers without anyone having to rediscover it. The document grows organically from real development friction, not from someone sitting down to "write documentation."
+
 ### The three-file hierarchy in action
 
 With 14 MRs spanning frontend, backend, and infrastructure, the three-level CLAUDE.md hierarchy proved its value:
@@ -63,29 +86,41 @@ resolve-library-id: "@tanstack/react-query"
 
 This confirmed that invalidating `['invoices', id]` does not bubble up to `['invoices']`, validating my review comment.
 
-## AI-Assisted Code Review: Critical vs. Accepting
+## AI-Assisted Code Review: Two Plugins, One Human Filter
 
-The most important AI literacy practice this week was **verifying AI suggestions before posting them**. Every code review comment was generated with Claude Code's assistance, but each finding was manually verified:
+Reviewing 10 MRs in one week was only possible because of a structured AI review workflow. I use two different Claude Code plugins depending on the MR type:
 
-**Verified and posted (MR !72):**
-The AI identified the missing `['invoices']` list invalidation in `useCreatePayment`. I verified this by:
-1. Reading the TanStack Query v5 docs via Context7
-2. Checking the existing invalidation code in `use-payments.ts`
-3. Confirming the invoices list page would show stale data
+### Plugin selection by MR type
 
-**Verified and posted (MR !45):**
-The AI flagged the auth/DB desync risk in the staff `update` method. I verified by:
-1. Reading the `create` method (which has proper error handling)
-2. Confirming `update` has no try/except
-3. Tracing the failure mode (Auth succeeds, DB fails → desync)
+| MR type | Plugin | Focus areas |
+|---------|--------|------------|
+| General features | [`/pr-review-toolkit:review-pr`](https://github.com/anthropics/claude-code/tree/main/plugins/pr-review-toolkit) | Maintainability, code quality, runtime error prevention |
+| Data management (client, invoice, staff CRUD) | Same plugin + security | Above + encryption handling, auth bypass, data integrity |
+| Very large MRs (1000+ lines) | [`/code-review:code-review`](https://github.com/anthropics/claude-code/tree/main/plugins/code-review) | Spawns 5 parallel subagents scoring bugs, security, performance, style, architecture |
 
-**AI suggestion rejected:**
-During review of MR !64 (frontend foundation), the AI suggested wrapping all API calls in a retry mechanism. I rejected this because:
-- SIRA's API calls are mostly mutations (create/update), not idempotent reads
-- Retrying a `POST /invoices/` could create duplicate invoices
-- The real fix for transient failures is proper error handling in the UI, not silent retries
+The `pr-review-toolkit` is my default. It reads the full diff with CLAUDE.md context (so it understands SIRA's conventions), then produces structured findings. For data management MRs that handle PII or financial records, I add the security lens because those MRs have higher risk if something slips through.
 
-This is the difference between score 3 (using AI) and score 4 (using AI critically). AI suggests; the developer decides. Every suggestion gets the "does this actually make sense for our project?" filter.
+For the really large MRs like !64 (frontend foundation rewrite), a single-pass review would miss things buried deep in the diff. The `code-review` plugin's 5 subagents each tackle a different quality dimension in parallel, giving comprehensive coverage that would take a human reviewer much longer.
+
+### The human filter: what gets posted vs. dropped
+
+After the AI produces findings, every single one gets reviewed by me before posting:
+
+**Posted** (substantive, verified):
+- MR !72: AI found missing `['invoices']` list invalidation in `useCreatePayment`. I verified via Context7 MCP (TanStack Query v5 docs confirm list and detail are separate cache entries).
+- MR !45: AI flagged auth/DB desync risk in staff `update` method. I verified by reading the `create` method (which has error handling) and confirming `update` has none.
+
+**Dropped** (nitpicks):
+- Naming preferences that don't affect readability
+- "You could also do it this way" style suggestions
+- Minor redundancies that aren't worth the churn of changing
+
+**Rejected** (AI was wrong):
+- MR !64: AI suggested wrapping all API calls in a retry mechanism. I rejected this because SIRA's API calls are mostly mutations (create/update), not idempotent reads. Retrying a `POST /invoices/` could create duplicate invoices.
+
+The filtering philosophy: we want **fast MR iteration** across a team of 9. Nitpicks slow the team down. Bugs, security risks, and architectural violations are worth the review cycle. Everything else gets dropped.
+
+All review comments are attributed with a "Generated with Claude Code" footer for transparency.
 
 ## Custom Slash Commands Under Load
 
@@ -106,7 +141,7 @@ Rough metrics from this week:
 | MRs reviewed | 10 |
 | AI review suggestions accepted | ~80% |
 | AI review suggestions rejected | ~20% |
-| CLAUDE.md updates | 1 (auth context fields) |
+| CLAUDE.md updates | 2 (auth context fields, seed encryption nonce) |
 | MCP queries (estimated) | 30+ |
 
 The 20% rejection rate is healthy. It means the AI is generating non-trivial suggestions (trivial ones would be 100% accepted), and the developer is exercising judgment.
@@ -118,6 +153,7 @@ The AI infrastructure built in Weeks 1-2 directly enabled the Week 3 output volu
 ## Evidence
 
 - Commit `80b127b` - CLAUDE.md update (fullName auth context)
+- Commit `cbfc047` - CLAUDE.md update (seed encryption nonce learning) + gitignore seed file
 - `.mcp.json` - 4 MCP server configurations
 - `.claude/commands/` - 3 custom slash commands
 - MR review comments on !72, !75, !64, !49, !45, !46 (AI-assisted, manually verified)

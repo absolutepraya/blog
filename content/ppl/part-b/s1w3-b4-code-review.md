@@ -28,6 +28,28 @@ This week I reviewed **10 teammates' merge requests**, leaving substantive comme
 
 ---
 
+## How I Conduct Code Reviews
+
+Reviewing 10 MRs in a single week is only feasible because of a structured AI-assisted workflow. I use two Claude Code plugins depending on the MR type, then manually filter and post the findings.
+
+### Three review strategies by MR type
+
+**1. General MRs** (most reviews): I use [`/pr-review-toolkit:review-pr`](https://github.com/anthropics/claude-code/tree/main/plugins/pr-review-toolkit), configured to focus on **maintainability, code quality, and runtime error prevention**. The plugin reads the full diff with CLAUDE.md context (so it knows SIRA's conventions), then produces a structured list of findings. I review each finding manually, drop anything that's just a nitpick, and post only substantive issues. Fast iteration matters more than perfect code in a team of 9 pushing features every day.
+
+**2. Data management MRs** (client CRUD, invoice CRUD, staff management): Same plugin, but I add the **security** aspect. MRs that handle PII (client emails, phone numbers) or financial data (invoice amounts, payment records) get extra scrutiny for encryption handling, auth bypass risks, and data integrity issues. This is how the auth/DB desync risk in !45 and the silent data loss in !75 were caught.
+
+**3. Very large MRs** (like !64, the frontend foundation rewrite): I use [`/code-review:code-review`](https://github.com/anthropics/claude-code/tree/main/plugins/code-review), which spawns **5 parallel subagents** that each score different aspects of the code (bugs, security, performance, style, architecture). This gives comprehensive coverage when a single-pass review would miss things buried in a 1000+ line diff.
+
+### The human filter
+
+The AI generates findings; I decide what gets posted. The filtering criteria:
+
+- **Post**: bugs, security risks, architectural violations, stale data patterns, silent data loss
+- **Drop**: style preferences, minor naming suggestions, "you could also do it this way" alternatives
+- **Rewrite**: when the AI finding is correct but the explanation is confusing, I rewrite it in my own words before posting
+
+This is how 10 reviews were feasible in one week without sacrificing quality. The AI handles the exhaustive diff analysis; I handle the judgment calls. All review comments are posted with a "Generated with Claude Code" attribution footer for transparency.
+
 ## Most Significant Reviews
 
 ### MR !72 (hl): Stale Data Bug in TanStack Query
@@ -83,13 +105,17 @@ This was the largest review. The Frontend Foundation MR rewrote the API client, 
 
 **Thread 2:** Architectural feedback praising the API client rewrite while identifying remaining issues. The new `createApiClient()` with injectable `getToken`, `clearSession`, and `onUnauthorized` was a genuine improvement over the previous Supabase-coupled version.
 
-### MR !49 (qenthm): Overdue Detection Consistency
+### MR !49 (qenthm): What a Third Reviewer Catches
 
-After two teammates had already reviewed this MR, I added a follow-up focusing on consistency with existing patterns on `main`:
+This MR had already been reviewed by two teammates (@dafandikri and @hl) who caught real issues. I added a third review, and the type of feedback was fundamentally different from the first two.
+
+The first reviewers focused on **correctness**: does the code work, are there bugs, is the logic sound? They caught solid issues. My review focused on **consistency with `main`**: does this code follow the patterns the rest of the codebase already uses?
 
 > Thanks @dafandikri and @hl for the thorough reviews, you both caught some solid stuff. I want to add a few more things that I think we should address before merging this, mostly around consistency with what's already on `main`.
 
-The review acknowledged the TDD quality (red-green approach, comprehensive coverage including timezone handling and idempotency tests) while flagging naming conventions and import patterns that diverged from the established codebase.
+The findings were naming conventions, import patterns, and structural choices that diverged from the established codebase. These aren't bugs; the code would work fine. But they create subtle maintenance friction: a developer reading the codebase later would see two different conventions for the same thing and wonder which one is correct.
+
+This is why multiple reviewers matter. Each reviewer brings a different lens. Bug-finding and consistency-checking are complementary skills, and a team that only does one will accumulate drift in the other.
 
 ### MR !46 (adipppp): Auth Deadlock Verification
 
