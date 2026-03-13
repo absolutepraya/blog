@@ -1,14 +1,14 @@
 ---
 title: "How I Actually Use Claude Code"
-date: 2026-03-06
-description: "A walkthrough of how I use Claude Code as my primary development tool - from brainstorming to shipping, with custom skills, MCP integrations, and a mobile VPS setup."
+date: 2026-03-13
+description: "A walkthrough of how I use Claude Code as my primary development tool - from brainstorming to shipping, with custom skills, MCP integrations, token optimization with RTK, and Remote Control from my phone."
 tags: ["claude-code", "ai", "developer-tools", "workflow"]
 toc: true
 ---
 
 People keep asking me how I work with Claude Code. Friends, classmates, engineers I meet - the question always comes up: "Can you walk me through your dev workflow with it?"
 
-I use Claude Code for pretty much everything: personal projects, internship work at a startup, managing my VPS, even writing from my phone over SSH (more on that in a separate post). If you're already using something like GitHub Copilot or Cursor and wondering what a CLI-first AI workflow looks like when you go deeper, this is for you.
+I use Claude Code for pretty much everything: personal projects, internship work at a startup, managing my VPS, even continuing sessions from my phone with Remote Control. If you're already using something like GitHub Copilot or Cursor and wondering what a CLI-first AI workflow looks like when you go deeper, this is for you.
 
 ## Why Claude Code
 
@@ -165,6 +165,12 @@ Custom commands live in `.claude/commands/` and get invoked with `/command-name`
 
 Each command is a markdown file with structured instructions. Writing your own is straightforward - describe what the command should do, what tools it can use, and what output it should produce.
 
+I also have personal commands at user scope (in `~/.claude/commands/`) that work across all projects:
+
+- **/work-log** - Generates an Excel work log from git commits across all branches for a date range. It fetches every commit, groups by date, summarizes them into 2-4 tasks per day in a casual style, calculates time-in/time-out, and saves a formatted `.xlsx` file. I use this for my internship timesheets - what used to take 30 minutes of scrolling through git log now takes one command.
+- **/crontab-create** and **/crontab-manage** - Guided cron job management. Create validates the schedule, shows the next 5 run times, and asks for confirmation before adding. Manage lists jobs with human-readable translations and lets you delete them safely.
+- **/tidy-stocks** - Organizes stock research PDFs from my Downloads folder into a structured directory by ticker symbol. Niche, but it's a recurring chore I never want to think about again.
+
 ### MCP Servers - Connecting to Everything
 
 MCP (Model Context Protocol) is how Claude Code talks to external services. Instead of copy-pasting context from other tools, Claude just... uses them directly. My setup includes:
@@ -180,13 +186,28 @@ The key thing about MCPs is that Claude uses them autonomously when relevant. If
 
 ### Plugins
 
-Three plugins that I consider essential:
+I have 13 plugins installed at this point. Here are the ones that actually changed how I work.
 
-**[Superpowers](https://github.com/obra/superpowers)** is the workflow engine described in the previous section. It provides all 14 skills (brainstorming, planning, TDD, debugging, verification, code review, etc.) and the hooks that chain them together. It's the single biggest upgrade to how Claude Code works. Without it, Claude is a capable assistant. With it, Claude follows a disciplined engineering process.
+**[Superpowers](https://github.com/obra/superpowers)** is the workflow engine described in the previous section. It provides 14 skills covering the entire development lifecycle and the hooks that chain them together. It's the single biggest upgrade to how Claude Code works. Without it, Claude is a capable assistant. With it, Claude follows a disciplined engineering process.
 
 **[Claude HUD](https://github.com/jarrodwatts/claude-hud)** shows what's happening in real time. It adds a statusline below your input that displays the current model, context window usage (with a color-coded bar that goes green to yellow to red), git branch status, active tool calls, running subagents, and todo progress. When context gets above 85%, it shows a token breakdown so you know what's eating your window. Small thing, but knowing your context health at a glance prevents nasty surprises.
 
-**[notification-go](https://github.com/777genius/claude-notifications-go)** solves a practical problem: Claude Code sessions can run for a while. Maybe it's executing a plan, running through test suites, or doing a multi-file refactor. You switch to another window, check your phone, whatever. This plugin sends desktop notifications with sound when Claude stops and needs your input - whether it's asking a question, waiting for plan approval, reporting an error, or telling you it's done. Sounds minor, but it completely changes how you multitask during long sessions.
+**[notification-go](https://github.com/777genius/claude-notifications-go)** solves a practical problem: Claude Code sessions can run for a while. Maybe it's executing a plan, running through test suites, or doing a multi-file refactor. You switch to another window, check your phone, whatever. This plugin sends desktop notifications with sound when Claude stops and needs your input - whether it's asking a question, waiting for plan approval, reporting an error, or telling you it's done. I also have it configured to send a webhook to [Moshi](https://getmoshi.app) so I get push notifications on my phone too - useful when I step away from my desk entirely.
+
+**[feature-dev](https://github.com/anthropics/claude-plugins-official)** is my go-to for anything bigger than a quick fix. Running `/feature-dev` kicks off a structured 7-phase workflow: it clarifies requirements, launches `code-explorer` agents to analyze similar features and architecture patterns in your codebase, asks clarifying questions, then spawns multiple `code-architect` agents that each propose a different approach (minimal changes vs. clean architecture vs. pragmatic balance). After implementation, it launches 3 `code-reviewer` agents in parallel - one focused on simplicity, one on bugs, one on convention compliance. Each reviewer scores issues by confidence and only surfaces findings above 80%. It's like having a small engineering team that explores, builds, and reviews in one command.
+
+**[pr-review-toolkit](https://github.com/anthropics/claude-plugins-official)** gives me six specialist review agents that trigger based on context:
+
+- **silent-failure-hunter** - catches error handling gaps and inadequate catch blocks
+- **type-design-analyzer** - rates type encapsulation and invariant expression on a 1-10 scale
+- **pr-test-analyzer** - evaluates test coverage quality, not just line coverage
+- **comment-analyzer** - checks if comments actually match the code they describe
+- **code-reviewer** - general quality and CLAUDE.md compliance
+- **code-simplifier** - identifies unnecessary complexity and redundancy
+
+These activate automatically when relevant. Finish error handling code, silent-failure-hunter kicks in. Add tests, pr-test-analyzer reviews them. The agents run after you write code, not just when you ask.
+
+**[commit-commands](https://github.com/anthropics/claude-plugins-official)** streamlines the daily git workflow. `/commit` auto-generates a commit message by analyzing your staged changes and matching your repo's commit style. `/commit-push-pr` does the full cycle - creates a branch if you're on main, commits, pushes, and opens a PR with a summary and test plan. `/clean_gone` removes local branches that no longer exist on the remote. Small automations, but they add up when you're committing 10+ times a day.
 
 ### Hooks - Automated Quality Checks
 
@@ -195,10 +216,69 @@ Hooks run automatically at specific points in the Claude Code lifecycle:
 - **Post-edit validation** - After every file edit, checks IDE diagnostics (TypeScript errors, linter issues). Catches problems immediately instead of at build time.
 - **Session-end** - When a session ends, a hook extracts learnings from the transcript and posts them to an internal API. This is the "compound engineering" idea - every session makes the system smarter.
 - **Session-start** - Initializes the superpowers workflow context so skills activate properly from the start.
+- **RTK rewrite** - A `PreToolUse` hook intercepts every Bash command and rewrites it through RTK for token-optimized output. More on this below.
 
-## Bonus: I Do All This from My Phone Too
+### RTK - Token Optimization
 
-I also run Claude Code from my phone over SSH - Tailscale VPN to a Debian VPS, mosh for persistent sessions, Termius as the terminal app. I've debugged issues, reviewed PRs, and written blog posts from my phone while commuting. I'll write a separate post on that setup.
+This one is invisible but dramatic. [RTK](https://github.com/rtk-ai/rtk) (Rust Token Killer) is a CLI proxy that sits between Claude Code and your shell commands, filtering and compressing output before it reaches the context window.
+
+The problem it solves: when Claude runs `git status` or `ls` or `cargo test`, the raw terminal output goes straight into the context window. Most of that output is noise - whitespace, formatting, redundant info. RTK strips it down to what actually matters.
+
+It works through a PreToolUse hook. Every time Claude runs a Bash command, the hook intercepts it and rewrites the command to go through RTK. Claude never sees the rewrite - it just gets compressed output. `git status` becomes `rtk git status`. `ls` becomes `rtk ls`. The hook is a thin shell script that delegates all rewrite logic to the Rust binary.
+
+The savings are real. Here's what my RTK dashboard looks like after about a month of use:
+
+{{< figure src="/images/claude-code-workflow/rtk-gain.png" alt="RTK token savings dashboard showing 87.5% efficiency" caption="9.2M tokens saved across 1,152 commands. The biggest wins are git operations and file reads." >}}
+
+87.5% overall savings. That means for every 10M tokens of raw CLI output, only 1.3M actually enter the context window. The biggest wins come from `gh pr diff` (75% savings), `git push` (88%), and `find` (76%). Even simple `ls` commands save 67% on average.
+
+This matters because context is finite. Every token of noisy `git diff` output is a token that could be holding your project's architecture or the plan it's executing. RTK keeps the signal-to-noise ratio high so Claude stays effective deeper into long sessions.
+
+Setup is one command: `rtk init --global`. It generates the hook file and registers it in your Claude Code settings. After restarting Claude Code, every shell command gets optimized transparently.
+
+## Remote Control: Claude Code from My Phone
+
+*Update: I originally wrote about running Claude Code from my phone over SSH - Tailscale VPN to a Debian VPS, mosh for persistent sessions, Termius as the terminal app. That setup still works and I still use it for VPS tasks. But for controlling Claude Code on my MacBook, Remote Control replaces all of that.*
+
+[Remote Control](https://code.claude.com/docs/en/remote-control) shipped in February 2026 and it's exactly what the name suggests: you start a Claude Code session on your machine, and continue it from your phone, tablet, or any browser. The session runs locally the entire time - your filesystem, MCP servers, tools, and project config all stay available. The phone is just a window into the local session.
+
+### How It Works
+
+If you're already in a Claude Code session and want to pick it up from your phone, type `/remote-control` (or `/rc`). The terminal shows a session URL and a QR code. Scan the QR code with your phone, and the session opens in the Claude mobile app or at `claude.ai/code`.
+
+{{< figure src="/images/claude-code-workflow/remote-control-terminal.png" alt="Terminal showing Remote Control QR code and session URL" caption="Running /remote-control inside a session. Scan the QR code or open the URL on any device." >}}
+
+You can also start a fresh Remote Control session from the command line:
+
+```bash
+claude remote-control --name "Blog Project"
+```
+
+This starts Claude Code in remote-control mode, ready for connections without an existing conversation.
+
+### Why This is Better Than SSH
+
+With the SSH setup, I was running Claude Code on the VPS - different environment, different files, different config. I had to push code, SSH in, pull, run Claude there, push changes back. It worked, but it was a workaround.
+
+Remote Control runs on my actual MacBook. Same project, same CLAUDE.md, same MCP servers, same everything. I start working at my desk, grab my phone, and keep going on the couch. The conversation stays in sync across all connected devices - I can send messages from the terminal, browser, and phone interchangeably.
+
+{{< figure src="/images/claude-code-workflow/remote-control-phone.png" alt="Claude Code session running on phone via Remote Control" caption="The same session, continued from the Claude app on my phone." >}}
+
+If my laptop sleeps or the network drops, the session reconnects automatically when the machine comes back online. No mosh keepalive hacks, no tmux resurrection.
+
+### When I Still Use SSH
+
+Remote Control needs the laptop running and connected. For tasks on my VPS (server maintenance, deployments, checking logs), I still SSH in with mosh via Termius. Different tool for a different job. But for actual development on my projects, Remote Control is the way.
+
+## Quality of Life
+
+A few smaller things that don't fit neatly into the sections above but make the daily experience better.
+
+**Star Wars spinner verbs.** Claude Code shows a loading message while it thinks. By default it says things like "Thinking..." or "Working...". I replaced all 46 verbs with Star Wars lines: "Making the Kessel Run", "Consulting the Jedi Archives", "Avoiding the Dark Side", "Executing Order 66". It's purely cosmetic and purely fun. You configure these in `~/.claude/settings.json` under `spinnerVerbs`.
+
+**Custom keybindings.** I use vim-style navigation everywhere in Claude Code - `j`/`k` to scroll through settings, `/` to search, `Ctrl+T` to toggle the todo panel, `Meta+P` to open the model picker, `Meta+T` to toggle thinking. These live in `~/.claude/keybindings.json` and cover 17 different contexts (chat, settings, transcript, history search, etc.). Once you set them up, you never touch the mouse.
+
+**Effort level set to high.** In `settings.json`, `effortLevel: "high"` tells Claude to use maximum reasoning depth on every response. It uses more tokens but catches more edge cases and produces better plans. I'd rather have thorough answers than fast ones.
 
 ## Getting Started
 
