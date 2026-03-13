@@ -1,5 +1,5 @@
 ---
-title: "PPL: Static Analysis in SIRA — Sprint 1 Week 2"
+title: "PPL: Static Analysis in SIRA [Sprint 1, Week 2]"
 date: 2026-03-04
 description: "The complete static analysis stack for Smart Invoice Reminder AI: Biome, Ruff, mypy, Knip, Husky pre-commit hooks, and SonarQube integrated into GitLab CI."
 tags: ["ppl", "code-quality", "sonarqube", "ci", "devops"]

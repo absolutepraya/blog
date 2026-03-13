@@ -1,5 +1,5 @@
 ---
-title: "PPL: New Learnings Applied: Nginx, SMTP Alerting, Migration Validation, and More"
+title: "PPL: New Learnings Applied to SIRA [Sprint 1, Week 3]"
 date: 2026-03-10
 description: "Seven new technologies and concepts learned outside standard coursework and applied directly to the SIRA project during Sprint 1 Week 3."
 tags: ["ppl", "aptitude", "learning", "devops", "infrastructure"]

@@ -1,5 +1,5 @@
 ---
-title: "PPL: Code Review - Architecture Violations, Performance Bugs, and Runtime Errors"
+title: "PPL: Code Review Across Architecture and Runtime Bugs [Sprint 1, Week 2]"
 date: 2026-03-04
 description: "Detailed breakdown of code review contributions across 4 teammates' merge requests, covering architecture violations, performance patterns, and runtime bugs."
 tags: ["ppl", "code-review", "collaboration", "fastapi"]

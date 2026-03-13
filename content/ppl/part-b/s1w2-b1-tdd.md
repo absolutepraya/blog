@@ -1,5 +1,5 @@
 ---
-title: "PPL: Test-Driven Development in a FastAPI Project — Sprint 1 Week 2"
+title: "PPL: Test-Driven Development in a FastAPI Project [Sprint 1, Week 2]"
 date: 2026-03-04
 description: "44 backend tests, red-green-refactor discipline, and mock/stub isolation patterns in the Smart Invoice Reminder AI API."
 tags: ["ppl", "tdd", "testing", "python", "fastapi"]
