@@ -133,6 +133,24 @@ This was originally discovered as a bug (MR !35 from last week), but this week t
 
 Without this test, the auto-link logic could silently break and new users would get locked out after their first login.
 
+## TDD Enforced at the Process Level
+
+The red-green-refactor discipline isn't just a convention I follow manually. It's built into the development workflow through the [Superpowers](https://github.com/obra/superpowers) plugin for Claude Code. When developing a feature, the process looks like this:
+
+```mermaid
+flowchart LR
+    B(["/brainstorming"]) --> P(["/executing-plans"])
+    P --> V(["/verification-before-completion"])
+    V --> MR(["/create-mr"])
+```
+
+1. **`/brainstorming`** explores the feature requirements: what do I need, what are the edge cases, what's the scope? It asks questions, proposes approaches, and produces a design document with a concrete plan.
+2. **`/executing-plans`** executes the plan from the brainstorming session. This is combined with **`/test-driven-development`** from the same plugin, which enforces the red-green-refactor cycle. The AI writes a failing test first, then implements just enough code to pass it, then refactors. It won't skip ahead to implementation without a test.
+3. **`/verification-before-completion`** runs a final check before the work is considered done: are all tests passing, does the code match the plan, are there any loose ends?
+4. **`/create-mr`** creates the merge request with a structured description.
+
+The reason this matters for TDD specifically: it removes the temptation to "just write the code first and add tests later." When TDD is baked into the execution process, every feature starts with a test by default. The 18+ red-green pairs this week weren't the result of extra discipline; they were the natural output of a process that won't let you skip the red step.
+
 ## Coverage Pipeline
 
 Coverage is collected in CI and flows into SonarQube:

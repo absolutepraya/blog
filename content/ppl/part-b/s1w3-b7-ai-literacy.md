@@ -122,14 +122,27 @@ The filtering philosophy: we want **fast MR iteration** across a team of 9. Nitp
 
 All review comments are attributed with a "Generated with Claude Code" footer for transparency.
 
-## Custom Slash Commands Under Load
+## Full AI Development Pipeline: From Idea to MR
 
-The three custom commands (`/commit`, `/commit-and-push`, `/create-pr`) handled the volume well:
+Beyond code review, AI is integrated into the entire feature development lifecycle through the [Superpowers](https://github.com/obra/superpowers) plugin for Claude Code. The pipeline for building a new feature looks like this:
 
-- `/commit` ran the 5-hook pre-commit stack (Biome → Ruff → tsc → mypy → Knip) for every commit. When hooks failed, it auto-fixed formatting issues and retried without `--no-verify`.
-- `/create-pr` generated MR descriptions from commit history, ensuring each MR had a structured description explaining what changed and why.
+```mermaid
+flowchart LR
+    B(["1. /brainstorming"]) --> E(["2. /executing-plans<br>+ /test-driven-development"])
+    E --> V(["3. /verification-before-completion"])
+    V --> C(["4. /commit"])
+    C --> MR(["5. /create-mr"])
+```
 
-With 14 MRs, these commands saved significant time on repetitive Git operations while ensuring consistent quality (no commits bypassing hooks, no MRs without descriptions).
+**Step 1: `/brainstorming`** explores the requirements interactively. It asks what I need, what my preferences are, what edge cases to consider, and produces a design document with a concrete implementation plan. This prevents the "just start coding" trap where you realize halfway through that you missed a requirement.
+
+**Step 2: `/executing-plans` + `/test-driven-development`** executes the plan from a separate session (so it starts fresh with just the plan as context). Combined with the TDD skill, it enforces red-green-refactor: write a failing test first, implement just enough to pass, refactor. The AI won't skip ahead to implementation without a test.
+
+**Step 3: `/verification-before-completion`** runs a final check: are all tests passing, does the implementation match the plan, are there loose ends? This catches the "it works on my machine" gaps before they reach the MR.
+
+**Step 4-5: `/commit` + `/create-mr`** handle Git operations. `/commit` runs the 5-hook pre-commit stack (Biome → Ruff → tsc → mypy → Knip) and auto-fixes formatting issues on failure. `/create-mr` generates structured MR descriptions from commit history.
+
+This pipeline is how 14 MRs were feasible in one week. Each step is a separate AI session with focused context, and the handoffs between steps (plan document → execution → verification → MR) create natural checkpoints where I review what the AI produced before moving forward.
 
 ## Measuring AI Impact
 
