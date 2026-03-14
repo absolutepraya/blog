@@ -831,7 +831,7 @@ article.post {
 }
 
 .side-outline-item[data-level="2"] ~ .side-outline-item[data-level="2"] {
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .side-outline-item[data-level="3"] {
