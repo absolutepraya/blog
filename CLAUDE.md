@@ -169,7 +169,13 @@ hugo                 # Production build → public/
 hugo --minify        # Minified production build
 ```
 
-Output goes to `public/`. Site is served at `https://blog.abhipraya.dev/`.
+Output goes to `public/`. Site is deployed to Vercel at `https://blog.abhipraya.dev/`. Pushes to `main` trigger automatic deployment.
+
+```bash
+vercel ls            # List recent deployments and status
+vercel inspect <url> # Show deployment details
+vercel logs <url>    # Stream build/runtime logs
+```
 
 ## Commit Messages
 
