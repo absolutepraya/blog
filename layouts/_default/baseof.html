@@ -592,13 +592,14 @@
                 items.push({ el: item, heading: heading });
             });
 
-            // Position outline relative to .page-content
+            // Position outline centered in the left margin
             var pageContent = document.querySelector('.page-content');
             function positionOutline() {
                 if (!pageContent) return;
                 var rect = pageContent.getBoundingClientRect();
-                var gap = 24; // 1.5rem
-                var leftPos = rect.left - gap - outline.offsetWidth;
+                var marginWidth = rect.left;
+                var outlineWidth = outline.offsetWidth;
+                var leftPos = (marginWidth - outlineWidth) / 2;
                 outline.style.left = Math.max(8, leftPos) + 'px';
                 outline.style.right = 'auto';
             }
