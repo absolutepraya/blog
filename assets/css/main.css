@@ -520,7 +520,7 @@ hr {
 }
 
 /* --- Navigation --- */
-nav {
+.site-header nav {
   margin: 0;
   display: flex;
   height: 2rem;
@@ -531,12 +531,12 @@ nav {
   white-space: nowrap;
 }
 
-nav a {
+.site-header nav a {
   color: var(--text-primary);
   text-decoration: none;
 }
 
-nav a:hover {
+.site-header nav a:hover {
   color: var(--color-blue);
   text-decoration: underline;
 }
@@ -1032,7 +1032,7 @@ pre.mermaid {
     padding: 0.2rem 0.35rem;
     letter-spacing: 1px;
   }
-  nav {
+  .site-header nav {
     gap: 0.5rem;
   }
   .toggle-switch {
@@ -1100,7 +1100,7 @@ pre.mermaid {
     padding: 0.1rem 0.25rem;
     letter-spacing: 1px;
   }
-  nav {
+  .site-header nav {
     gap: 0.25rem;
   }
   .toggle-switch {
