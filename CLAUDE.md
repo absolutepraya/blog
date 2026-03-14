@@ -61,7 +61,7 @@ Post content here in standard Markdown.
 | `date` | Yes | Publish date (YYYY-MM-DD) |
 | `description` | Yes | Short summary for meta tags and previews |
 | `tags` | No | Array of tag strings |
-| `toc` | No | Enable table of contents (`true`/`false`) |
+| `toc` | No | Side outline (default: `true`). Set `false` to hide the left-side TOC on desktop |
 | `draft` | No | Set `true` to hide from production builds |
 
 ## Images
