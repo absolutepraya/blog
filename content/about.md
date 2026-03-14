@@ -3,6 +3,7 @@ title = "About"
 description = "About me"
 date = "2026-03-04"
 aliases = ["about"]
+toc = false
 +++
 
 Hi, I'm Abhip.
