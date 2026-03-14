@@ -5,3 +5,4 @@ hugo_stats.json
 .DS_Store
 docs/
 .vercel
+.superpowers/
