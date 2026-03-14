@@ -783,6 +783,57 @@ article.post {
   text-decoration: underline;
 }
 
+/* --- Side Outline (TOC) --- */
+.side-outline {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  max-width: 10rem;
+  text-align: right;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-right: 0.75rem;
+}
+
+.side-outline-track {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2px;
+  height: 100%;
+  background-color: var(--bg-secondary);
+}
+
+.side-outline-item {
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s;
+}
+
+.side-outline-item:hover {
+  color: var(--text-primary);
+}
+
+.side-outline-item.active {
+  color: var(--color-blue);
+}
+
+.side-outline-item[data-level="2"] {
+  padding-left: 0.75rem;
+}
+
+.side-outline-item[data-level="3"] {
+  padding-left: 1.5rem;
+}
+
 /* --- Related Posts --- */
 .related-posts {
   margin: 2rem 0;
@@ -963,6 +1014,12 @@ pre.mermaid svg {
 pre.mermaid {
   overflow-x: auto;
   border-radius: 4px;
+}
+
+@media (max-width: 1100px) {
+  .side-outline {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
