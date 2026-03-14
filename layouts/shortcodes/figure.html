@@ -1,0 +1,42 @@
+{{- $src := .Get "src" -}}
+{{- $alt := .Get "alt" | default "" -}}
+{{- $width := .Get "width" -}}
+{{- $height := .Get "height" -}}
+{{- $loading := .Get "loading" -}}
+{{- $link := .Get "link" -}}
+{{- $target := .Get "target" -}}
+{{- $rel := .Get "rel" -}}
+{{- $title := .Get "title" -}}
+{{- $caption := .Get "caption" -}}
+{{- $attr := .Get "attr" -}}
+{{- $attrlink := .Get "attrlink" -}}
+{{- $class := .Get "class" -}}
+
+{{- /* Compute WebP src for internal /images/ paths */ -}}
+{{- $imgSrc := $src -}}
+{{- if and (hasPrefix $src "/images/") (not (hasPrefix $src "/images/compressed/")) -}}
+  {{- $imgRel := strings.TrimPrefix "/images/" $src -}}
+  {{- $relBase := $imgRel | strings.TrimSuffix (path.Ext $imgRel) -}}
+  {{- $webpSrc := printf "/images/compressed/%s.webp" $relBase -}}
+  {{- $webpDisk := printf "static%s" $webpSrc -}}
+  {{- if fileExists $webpDisk -}}
+    {{- $imgSrc = $webpSrc -}}
+  {{- end -}}
+{{- end -}}
+
+<figure{{ with $class }} class="{{ . }}"{{ end }}>
+  {{- if $link }}
+  <a href="{{ $link }}"{{ with $target }} target="{{ . }}"{{ end }}{{ with $rel }} rel="{{ . }}"{{ end }}>
+  {{- end }}
+  <img src="{{ $imgSrc }}" alt="{{ $alt }}"{{ with $width }} width="{{ . }}"{{ end }}{{ with $height }} height="{{ . }}"{{ end }}{{ with $loading }} loading="{{ . }}"{{ end }}>
+  {{- if $link }}</a>{{ end }}
+  {{- if or $title $caption $attr }}
+  <figcaption>
+    {{- with $title }}<h4>{{ . }}</h4>{{ end }}
+    {{- with $caption }}<p>{{ . | markdownify }}</p>{{ end }}
+    {{- with $attr }}
+    <p>{{ if $attrlink }}<a href="{{ $attrlink }}">{{ end }}{{ . | markdownify }}{{ if $attrlink }}</a>{{ end }}</p>
+    {{- end }}
+  </figcaption>
+  {{- end }}
+</figure>

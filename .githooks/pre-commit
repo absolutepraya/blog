@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Pre-commit hook: convert staged PNG/JPG images to WebP
+# Install: git config core.hooksPath .githooks
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+CONVERT_SCRIPT="$REPO_ROOT/scripts/convert-images.sh"
+
+if ! command -v cwebp &>/dev/null; then
+  echo "WARNING: cwebp not installed. Skipping WebP conversion." >&2
+  echo "Install with: brew install webp" >&2
+  exit 0
+fi
+
+# Collect staged image files (added or modified) under static/images/
+# Exclude anything already in compressed/
+# Uses while-read instead of mapfile for bash 3.2 compatibility (macOS default)
+STAGED=()
+while IFS= read -r line; do
+  [[ -n "$line" ]] && STAGED+=("$line")
+done < <(
+  git diff --cached --name-only --diff-filter=AM \
+    | grep -E '^static/images/.*\.(png|jpg|jpeg)$' \
+    | grep -v '/compressed/' \
+    || true
+)
+
+if [[ ${#STAGED[@]} -eq 0 ]]; then
+  exit 0
+fi
+
+echo "Converting ${#STAGED[@]} staged image(s) to WebP..."
+
+CONVERTED_FILES=()
+for rel in "${STAGED[@]}"; do
+  abs="$REPO_ROOT/$rel"
+  if [[ -f "$abs" ]]; then
+    bash "$CONVERT_SCRIPT" "$abs"
+    # Compute WebP path: static/images/ppl/foo.png -> static/images/compressed/ppl/foo.webp
+    strip_prefix="${rel#static/images/}"
+    base="${strip_prefix%.*}"
+    webp_rel="static/images/compressed/${base}.webp"
+    if [[ -f "$REPO_ROOT/$webp_rel" ]]; then
+      CONVERTED_FILES+=("$webp_rel")
+    fi
+  fi
+done
+
+if [[ ${#CONVERTED_FILES[@]} -gt 0 ]]; then
+  git add "${CONVERTED_FILES[@]}"
+  echo "Staged ${#CONVERTED_FILES[@]} WebP file(s)."
+fi

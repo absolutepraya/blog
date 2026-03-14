@@ -1,0 +1,18 @@
+{{- $src := .Destination -}}
+{{- $alt := .Text -}}
+{{- $title := .Title -}}
+{{- if or (hasPrefix $src "http://") (hasPrefix $src "https://") (hasPrefix $src "/images/compressed/") -}}
+<img src="{{ $src }}" alt="{{ $alt }}"{{ with $title }} title="{{ . }}"{{ end }}>
+{{- else if hasPrefix $src "/images/" -}}
+  {{- $rel := strings.TrimPrefix "/images/" $src -}}
+  {{- $relBase := $rel | strings.TrimSuffix (path.Ext $rel) -}}
+  {{- $webpSrc := printf "/images/compressed/%s.webp" $relBase -}}
+  {{- $webpDisk := printf "static%s" $webpSrc -}}
+  {{- if fileExists $webpDisk -}}
+<img src="{{ $webpSrc }}" alt="{{ $alt }}"{{ with $title }} title="{{ . }}"{{ end }}>
+  {{- else -}}
+<img src="{{ $src }}" alt="{{ $alt }}"{{ with $title }} title="{{ . }}"{{ end }}>
+  {{- end -}}
+{{- else -}}
+<img src="{{ $src }}" alt="{{ $alt }}"{{ with $title }} title="{{ . }}"{{ end }}>
+{{- end -}}
