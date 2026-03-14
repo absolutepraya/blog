@@ -545,5 +545,113 @@
             });
         });
     </script>
+    <script>
+        (function() {
+            var outline = document.getElementById('side-outline');
+            if (!outline) return;
+
+            var headings = document.querySelectorAll('.post-content h1, .post-content h2, .post-content h3');
+            if (headings.length === 0) {
+                outline.style.display = 'none';
+                return;
+            }
+
+            // Build track line
+            var track = document.createElement('div');
+            track.className = 'side-outline-track';
+            outline.appendChild(track);
+
+            // Build outline items
+            var items = [];
+            headings.forEach(function(heading) {
+                var item = document.createElement('div');
+                item.className = 'side-outline-item';
+                item.setAttribute('role', 'button');
+                item.setAttribute('tabindex', '0');
+                var level = parseInt(heading.tagName.charAt(1));
+                item.setAttribute('data-level', level);
+
+                // Get heading text without anchor elements
+                var clone = heading.cloneNode(true);
+                var anchors = clone.querySelectorAll('.anchor');
+                anchors.forEach(function(a) { a.remove(); });
+                item.textContent = clone.textContent.trim();
+
+                function handleClick() {
+                    heading.scrollIntoView({ behavior: 'smooth' });
+                }
+                item.addEventListener('click', handleClick);
+                item.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleClick();
+                    }
+                });
+
+                outline.appendChild(item);
+                items.push({ el: item, heading: heading });
+            });
+
+            // Position outline relative to .page-content
+            var pageContent = document.querySelector('.page-content');
+            function positionOutline() {
+                if (!pageContent) return;
+                var rect = pageContent.getBoundingClientRect();
+                var gap = 24; // 1.5rem
+                var leftPos = rect.left - gap - outline.offsetWidth;
+                outline.style.left = Math.max(8, leftPos) + 'px';
+                outline.style.right = 'auto';
+            }
+            positionOutline();
+            window.addEventListener('resize', positionOutline);
+
+            // Track active heading with IntersectionObserver
+            var currentActive = null;
+            var visibleHeadings = new Set();
+
+            function setActive(index) {
+                if (currentActive === index) return;
+                items.forEach(function(item) { item.el.classList.remove('active'); });
+                if (index >= 0 && index < items.length) {
+                    items[index].el.classList.add('active');
+                }
+                currentActive = index;
+            }
+
+            // Default: first heading active
+            setActive(0);
+
+            function activateBottommost() {
+                var best = -1;
+                for (var i = 0; i < items.length; i++) {
+                    if (visibleHeadings.has(items[i].heading)) {
+                        best = i;
+                    }
+                }
+                if (best >= 0) {
+                    setActive(best);
+                }
+            }
+
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        visibleHeadings.add(entry.target);
+                    } else {
+                        visibleHeadings.delete(entry.target);
+                    }
+                });
+                if (visibleHeadings.size > 0) {
+                    activateBottommost();
+                }
+            }, {
+                rootMargin: '0px 0px -70% 0px'
+            });
+
+            headings.forEach(function(heading) {
+                observer.observe(heading);
+            });
+        })();
+    </script>
 </body>
 </html>
