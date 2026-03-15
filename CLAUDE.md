@@ -8,6 +8,7 @@ Hugo static site with Solarized theme (light/dark), Mermaid diagram support, dep
 content/posts/       — Blog posts (Markdown)
 content/ppl/         — PPL course blogs (part-a/, part-b/, part-c/)
 content/about.md     — About page
+content/**/notes/    — Scratch notes for drafting posts (gitignored, not rendered)
 archive/ppl/part-a/  — Archived Part A evidence-text drafts (NOT rendered by Hugo)
 static/images/             — Original images (referenced as /images/filename.png in markdown)
 static/images/compressed/  — Auto-generated WebP versions (served by Hugo render hooks)
