@@ -9,6 +9,9 @@ content/posts/       — Blog posts (Markdown)
 content/ppl/         — PPL course blogs (part-a/, part-b/, part-c/)
 content/about.md     — About page
 content/**/notes/    — Scratch notes for drafting posts (gitignored, not rendered)
+                       When asked to save/take notes for a blog post, write them here
+                       Naming: kebab-case topic slug (e.g., tdd-qa-advanced-tooling.md)
+                       Ticket prefix optional (e.g., sira-110-tdd-qa-advanced-tooling.md)
 archive/ppl/part-a/  — Archived Part A evidence-text drafts (NOT rendered by Hugo)
 static/images/             — Original images (referenced as /images/filename.png in markdown)
 static/images/compressed/  — Auto-generated WebP versions (served by Hugo render hooks)
