@@ -181,8 +181,11 @@ img, video {
 }
 
 .post-content img {
-  width: 100% !important;
+  width: auto;
+  max-width: 100%;
+  max-height: 700px;
   border-radius: 4px;
+  margin-inline: auto;
 }
 
 .img-zoom-wrap {
