@@ -8,7 +8,7 @@ Hugo static site with Solarized theme (light/dark), Mermaid diagram support, dep
 content/posts/       — Blog posts (Markdown)
 content/ppl/         — PPL course blogs (part-a/, part-b/, part-c/)
 content/about.md     — About page
-content/**/notes/    — Scratch notes for drafting posts (gitignored, not rendered)
+notes/               — Scratch notes for drafting posts (gitignored, not rendered)
                        When asked to save/take notes for a blog post, write them here
                        Naming: kebab-case topic slug (e.g., tdd-qa-advanced-tooling.md)
                        Ticket prefix optional (e.g., sira-110-tdd-qa-advanced-tooling.md)
