@@ -74,6 +74,18 @@ All 459 backend tests passed without modification. The spans are transparent wra
 - SonarQube quality gate passed after extracting the `_SPAN_DB_QUERY` constant
 - MR !106 merged to main, all CI jobs green
 
+As part of the same ticket, I also configured GlitchTip uptime monitors (SIRA-137) to track API and frontend availability:
+
+![GlitchTip Uptime Dashboard](/images/ppl/glitchtip-uptime-dashboard.png)
+
+Both monitors running green: API health checked every 60 seconds, frontend every 5 minutes. Email alerts fire on 2 consecutive failures.
+
+![API Health Monitor Detail](/images/ppl/glitchtip-uptime-api-health.png)
+
+The API health monitor shows consistent ~108ms response times with zero downtime since configuration.
+
+![Frontend Monitor Detail](/images/ppl/glitchtip-uptime-frontend.png)
+
 The clean layered architecture paid off: adding observability was a mechanical change that didn't require architectural decisions or test rewrites.
 
 ## Evidence
