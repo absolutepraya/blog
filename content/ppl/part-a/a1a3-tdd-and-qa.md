@@ -244,6 +244,20 @@ After fixing all violations and marking the one security hotspot as reviewed, th
 
 {{< figure src="/images/ppl/tdd-qa/sonarqube-no-security-hotspots.png" alt="SonarQube security hotspots reviewed" caption="All security hotspots reviewed and resolved." >}}
 
+### Quality Gates Keep Catching Things
+
+Making the quality gate blocking wasn't a one-time event. Every new feature had to pass the same bar, and the gate kept finding real issues.
+
+When we added an email template service (Jinja2 rendering for reminder emails), SonarQube flagged insufficient coverage on the new code. The service had CRUD operations, template rendering, and context variable injection, but only the happy path was tested. We added 12 tests covering edge cases: rendering with missing variables, invalid template syntax, empty templates, and concurrent template updates. Coverage on the new code went from 62% to 94%.
+
+SonarQube also caught a duplicated string literal (`"Database connection required"`) used across multiple service methods. Small thing, but it's exactly the kind of tech debt that compounds. We extracted it to a `_DB_REQUIRED` constant.
+
+[Bandit](https://bandit.readthedocs.io/) (our Python SAST tool) flagged a false positive: `B704` on `Markup()` from Jinja2. Bandit warns that `Markup()` can introduce XSS if the input is user-controlled. In our case, the input comes from sandboxed Jinja2 templates that we control, not from user input. We suppressed it with `# nosec B704` and a comment explaining why, rather than disabling the rule globally. The distinction matters: suppressing a specific instance with justification is security-aware; disabling the rule entirely is security-negligent.
+
+Email HTML templates (the `<table>` layout required for email client compatibility) had to be excluded from SonarQube analysis entirely. Email HTML is a different universe from web HTML: inline styles, table-based layout, no CSS grid or flexbox. Applying web code quality rules to email templates would flag every line as a violation. We added `apps/api/src/app/templates/**` to `sonar.exclusions`.
+
+These aren't dramatic stories. They're the unglamorous reality of quality gates: every new feature triggers a negotiation between the gate's rules and the code's context. The value isn't in the initial setup; it's in the ongoing discipline of either fixing what the gate finds or explicitly justifying why a suppression is warranted.
+
 ### Schemathesis: The API Fuzzer That Found a Real Bug
 
 [Schemathesis](https://schemathesis.readthedocs.io/) generates random HTTP requests from your OpenAPI schema and fires them at your running API. It's like property-based testing for API contracts.
@@ -266,6 +280,66 @@ api:schema-test:
 On its first real run, Schemathesis found a production bug: `GET /api/clients/` returned HTTP 500 when the encryption key didn't match the stored client data. The endpoint tried to decrypt PII fields (email, phone) and crashed with `InvalidTag` instead of gracefully handling the mismatch. The fix: return `"[encrypted]"` as a masked value and log the error, instead of crashing the entire endpoint for all users.
 
 This is a bug that no hand-written test would have found because no developer would think to test "what happens when the encryption key changes between encrypt and decrypt?" Schemathesis found it by sending random requests to every endpoint.
+
+### Hardening the Fuzzer: Seven Iterations to a Blocking Gate
+
+That initial Schemathesis setup was a starting point, not the final version. Over several weeks, the schema-test CI job went through seven iterations before it was stable enough to block merges. Each iteration was triggered by a real failure, not a theoretical concern.
+
+**Iteration 1: Timeout and orphaned processes.** The CI job hung indefinitely when Schemathesis hit a slow endpoint. The uvicorn process wasn't killed on failure, so the next job in the pipeline couldn't bind port 9999. Fix: explicit `fuser -k 9999/tcp` cleanup in `after_script`, plus a 5-minute timeout.
+
+**Iteration 2: Every endpoint returned 401.** Schemathesis was testing authenticated endpoints without credentials. Every request returned `401 Unauthorized`, which passed the `not_a_server_error` check (401 isn't a 5xx). The fuzzer was "passing" while testing nothing. Fix: generate a real JWT in CI using the Supabase JWT secret:
+
+```yaml
+# Generate a test JWT for authenticated endpoint testing
+- |
+  TOKEN=$(uv run python -c "
+  import jwt, time, os
+  token = jwt.encode({
+      'sub': os.environ['SCHEMA_TEST_AUTH_USER_ID'],
+      'email': 'schema-test@sira.internal',
+      'exp': int(time.time()) + 3600,
+      'aud': 'authenticated',
+      'role': 'authenticated',
+  }, os.environ['SUPABASE_JWT_SECRET'], algorithm='HS256')
+  print(token)
+  ")
+- uv run schemathesis run http://localhost:9999/openapi.json
+    -H "Authorization: Bearer $TOKEN"
+    --include-method GET
+    --checks not_a_server_error
+```
+
+**Iteration 3: POST/PUT/DELETE mutations corrupted test data.** Once authenticated, Schemathesis started creating, modifying, and deleting records in the database. Schema fuzzing with write methods is destructive by nature. Fix: `--include-method GET` restricts the fuzzer to read-only endpoints.
+
+**Iteration 4: UUID path parameters returned 500.** Path parameters like `/api/clients/{client_id}` accepted `string` in the OpenAPI spec. Schemathesis sent random strings like `"abc"` and `""`, which crashed the Supabase query with a PostgreSQL error (invalid UUID format). This was a real bug, not a testing artifact. Fix: change all path parameters from `str` to `UUID` in FastAPI, so invalid IDs return 422 (validation error) instead of 500:
+
+```python
+# Before: any string accepted, crashes on non-UUID
+@router.get("/{client_id}")
+async def get_client(client_id: str, ...):
+
+# After: FastAPI validates UUID format, returns 422 for invalid IDs
+@router.get("/{client_id}")
+async def get_client(client_id: UUID, ...):
+```
+
+This change touched every router (clients, invoices, staff, settings) and their corresponding test fixtures. Schemathesis found this across all four resource types simultaneously.
+
+**Iteration 5: Rate limiting blocked the fuzzer.** Our API has rate limiting middleware. Schemathesis fires 20+ requests per endpoint in rapid succession, hitting the limit and getting 429s. Fix: disable rate limiting when `ENVIRONMENT=test`, and exempt `/api/health` from rate limiting entirely.
+
+**Iteration 6: Missing table in schema test environment.** After adding a new `user_sessions` table, the schema-test environment (which connects to a shared database) didn't have the table yet. Schemathesis hit the sessions endpoint and got 500. Fix: graceful handling of missing tables with a fallback empty response instead of a crash.
+
+**Iteration 7: Blocking enforcement.** After all the above were fixed, the job was stable enough to make blocking. Removed `allow_failure: true` from the CI config. Now every MR must pass schema fuzzing before merge.
+
+Here's the before and after. The first image shows Schemathesis finding a real 500 on `GET /api/invoices/overdue` and flagging schema validation mismatches on three endpoints that accept `{client_id}`, `{invoice_id}`, and `{payment_id}` as path parameters:
+
+{{< figure src="/images/ppl/tdd-qa/schema-test-pre-fix.png" alt="Schemathesis before fixes" caption="Before: 1 failure (500 Internal Server Error on /api/invoices/overdue), 691 test cases generated, schema validation mismatches on 3 endpoints." >}}
+
+After fixing UUID validation, rate limiting, auth, and GET-only scoping:
+
+{{< figure src="/images/ppl/tdd-qa/schema-test-post-fix.png" alt="Schemathesis after fixes" caption="After: 763 test cases generated, 763 passed, 0 failures. Only informational schema validation warnings remain." >}}
+
+The key insight: **you cannot make a quality gate blocking on day one.** It took seven iterations of fixing false positives, environment issues, and real bugs before the gate was stable enough to trust. Each iteration made the gate more valuable because it eliminated a class of noise while preserving signal.
 
 ## Load Testing in CI
 
@@ -323,8 +397,8 @@ This test had been passing for weeks. Not because it was correct, but because it
 | Mutation score | untested | 0% (documented, not hidden) |
 | SonarQube violations | 31 (ignored) | 0 (enforced) |
 | Security hotspots | 1 unreviewed | 0 |
-| Blocking CI quality jobs | 0 | 3 (sonar-scan, security:sast, load-test) |
-| Informational CI quality jobs | 0 | 4 (schema-test, mutation:python, mutation:typescript, linear:notify) |
+| Blocking CI quality jobs | 0 | 4 (sonar-scan, security:sast, load-test, schema-test) |
+| Informational CI quality jobs | 0 | 3 (mutation:python, mutation:typescript, linear:notify) |
 
 The coverage number went *down* from 91% to 87.5%. That's intentional. We enabled branch coverage (which is stricter than line coverage) and excluded scaffold components that aren't wired up yet. An honest 87.5% with branch coverage is more meaningful than an inflated 91% with line-only coverage.
 
@@ -332,7 +406,7 @@ The coverage number went *down* from 91% to 87.5%. That's intentional. We enable
 
 **Coverage is a vanity metric.** It tells you what code was executed, not what code was verified. Our 91% coverage with 0% mutation score proved that executing a line and testing it are completely different things. If your team uses coverage as a quality signal, add mutation testing to see whether the signal is real.
 
-**Enforcement beats advisory.** SonarQube was analyzing our code for weeks with `allow_failure: true`. Nobody looked at the results. The moment we made it blocking, we fixed 31 violations in one day. Tools that don't block bad code from merging are tools that get ignored.
+**Enforcement beats advisory, but enforcement takes iteration.** SonarQube was analyzing our code for weeks with `allow_failure: true`. Nobody looked at the results. The moment we made it blocking, we fixed 31 violations in one day. But "make it blocking" isn't a switch you flip once. Our schema-test job went through seven iterations before it was stable enough to enforce. Each iteration removed a class of false positives while preserving the real signal. The patience to iterate on a quality gate, rather than giving up after the first false positive, is what separates teams that enforce quality from teams that measure it.
 
 **The tools that found real bugs weren't the ones we expected.** We expected Hypothesis (property-based testing) to find edge cases. It confirmed our invariants held. We expected SonarQube to find code smells. It found a JWT vulnerability. We expected k6 to find performance issues. It confirmed our latency was fine. The tool that found the most impactful bugs was Schemathesis (API fuzzing), which discovered a production crash we never would have tested for manually. And pytest-randomly, which does nothing but shuffle test order, found a real test pollution bug on its first run.
 
