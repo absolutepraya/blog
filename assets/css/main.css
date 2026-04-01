@@ -831,7 +831,7 @@ article.post {
   position: absolute;
   left: 0;
   right: 0;
-  height: 1.5rem;
+  height: 3rem;
   pointer-events: none;
   z-index: 2;
   opacity: 0;
