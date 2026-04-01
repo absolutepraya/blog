@@ -556,10 +556,15 @@
                 return;
             }
 
+            // Inner scrollable wrapper
+            var inner = document.createElement('div');
+            inner.className = 'side-outline-inner';
+            outline.appendChild(inner);
+
             // Build track line
             var track = document.createElement('div');
             track.className = 'side-outline-track';
-            outline.appendChild(track);
+            inner.appendChild(track);
 
             // Build outline items
             var items = [];
@@ -571,7 +576,6 @@
                 var level = parseInt(heading.tagName.charAt(1));
                 item.setAttribute('data-level', level);
 
-                // Get heading text without anchor elements
                 var clone = heading.cloneNode(true);
                 var anchors = clone.querySelectorAll('.anchor');
                 anchors.forEach(function(a) { a.remove(); });
@@ -588,12 +592,13 @@
                     }
                 });
 
-                outline.appendChild(item);
+                inner.appendChild(item);
                 items.push({ el: item, heading: heading });
             });
 
             // Position outline centered in the left margin
             var pageContent = document.querySelector('.page-content');
+
             function positionOutline() {
                 if (!pageContent) return;
                 var rect = pageContent.getBoundingClientRect();
@@ -603,21 +608,50 @@
                 outline.style.left = Math.max(8, leftPos) + 'px';
                 outline.style.right = 'auto';
             }
-            positionOutline();
-            window.addEventListener('resize', positionOutline);
+
+            function updateFadeState() {
+                var scrollTop = inner.scrollTop;
+                var maxScroll = inner.scrollHeight - inner.clientHeight;
+                outline.classList.toggle('show-fade-top', scrollTop > 2);
+                outline.classList.toggle('show-fade-bottom', maxScroll > 2 && scrollTop < maxScroll - 2);
+            }
 
             // Track active heading with IntersectionObserver
             var currentActive = null;
             var visibleHeadings = new Set();
+
+            function centerActiveItem(index, immediate) {
+                var maxScroll = inner.scrollHeight - inner.clientHeight;
+                if (index < 0 || index >= items.length || maxScroll <= 0) return;
+                var itemEl = items[index].el;
+                var targetTop = itemEl.offsetTop - (inner.clientHeight / 2) + (itemEl.offsetHeight / 2);
+                var clampedTop = Math.max(0, Math.min(maxScroll, targetTop));
+                if (Math.abs(inner.scrollTop - clampedTop) < 2) return;
+                inner.scrollTo({
+                    top: clampedTop,
+                    behavior: immediate ? 'auto' : 'smooth'
+                });
+                requestAnimationFrame(updateFadeState);
+            }
 
             function setActive(index) {
                 if (currentActive === index) return;
                 items.forEach(function(item) { item.el.classList.remove('active'); });
                 if (index >= 0 && index < items.length) {
                     items[index].el.classList.add('active');
+                    centerActiveItem(index, false);
                 }
                 currentActive = index;
             }
+
+            positionOutline();
+            updateFadeState();
+            window.addEventListener('resize', function() {
+                positionOutline();
+                updateFadeState();
+                if (currentActive !== null) centerActiveItem(currentActive, true);
+            });
+            inner.addEventListener('scroll', updateFadeState, { passive: true });
 
             // Default: first heading active
             setActive(0);

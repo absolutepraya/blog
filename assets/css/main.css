@@ -820,12 +820,55 @@ article.post {
   left: 0;
   transform: translateY(-50%);
   max-width: clamp(8rem, 15vw, 14rem);
+  max-height: calc(100vh - 3rem);
   text-align: left;
   z-index: 100;
+}
+
+.side-outline::before,
+.side-outline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1.5rem;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.side-outline::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--bg-primary), transparent);
+}
+
+.side-outline::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--bg-primary), transparent);
+}
+
+.side-outline.show-fade-top::before {
+  opacity: 1;
+}
+
+.side-outline.show-fade-bottom::after {
+  opacity: 1;
+}
+
+.side-outline-inner {
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: calc(100vh - 3rem);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   padding-left: 0.75rem;
+  scrollbar-width: none;
+}
+
+.side-outline-inner::-webkit-scrollbar {
+  display: none;
 }
 
 .side-outline-track {
