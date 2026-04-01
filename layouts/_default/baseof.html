@@ -596,17 +596,6 @@
                 items.push({ el: item, heading: heading });
             });
 
-            // Size track to match items (excluding padding)
-            function updateTrack() {
-                if (items.length === 0) return;
-                var firstTop = items[0].el.offsetTop;
-                var lastItem = items[items.length - 1].el;
-                var lastBottom = lastItem.offsetTop + lastItem.offsetHeight;
-                track.style.top = firstTop + 'px';
-                track.style.height = (lastBottom - firstTop) + 'px';
-            }
-            updateTrack();
-
             // Position outline centered in the left margin
             var pageContent = document.querySelector('.page-content');
 
