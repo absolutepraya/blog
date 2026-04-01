@@ -864,6 +864,8 @@ article.post {
   flex-direction: column;
   gap: 0.25rem;
   padding-left: 0.75rem;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
   scrollbar-width: none;
 }
 
