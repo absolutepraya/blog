@@ -820,7 +820,7 @@ article.post {
   left: 0;
   transform: translateY(-50%);
   max-width: clamp(8rem, 15vw, 14rem);
-  max-height: calc(100vh - 14rem);
+  max-height: calc(100vh - 6rem);
   text-align: left;
   z-index: 100;
 }
@@ -859,7 +859,7 @@ article.post {
 .side-outline-inner {
   overflow-x: hidden;
   overflow-y: auto;
-  max-height: calc(100vh - 14rem);
+  max-height: calc(100vh - 6rem);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
