@@ -323,3 +323,33 @@ Kadang satu pendekatan gak cukup, jadi kuantitatif dan kualitatif digabung.
 3. **Urutan/proses** sering keluar persis - hafalkan urutan formulasi masalah dan tahap pembuatan kuesioner
 4. **Bedakan istilah mirip**: metodologi ≠ metode, narrative review ≠ SLR, internal ≠ external validity, kuantitatif ≠ kualitatif
 5. **Trap questions yang sering muncul**: IEEE (bukan Scopus) untuk CS, Ethical bukan metodologi, mind map bukan untuk makalah, "membaca artikel sambil menulis" bukan cara hindari plagiarisme
+
+---
+
+## Referensi
+
+### Slide Kuliah (Minggu 1-7)
+
+| Minggu | File | Link |
+|--------|------|------|
+| 1 | What is Research in SI/TI | [Download](https://cloud.abhipraya.dev/s/WwFe642Y7TtHaCG) |
+| 2 | Logical Thinking & Problem Identification | [Download](https://cloud.abhipraya.dev/s/Qgz4W27BkbiE9zF) |
+| 3 | Writing Techniques, Paragraph Development & Critique Paper | [Download](https://cloud.abhipraya.dev/s/ay26Y5Nkgb3fGDe) |
+| 4 | Literature Review & Plagiarism (rev. 02/03/2026) | [Download](https://cloud.abhipraya.dev/s/kdBjjz9dm836osH) |
+| 5 | Research Design & Statistical Analysis | [Download](https://cloud.abhipraya.dev/s/H9cJeXBWHZKbAEQ) |
+| 6 | Survey Research | [Download](https://cloud.abhipraya.dev/s/Y2op7ZtSBqEEFbe) |
+| 7 | Qualitative Research (update 2026) | [Download](https://cloud.abhipraya.dev/s/WpMJDFzrwSJJN2y) |
+
+Semua materi kuliah: [Folder Materials](https://cloud.abhipraya.dev/s/emEwB8bCpYjPy56)
+
+### Soal Quiz Tahun Lalu
+
+| File | Link |
+|------|------|
+| Quiz 1 (Gasal 2022/2023) | [Download](https://cloud.abhipraya.dev/s/FPaw3ytJE24GnEe) |
+| Quiz 1 MPPI (versi lain) | [Download](https://cloud.abhipraya.dev/s/JmYALboB8TLHcMn) |
+| Kuis 1 MPPI Genap 2022/2023 | [Download](https://cloud.abhipraya.dev/s/247eGyjrMaPESA7) |
+| Quiz Online 1 Kelas B (Genap 2017/2018) | [Download](https://cloud.abhipraya.dev/s/72eAbWkTamsZLEB) |
+| Quiz 2 MPPI Genap 2022/2023 | [Download](https://cloud.abhipraya.dev/s/xyJ45AYtFmrPzxs) |
+
+Semua soal quiz: [Folder Referensi Quiz 1](https://cloud.abhipraya.dev/s/QdB5m9Lxq2oxko9)
