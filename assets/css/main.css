@@ -889,6 +889,7 @@ article.post {
   overflow: hidden;
   text-overflow: ellipsis;
   transition: color 0.2s;
+  flex-shrink: 0;
 }
 
 .side-outline-item:hover {
