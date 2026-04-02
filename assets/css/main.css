@@ -875,8 +875,8 @@ article.post {
 
 .side-outline-track {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 2rem;
+  bottom: 2rem;
   left: 0;
   width: 2px;
   background-color: var(--bg-secondary);
