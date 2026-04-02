@@ -9,15 +9,16 @@ toc: true
 
 ## Overview
 
-Sprint 2 Week 1 (Mar 24 to 30) output summary:
+Sprint 2, Week 1 (Mar 24 to Apr 2) output summary:
 
 | Metric | Count |
 |--------|-------|
-| MRs authored and merged | 8 |
+| MRs authored and merged | 13 |
 | MRs reviewed (in-depth, threaded) | 2 |
 | MRs merged as maintainer | 6+ (from teammates) |
-| Commits (across all branches) | 70+ |
-| Domains covered | 7 (CI/CD, infra, backend, frontend, database, DevOps tooling, email) |
+| Commits (across all branches) | 100+ |
+| Domains covered | 9 (CI/CD, infra, backend, frontend, database, DevOps tooling, email, SonarQube, Supabase staging) |
+| Linear tickets created | 10 (2 CI tickets + 8 BDD subtasks) |
 
 ---
 
@@ -118,11 +119,29 @@ This was built end-to-end by one person in one sprint week, including the schema
 
 ---
 
+### Extended CI/CD Session (Apr 1 to 2)
+
+A two-day session focused on CI reporting infrastructure and schema-test reliability:
+
+| MR | Type | Description |
+|----|------|-------------|
+| !126 | feat | CI report comments on MRs (ci-report.sh, 8 subcommands) |
+| !129 | feat | BDD report extraction and MR comment |
+| !131 | feat | SIRA Bot token for CI comments |
+| !132 | feat | SonarQube quality gate report |
+| !138 | feat | Staging Supabase for schema-test |
+
+The staging Supabase ticket (SIRA-224) went through **10 debugging iterations**: sudo permissions, URL encoding, wrong pooler hostname, IPv6 vs IPv4, stderr redirect hangs, auth_user_id FK constraints, RLS permission denied, PostgREST role grants. Each iteration was a push, watch CI, diagnose, fix, push cycle.
+
+Additionally created 8 BDD coverage expansion tickets (SIRA-232 to SIRA-239) with detailed acceptance criteria and scenario lists for team members.
+
+---
+
 ## Discipline
 
 - Hadir tepat waktu di kelas dan meetings
 - Responsive to team issues in Discord throughout the week
-- Conventional commits consistently followed across all 8 MRs
+- Conventional commits consistently followed across all 13 MRs
 - All MRs include proper Linear ticket codes in titles
 
 ---
@@ -130,7 +149,7 @@ This was built end-to-end by one person in one sprint week, including the schema
 ## Evidence
 
 ### All MRs Authored
-- [!107](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/107), [!108](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/108), [!110](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/110), [!111](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/111), [!112](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/112), [!116](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/116), [!119](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/119), [!120](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/120)
+- [!107](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/107), [!108](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/108), [!110](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/110), [!111](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/111), [!112](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/112), [!116](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/116), [!119](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/119), [!120](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/120), [!126](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/126), [!129](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/129), [!131](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/131), [!132](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/132), [!138](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/138)
 
 ### MR Reviews (threaded discussions)
 - [!109](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/109): 16 issues on blue/green deployment

@@ -385,20 +385,159 @@ def _clean_access_logger() -> Iterator[None]:
 
 This test had been passing for weeks. Not because it was correct, but because it happened to run before the test that polluted the logger. pytest-randomly costs zero configuration (install it and it activates automatically) and found a real bug in under a second.
 
+## Making Quality Visible: Automated CI Reporting
+
+All these testing layers are useless if reviewers have to dig through CI logs to see the results. We built `ci-report.sh`, a shared bash script (450+ lines, 8 subcommands) that posts formatted markdown comments on every MR with results from each CI job: test counts, coverage percentage, build sizes, security audit results, BDD scenario pass/fail, and SonarQube quality gate status. A dedicated bot account (`@sirabot`) posts the comments so it's immediately clear which feedback is automated vs human.
+
+### The Design: Green Collapses, Red Expands
+
+The key UX decision was **status-based collapsible comments**. When a job passes, the comment is collapsed into a single summary line using HTML `<details>/<summary>`. When something fails or warns, the comment expands to show the full diagnostic table. This keeps MR comment sections clean (no noise from passing jobs) while making failures impossible to miss.
+
+```bash
+# Each parser determines its own status
+local is_green=true
+[ -n "$failed" ] && [ "$failed" != "0" ] && is_green=false
+
+# Status emoji: 🟢 green, 🟡 yellow (warnings), 🔴 red (failures)
+local status_icon="🟢"
+[ "$is_green" = false ] && status_icon="🔴"
+
+if [ "$is_green" = true ]; then
+  # Collapsed: one-liner summary, expandable on click
+  echo "<details>"
+  echo "<summary>${status_icon} <b>API Tests</b> — 554 passed, 91% coverage</summary>"
+  echo "$table"
+  echo "</details>"
+else
+  # Expanded: full table visible, reviewer can't miss it
+  echo "${status_icon} <b>API Tests</b> — 550 passed, 4 failed"
+  echo "$table"
+fi
+```
+
+We went through three design iterations before landing on this pattern. The first version posted one comment per job (5 to 8 separate comments per MR). Reviewers said it was too noisy. The second version consolidated everything into a single comment, but that meant waiting for the slowest job to finish before posting anything, delaying feedback. The final version returned to per-job comments but with collapsing, giving fast feedback with minimal noise.
+
+### Parsing CI Output is Harder Than It Looks
+
+Each CI tool outputs results in a different format. pytest prints `554 passed, 2 warnings in 41.72s`. vitest prints `Tests  344 passed (344)` with multiple spaces for alignment. Vite build output uses unicode `│` (U+2502) separators. Schemathesis changed its output format between v3 and v4. Each parser needed its own regex.
+
+The worst bug was invisible for a full CI run: `tee` captures raw terminal output including ANSI escape codes (`\e[32m` for green text, `\e[0m` for reset). What looks like `dist/index.html` in the terminal is actually `\e[2mdist/\e[22m\e[32mindex.html\e[39m` in the captured file. Every regex silently failed until we added a `strip_ansi()` function:
+
+```bash
+strip_ansi() {
+  sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' "$1"
+}
+```
+
+This is a transferable lesson: if you're piping CI tool output through `tee` for post-processing, always strip ANSI codes before parsing. The terminal renders them invisibly, but they break every regex and string match.
+
+### SonarQube Quality Gate Reporting
+
+SonarQube already ran in CI and enforced our 85% coverage threshold. But reviewers had to navigate to the SonarQube dashboard to see the full quality gate status. We added automated MR comments that parse the quality gate API response and post a table with every metric, its value, the threshold, and pass/fail status.
+
+The implementation revealed an access limitation: the SonarQube `measures/component` API (which returns overall project coverage) requires "Browse" permission that our CI token doesn't have. Instead of requesting elevated permissions, we fetch both the PR quality gate (which only shows conditions relevant to changed code) and the main branch quality gate (which has all conditions including coverage), then merge them. PR conditions take priority; main branch fills the gaps:
+
+```python
+# Merge PR and main branch quality gate conditions
+pr_keys = {c['metricKey'] for c in pr_conditions}
+conditions = list(pr_conditions)
+for c in main_conditions:
+    if c['metricKey'] not in pr_keys:
+        c['_from_main'] = True  # Label as informational
+        conditions.append(c)
+```
+
+### Pipeline Status Granularity
+
+GitLab CI jobs traditionally show binary green/red. We added a third state using `allow_failure: exit_codes: [77]`, which makes exit code 77 show as yellow/orange (warning) while exit 1 stays red (failure). This maps semantic meaning to pipeline colors:
+
+| Exit Code | Pipeline Color | Meaning |
+|-----------|---------------|---------|
+| 0 | 🟢 Green | Clean pass |
+| 77 | 🟡 Yellow | Passed with warnings (non-blocking) |
+| 1 | 🔴 Red | Failed (blocks merge) |
+
+The `security:sast` job uses this to distinguish severity: moderate npm vulnerabilities get yellow (you should know, but it won't block you), while critical/high get red (fix before merging). The implementation parses `pnpm audit --json` output with Python to count vulnerabilities by severity:
+
+```bash
+CRITICAL=$(echo "$AUDIT_OUTPUT" | python3 -c "
+  import json, sys
+  d = json.load(sys.stdin)
+  print(sum(1 for v in d.get('advisories',{}).values()
+            if v.get('severity')=='critical'))
+" 2>/dev/null || echo 0)
+
+if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+  exit 1   # Red: block the merge
+elif [ "$MODERATE" -gt 0 ]; then
+  exit 77  # Yellow: warning, don't block
+fi
+```
+
+This granularity means reviewers see meaningful pipeline colors instead of "everything is green because we set `allow_failure: true` everywhere."
+
+### Staging Supabase for Schema Testing
+
+Schema tests against production Supabase meant every feature branch with a new migration would fail, because the migration hadn't been applied to prod yet. The `allow_failure: true` band-aid hid this by making all failures yellow, including real API bugs.
+
+We created a dedicated free-tier staging Supabase project. Before each schema-test run, the CI job performs a full database reset:
+
+```bash
+# 1. Drop and recreate the public schema
+psql -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"
+
+# 2. Set default privileges BEFORE migrations (so tables inherit grants)
+psql -c "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+         GRANT ALL ON TABLES TO anon, authenticated, service_role;"
+
+# 3. Apply ALL migrations (including the branch's new ones)
+for f in $(ls -1 supabase/migrations/*.sql | sort); do
+  psql -f "$f" -v ON_ERROR_STOP=1
+done
+
+# 4. Seed test data + create auth user for JWT validation
+psql -f supabase/seed.sql
+psql -c "INSERT INTO auth.users (...) VALUES (...) ON CONFLICT DO NOTHING"
+```
+
+The `ALTER DEFAULT PRIVILEGES` before migrations is critical. Without it, tables created by migrations inherit no grants, and PostgREST (Supabase's REST API layer) can't access them. This was a non-obvious failure mode: the tables existed, the data was seeded, but every API call returned "permission denied for table clients" because the PostgREST roles (`anon`, `authenticated`, `service_role`) had no access.
+
+A `resource_group: schema-staging` serializes these jobs across all MR pipelines. Without it, two concurrent pipelines could corrupt each other's staging database (one resets while the other is mid-test). GitLab's resource group acts as a mutex: only one schema-test runs at a time, others queue.
+
+The result: 710 test cases generated, 710 passed, zero server errors. Feature branches with new migrations now pass schema testing for the first time.
+
+### Scaling BDD Coverage
+
+The initial 13 BDD scenarios covered 3 domains (invoice creation, overdue detection, payment recording). We analyzed the full application and found 7 uncovered domains:
+
+| Domain | Endpoints | BDD Scenarios |
+|--------|:---------:|:-------------:|
+| Invoices | 8 | 4 (creation only) |
+| Overdue Detection | (worker) | 5 ✅ |
+| Payments | 4 | 4 ✅ |
+| Clients | 5 | 0 |
+| Risk Scoring | 1 | 0 |
+| Reminders | 2 | 0 |
+| Auth/Sessions | 5 | 0 |
+| Settings/Templates | 4 | 0 |
+
+We created 8 tickets with detailed Gherkin scenario lists (39 new scenarios total), distributed as subtasks under the relevant PBIs for team members to implement. A dedicated `api:bdd` CI job now runs BDD tests separately and posts a per-feature pass/fail table on each MR, making behavioral test coverage visible to every reviewer.
+
 ## The Final Numbers
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Total tests | 633 | 686 (+53) |
-| Backend tests | 433 | 459 (+26) |
-| Frontend tests | 200 | 227 (+27) |
+| Total tests | 633 | 898 (+265) |
+| Backend tests | 433 | 554 (+121) |
+| Frontend tests | 200 | 344 (+144) |
 | Test types | 1 (unit) | 6 (unit, property, BDD, schema, load, mutation) |
-| Coverage | 91% line | 87.5% line+branch (enforced at 85%) |
+| Coverage | 91% line | 91% line+branch (enforced at 85%) |
 | Mutation score | untested | 0% (documented, not hidden) |
 | SonarQube violations | 31 (ignored) | 0 (enforced) |
 | Security hotspots | 1 unreviewed | 0 |
-| Blocking CI quality jobs | 0 | 4 (sonar-scan, security:sast, load-test, schema-test) |
-| Informational CI quality jobs | 0 | 3 (mutation:python, mutation:typescript, linear:notify) |
+| BDD scenarios | 0 | 13 (39 more planned) |
+| Blocking CI quality jobs | 0 | 5 (sonar-scan, security:sast, load-test, schema-test, api:bdd) |
+| CI report comments per MR | 0 | 8 (tests, build, schema, security, BDD, sonar, linear) |
 
 The coverage number went *down* from 91% to 87.5%. That's intentional. We enabled branch coverage (which is stricter than line coverage) and excluded scaffold components that aren't wired up yet. An honest 87.5% with branch coverage is more meaningful than an inflated 91% with line-only coverage.
 

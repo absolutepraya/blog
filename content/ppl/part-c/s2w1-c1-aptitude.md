@@ -136,6 +136,44 @@ Iterated on the Schemathesis CI job through seven rounds of fixes (detailed in t
 
 ---
 
+## 7. CI Reporting System (450+ Lines of Bash)
+
+Built `ci-report.sh` from scratch: a shared bash script with 8 subcommands that parses output from pytest, vitest, vite build, schemathesis, bandit, pnpm audit, pytest-bdd, and SonarQube. Each parser extracts metrics from raw CI output and posts a formatted markdown table as an MR comment.
+
+Key technical challenges solved:
+- **ANSI escape code stripping**: `tee` captures raw terminal output with color codes (`\e[32m`). All regex parsing silently failed until I wrote `strip_ansi()` using `sed 's/\x1b\[[0-9;]*[a-zA-Z]//g'`
+- **SonarQube API exploration**: the `measures/component` endpoint returned 403 (insufficient privileges), so I designed a dual quality-gate fetch (PR gate + main branch gate) to show full metrics
+- **Green/red collapsible UX**: HTML `<details>/<summary>` for passing results, expanded tables for failures
+
+**Evidence:**
+- [MR !126](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/126), [MR !132](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/132)
+- [Linear SIRA-228](https://linear.app/ppl-sira/issue/SIRA-228), [SIRA-231](https://linear.app/ppl-sira/issue/SIRA-231)
+
+---
+
+## 8. PostgreSQL Connection Debugging
+
+Connecting the CI runner to a staging Supabase project required solving a chain of infrastructure problems:
+- **IPv4 vs IPv6**: Supabase direct connections are IPv6 only; VPS has no IPv6. Solution: use the Supavisor pooler (IPv4)
+- **Pooler hostname**: documentation showed `aws-0-ap-southeast-1` but the actual host was `aws-1-ap-northeast-1` (different region numbering)
+- **Password URL encoding**: special characters (`#`, `%`) in the DB password broke connection strings. Solution: `PGPASSWORD` env var instead of embedding in URL
+- **PostgREST role grants**: after `DROP SCHEMA public CASCADE`, the `anon`/`authenticated`/`service_role` roles lose all table permissions. Fixed with `ALTER DEFAULT PRIVILEGES` before running migrations
+
+**Evidence:**
+- [MR !138](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/138)
+- [Linear SIRA-224](https://linear.app/ppl-sira/issue/SIRA-224)
+
+---
+
+## 9. VPS Resource Analysis
+
+Diagnosed OOM crashes on the 3.8GB VPS by mapping memory usage per process: Docker containers (~147MB total), dockerd (287MB), gitlab-runner (38MB). Found stale blue/green deployment containers consuming ~1GB unnecessarily. Drafted an upgrade proposal with specific recommendations (8GB RAM, 40GB disk).
+
+**Evidence:**
+- SSH session logs, `docker stats`, `free -h`, `ps aux --sort=-%mem`
+
+---
+
 ## Evidence
 
 - [MR !107](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/107): schema-test timeout and hardening

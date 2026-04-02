@@ -125,6 +125,32 @@ Continued managing the Linear board this sprint:
 
 ---
 
+## 5. BDD Coverage Planning for the Team
+
+Analyzed BDD test coverage and found only 3 of 10 application domains had behavioral tests (13 scenarios total). Created 8 detailed subtask tickets (SIRA-232 to SIRA-239), each with:
+- Gherkin scenario lists (4 to 6 scenarios per ticket)
+- Target file paths for feature files and step definitions
+- Acceptance criteria
+
+These were distributed as subtasks under the respective PBIs so team members can pick them up. The planned 39 new scenarios would bring BDD coverage from 3 domains to 11 domains.
+
+**Evidence:**
+- [Linear SIRA-232](https://linear.app/ppl-sira/issue/SIRA-232) through [SIRA-239](https://linear.app/ppl-sira/issue/SIRA-239)
+
+---
+
+## 6. CI Bot and Notification Redesign
+
+Set up @sirabot, a dedicated GitLab account for CI comments, so automated feedback appears as bot-authored (not from a personal account). This makes it immediately clear which MR comments are automated vs human.
+
+Redesigned the Linear notification comment from plain text to a structured collapsible table with Code, Title, and Status columns, fetching issue titles via the Linear GraphQL API. Reviewers can see which tickets are linked without expanding the comment.
+
+**Evidence:**
+- [MR !131](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/131) (bot token)
+- [MR !126](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/126) (Linear table format)
+
+---
+
 ## Evidence
 
 ### MR Reviews (as discussion threads)
