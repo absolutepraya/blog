@@ -1266,3 +1266,14 @@ pre.mermaid {
     margin-inline: -0.75rem;
   }
 }
+
+/* --- KaTeX math rendering --- */
+.katex {
+  color: var(--text-primary);
+  font-size: 1.1em;
+}
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+}

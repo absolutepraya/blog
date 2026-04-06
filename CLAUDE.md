@@ -66,6 +66,7 @@ Post content here in standard Markdown.
 | `description` | Yes | Short summary for meta tags and previews |
 | `tags` | No | Array of tag strings |
 | `toc` | No | Side outline (default: `true`). Set `false` to hide the left-side TOC on desktop |
+| `math` | No | Set `true` to enable LaTeX math rendering via KaTeX |
 | `draft` | No | Set `true` to hide from production builds |
 
 ## Images
@@ -104,6 +105,27 @@ Markdown source always references the original PNG path. Hugo rewrites it to Web
 **Requires:** `cwebp` (`brew install webp`). If missing, the hook warns and skips (commit still proceeds).
 
 **Bulk convert all images:** `bash scripts/convert-images.sh`
+
+## LaTeX / Math
+
+Enable math rendering by adding `math: true` to the post's front matter. KaTeX loads via CDN only on pages that need it.
+
+### Syntax
+
+- **Inline math:** `\(E = mc^2\)` renders inline with text
+- **Block math (display):** Use `$$...$$` or `\[...\]` on its own line:
+
+```markdown
+$$
+\int_0^\infty e^{-x}\, dx = 1
+$$
+```
+
+### Notes
+
+- Delimiters are handled by Hugo's Goldmark passthrough extension, so underscores and backslashes inside math are preserved correctly.
+- KaTeX inherits Solarized text color and works in both light and dark mode.
+- Do not use `$...$` for inline math (not enabled to avoid conflicts with literal dollar signs).
 
 ## Mermaid Diagrams
 
