@@ -155,7 +155,7 @@ One technical hurdle: pytest-bdd doesn't support `async` step functions. Our ser
 
 ## Mutation Testing: The Uncomfortable Truth
 
-This is where our confidence shattered.
+This is where our confidence shattered, and then slowly rebuilt.
 
 [Mutation testing](https://mutmut.readthedocs.io/) works by introducing small, deliberate bugs ("mutants") into your source code:
 
@@ -166,16 +166,16 @@ This is where our confidence shattered.
 
 Then it runs your test suite. If tests **fail**, the mutant is "killed" (good; your tests caught the bug). If tests **still pass**, the mutant "survived" (bad; your tests didn't notice a behavioral change).
 
-We ran [mutmut](https://github.com/boxed/mutmut) against our service layer (`src/app/services/`). The results:
+We ran [mutmut](https://github.com/boxed/mutmut) against our service layer (`src/app/services/`). The initial results were brutal:
 
 | Metric | Count |
 |--------|-------|
 | Mutants killed | 0 |
-| Mutants survived | 168 |
-| No covering tests | 133 |
+| Mutants survived | 272 |
+| No covering tests | 492 |
 | **Mutation score** | **0%** |
 
-Zero. Out of 168 mutants injected into our payment service, invoice service, and client service, not a single one was caught by our tests. We had 91% line coverage. Every line was executed. But the tests were verifying mock behavior, not real service logic.
+Zero. Out of 764 mutants across our entire service layer, not a single one was caught by our tests. We had 91% line coverage. Every line was executed. But the tests were verifying mock behavior, not real service logic.
 
 ### Why Mock-Heavy Tests Fail Mutation Testing
 
@@ -194,15 +194,63 @@ When mutmut changes `payment_service.py` (for example, changing `>=` to `>` in t
 
 This is the fundamental limitation of mock-heavy testing: **you're testing the contract between your code and your mocks, not the actual behavior of your code.**
 
-The fix isn't to abandon mocks (they're necessary for fast, isolated unit tests). It's to complement them with integration tests that use a real database, where mutations in the service layer would actually affect the query results and cause tests to fail.
+### The Fix: Exact Value Assertions
 
-### What We Learned
+The first instinct was "write integration tests with a real database." We did that: 129 integration tests hitting a real Supabase instance, covering every service method with meaningful assertions. But here's the twist: **mutmut couldn't use them**.
 
-We deliberately chose not to chase a higher mutation score by writing more mock-based tests. That would be gaming the metric. Instead, we documented the 0% score as evidence that:
+Mutmut copies your source code to a `mutants/` directory and uses function-level tracing to map which tests touch which functions. Integration tests that go through the full request lifecycle (router → service → DB queries → database) don't get mapped to the mutated service functions because the tracing doesn't follow across module boundaries in the copied directory.
 
-1. Line coverage is a vanity metric without mutation testing to validate it
-2. Our next testing investment should be integration tests with a real database
-3. The 85% coverage threshold we enforce is meaningful *because* we know its limitations
+The actual fix was simpler than expected: **write unit tests with exact value assertions instead of existence checks.**
+
+```python
+# BAD: mutant survives because we only check existence
+assert result.error is not None
+
+# GOOD: mutant dies because the exact string must match
+assert result.error == "Invalid email address"
+```
+
+```python
+# BAD: mock returns canned data, mutation doesn't affect outcome
+mock_db.return_value = {"status": "PAID"}
+result = await service.create(data)
+assert result is not None  # proves nothing
+
+# GOOD: test the actual logic path with exact assertions
+result = PaymentService._to_response(
+    record_with_nested_invoice, invoice_number=""
+)
+assert result.invoice_number == "INV-NESTED"  # tests the fallback chain
+```
+
+The key insight: you don't need a real database to kill mutations. You need tests that **verify exact output values**, not just that something was returned. A test that asserts `result.invoice_number == "INV-NESTED"` will fail if mutmut changes the fallback logic, even with mocked data.
+
+### What We Targeted
+
+We mapped every surviving mutant to its service and wrote targeted tests:
+
+| Service | Before | After | Key mutations killed |
+|---------|:------:|:-----:|---------------------|
+| `email_service` | 62 survived | 27 survived | Status code check (`== 200`), error message extraction, request payload structure |
+| `staff_service` | 133 untested | 45 survived | Create/update/delete with auth rollback, email conflict detection, helper functions |
+| `email_template_service` | 6 survived | 3 survived | Currency formatting, date formatting, variable rendering |
+| `invoice_service` | 8 survived | 6 survived | Boundary conditions (`<` vs `<=`), status string comparisons |
+| `session_service` | 2 survived | 2 survived | User agent parsing "Unknown" fallback |
+| `payment_service` | 1 survived | 0 survived | `_to_response` invoice number fallback chain |
+
+The total went from 764 mutants (492 untested, 272 survived) down to 85 survived with zero untested. That's not a high kill rate yet, but it's a fundamentally different position: every service function is now covered by tests that make specific assertions, and the remaining survivors are in code paths that genuinely need more granular testing.
+
+### Why Mutation Testing is Non-Negotiable
+
+After this journey, we're convinced that mutation testing belongs in every project's quality pipeline, even if the initial score is embarrassing. Here's why:
+
+1. **It's the only metric that measures test quality, not test quantity.** Coverage tells you what code was executed. Mutation testing tells you what code was *verified*.
+
+2. **It exposes weak assertion patterns instantly.** Every `assert result is not None` in your codebase is a survived mutant waiting to happen. Mutation testing forces you to write assertions that actually check values.
+
+3. **It catches real bugs.** When mutmut changes `>=` to `>` in your payment threshold check and your tests still pass, that means a real off-by-one bug in that exact location would also go unnoticed. The surviving mutants aren't theoretical; they're specific lines where your tests provide zero protection.
+
+4. **It changes how you write tests going forward.** Once you've seen a 0% mutation score, you never write `assert result is not None` again. Every new test gets exact value assertions because you know mutmut is watching.
 
 ## The Quality Gate That Actually Blocks Bad Code
 
@@ -527,26 +575,30 @@ We created 8 tickets with detailed Gherkin scenario lists (39 new scenarios tota
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Total tests | 633 | 898 (+265) |
-| Backend tests | 433 | 554 (+121) |
-| Frontend tests | 200 | 344 (+144) |
-| Test types | 1 (unit) | 6 (unit, property, BDD, schema, load, mutation) |
+| Total tests | 633 | 1022 (+389) |
+| Backend unit tests | 433 | 522 (+89) |
+| Backend integration tests | 0 | 129 |
+| Frontend tests | 200 | 371 (+171) |
+| Test types | 1 (unit) | 7 (unit, integration, property, BDD, schema, load, mutation) |
 | Coverage | 91% line | 91% line+branch (enforced at 85%) |
-| Mutation score | untested | 0% (documented, not hidden) |
+| Mutation score (Python) | untested | improving (0 untested, 85 survived, actively reducing) |
+| Mutation score (TypeScript) | untested | 69% ([Stryker](https://stryker-mutator.io/)) |
 | SonarQube violations | 31 (ignored) | 0 (enforced) |
 | Security hotspots | 1 unreviewed | 0 |
 | BDD scenarios | 0 | 13 (39 more planned) |
 | Blocking CI quality jobs | 0 | 5 (sonar-scan, security:sast, load-test, schema-test, api:bdd) |
-| CI report comments per MR | 0 | 8 (tests, build, schema, security, BDD, sonar, linear) |
+| CI report comments per MR | 0 | 9 (API tests, integration tests, web tests, build, schema, security, BDD, sonar, linear) |
 
-The coverage number went *down* from 91% to 87.5%. That's intentional. We enabled branch coverage (which is stricter than line coverage) and excluded scaffold components that aren't wired up yet. An honest 87.5% with branch coverage is more meaningful than an inflated 91% with line-only coverage.
+The coverage number went *down* from 91% to 87.5%. That's intentional. We enabled branch coverage (which is stricter than line coverage) and excluded scaffold components that aren't wired up yet. An honest 87.5% with branch coverage is more meaningful than an inflated 91% with line-only coverage. Integration test coverage now feeds into SonarQube alongside unit test coverage, so replacing a mock-based test with an integration test no longer drops the reported coverage.
 
 ## What I Learned
 
-**Coverage is a vanity metric.** It tells you what code was executed, not what code was verified. Our 91% coverage with 0% mutation score proved that executing a line and testing it are completely different things. If your team uses coverage as a quality signal, add mutation testing to see whether the signal is real.
+**Coverage is a vanity metric without mutation testing.** It tells you what code was executed, not what code was verified. Our 91% coverage with 0% mutation score proved that executing a line and testing it are completely different things. If your team uses coverage as a quality signal, add mutation testing to see whether the signal is real.
+
+**The fix for bad tests isn't more tests; it's better assertions.** When we saw 0% mutation score, the instinct was "write more tests." But adding 129 integration tests with real database calls didn't move the mutation score at all because of how mutmut traces test coverage. What actually worked was going back to existing tests and changing `assert result is not None` to `assert result.error == "Invalid email address"`. Exact value assertions are the cheapest, highest-impact improvement you can make to any test suite.
 
 **Enforcement beats advisory, but enforcement takes iteration.** SonarQube was analyzing our code for weeks with `allow_failure: true`. Nobody looked at the results. The moment we made it blocking, we fixed 31 violations in one day. But "make it blocking" isn't a switch you flip once. Our schema-test job went through seven iterations before it was stable enough to enforce. Each iteration removed a class of false positives while preserving the real signal. The patience to iterate on a quality gate, rather than giving up after the first false positive, is what separates teams that enforce quality from teams that measure it.
 
 **The tools that found real bugs weren't the ones we expected.** We expected Hypothesis (property-based testing) to find edge cases. It confirmed our invariants held. We expected SonarQube to find code smells. It found a JWT vulnerability. We expected k6 to find performance issues. It confirmed our latency was fine. The tool that found the most impactful bugs was Schemathesis (API fuzzing), which discovered a production crash we never would have tested for manually. And pytest-randomly, which does nothing but shuffle test order, found a real test pollution bug on its first run.
 
-**Don't chase coverage numbers.** We deliberately set our threshold at 85%, not 95%. Mutation testing proved that coverage percentage is disconnected from test quality. Our next investment should be integration tests with a real database (which would actually catch mutations), not more mock-based unit tests that inflate the coverage number without improving confidence.
+**Don't wait for a "good" mutation score to start.** Our first run was 0%. That's fine. The act of running mutation testing changed how we write every test going forward. Even before the score improved, we stopped writing `assert result is not None` and started writing `assert result.error == "Invalid email address"`. The tool's value isn't in the number; it's in the discipline it forces on your assertion patterns.
