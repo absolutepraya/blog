@@ -442,6 +442,168 @@ int main() {
 
 ---
 
+## PR1: Pemrograman MPI di Cluster dan Multicore
+
+PR1 adalah tugas praktik utama di ProgPar - kita mengimplementasikan program paralel dengan MPI, menjalankannya di dua lingkungan berbeda, dan menganalisis hasilnya. Bagian ini penting karena soal esai kemungkinan besar berkaitan dengan apa yang kita kerjakan di PR1.
+
+### Dua Lingkungan Eksperimen
+
+Semua eksperimen dijalankan di dua environment untuk membandingkan performa:
+
+| | Lingkungan A - Cluster | Lingkungan B - Multicore |
+|---|---|---|
+| **Tipe** | Multi-node (banyak mesin) | Single node (satu mesin banyak core) |
+| **Jumlah core** | 6 nodes x 8 cores = 48 cores | 64 cores |
+| **Cara menjalankan** | `sbatch` (submit ke SLURM queue) | `mpirun -np N` (langsung) |
+| **Komunikasi antar proses** | Lewat jaringan (network) - lambat | Lewat shared memory - cepat |
+| **Perintah run** | `srun --mpi=pmix -n N` | `mpirun -np N` |
+
+> **Kenapa dua lingkungan?** Supaya kita bisa membandingkan **overhead komunikasi**. Di cluster, komunikasi antar node lewat jaringan (lambat). Di multicore, semua proses ada di satu mesin (shared memory, cepat).
+
+### Topik 1 PR1: Hello World MPI
+
+Ini program MPI paling basic - setiap proses mencetak "Hello World" beserta rank-nya.
+
+- Dijalankan dengan NP = 2, 4, 8, 16, 32
+- **Temuan utama**: urutan output **TIDAK konsisten** antar-run
+- Kenapa? Karena proses MPI berjalan **paralel** dan OS scheduler menentukan urutan eksekusi secara **non-deterministik**
+- Di cluster, ranks terbagi per node (misal rank 0-7 di node-01, rank 8-15 di node-03), tapi urutan dalam node tetap acak
+- Di multicore, semua ranks ada di satu mesin
+
+**Konsep yang dibuktikan:** paralelisme = non-deterministic execution order.
+
+### Topik 2 PR1: Perkalian Matriks Paralel
+
+Dua sub-tugas: Matrix-Vector (Mat x Vec) dan Matrix-Matrix (Mat x Mat). Format hasil: **(waktu komputasi / waktu komunikasi)** dalam detik.
+
+**Strategi paralel (row-wise distribution):**
+
+1. Root process generate matriks A dan vektor/matriks B (`srand(42)` untuk reproducibility)
+2. `MPI_Scatter` - bagi baris-baris A ke semua proses (setiap proses dapat `N/NP` baris)
+3. `MPI_Bcast` - broadcast B ke semua proses (semua butuh B lengkap)
+4. Setiap proses hitung perkalian lokal (baris A lokal x B)
+5. `MPI_Gather` - kumpulkan hasil dari semua proses ke root
+6. `MPI_Reduce(MPI_MAX)` - ambil waktu maksimum dari semua proses untuk timing
+
+> **Row-wise distribution** = strategi distribusi data di mana matriks dibagi berdasarkan baris. Proses 0 dapat baris 0 sampai N/NP-1, proses 1 dapat baris N/NP sampai 2N/NP-1, dst.
+
+**Variasi eksperimen:**
+- Ukuran matriks: N = 512, 1024, 2048, 4096
+- Jumlah proses: NP = 2, 4, 8, 16, 32
+
+**Temuan utama:**
+
+- **Waktu komputasi turun** seiring NP naik - ini yang disebut **speed-up**
+- Contoh: Mat x Mat N=4096, NP=2 butuh 1125 detik, NP=32 butuh 110 detik - speed-up sekitar 10x
+- **Komunikasi mendominasi** di cluster - karena data harus dikirim lewat jaringan
+  - Contoh: N=512 NP=32, cluster butuh 0.246s komunikasi vs multicore cuma 0.007s
+- **Trade-off**: untuk matriks kecil (N=512), overhead komunikasi lebih besar dari manfaat paralelisasi. Untuk N besar, speed-up nyata terlihat
+
+***Penting untuk esai:*** Kalau ditanya "apakah menambah prosesor selalu mempercepat?", jawabannya **TIDAK**. Ada titik di mana overhead komunikasi melebihi keuntungan paralelisasi - ini disebut **diminishing returns**.
+
+### Topik 3 PR1: Process Topologies MPI
+
+Program ini mendemonstrasikan 6 fitur MPI untuk mengatur **bagaimana proses berkomunikasi dalam topologi terstruktur** (grid 2D):
+
+| Tahap | Fitur MPI | Fungsi |
+|-------|-----------|--------|
+| 1 | `MPI_Dims_create` | Otomatis distribusi N proses ke grid 2D (misal 16 proses menjadi 4x4) |
+| 2 | `MPI_Cart_create` + `MPI_Cart_coords` | Buat topologi Cartesian periodik, tiap proses punya koordinat (row, col) |
+| 3 | `MPI_Cart_shift` + `MPI_Sendrecv` | Komunikasi dengan tetangga (atas/bawah/kiri/kanan) |
+| 4 | `MPI_Cart_sub` | Pecah grid jadi sub-communicator per baris |
+| 5 | Latency Benchmark | Ukur latensi komunikasi (1000 iterasi Sendrecv bolak-balik) |
+| 6 | `MPI_Cartdim_get` + `MPI_Cart_get` | Inspeksi topologi: cek dimensi, periodisitas, koordinat |
+
+> **Cartesian topology** = pengaturan proses MPI dalam grid multidimensi (biasanya 2D). Berguna untuk masalah yang punya struktur grid alami, seperti simulasi fisika 2D.
+
+> **Periodik** = proses di tepi grid terhubung dengan proses di tepi seberangnya (wrap-around, seperti donat/torus).
+
+**Temuan latency benchmark:**
+
+| | NP=2 | NP=4 | NP=8 | NP=16 | NP=32 |
+|---|---|---|---|---|---|
+| Multicore (min) | 0.19 us | 1.0 us | 0.31 us | 23.6 us | 7.6 us |
+| Multicore (max) | 0.60 us | 2.4 us | 9.7 us | 136 us | 204 us |
+| Cluster (min) | 0.16 us | 0.32 us | 0.51 us | - | - |
+| Cluster (max) | 0.16 us | 0.37 us | 0.58 us | - | - |
+
+- Multicore: latency naik seiring NP karena **contention** (banyak proses berebut akses memori)
+- Cluster NP kecil: latency sangat stabil karena masih dalam 1 node (shared memory)
+
+### Topik 4 PR1: Jacobi Iteration (SPL Paralel)
+
+Menyelesaikan sistem persamaan linier (Ax = b) secara paralel menggunakan metode iterasi Jacobi. Referensi: Bab 7 buku Rauber & Runger.
+
+> **Jacobi Iteration** = metode iteratif untuk menyelesaikan sistem persamaan linier. Setiap iterasi, nilai x baru dihitung dari nilai x sebelumnya. Prosesnya diulang sampai konvergen (nilai x tidak berubah lagi).
+
+**Rumus Jacobi:**
+```
+x_i^(k+1) = (1/a_ii) * (b_i - sum(a_ij * x_j^(k), j != i))
+```
+
+**Strategi paralel (mirip pattern Mat x Vec):**
+
+1. Root generate matriks A yang **diagonally dominant** dan vektor b
+2. `MPI_Scatter` baris A dan elemen b ke semua proses
+3. **Loop iterasi:**
+   - **Komputasi**: setiap proses hitung x baru untuk baris lokalnya
+   - **Komunikasi**: `MPI_Allgather` untuk berbagi x terbaru ke semua proses
+   - **Konvergensi**: `MPI_Allreduce(MPI_MAX)` untuk cek apakah max|x_baru - x_lama| < epsilon
+4. Berhenti kalau konvergen atau mencapai max iterasi
+
+> **Diagonally dominant** = matriks di mana nilai absolut diagonal lebih besar dari jumlah nilai absolut elemen lain di baris yang sama. Syarat agar Jacobi iteration pasti konvergen.
+
+**Variasi eksperimen:** N = 512-4096, NP = 1, 2, 4, 8, 16, 32 (NP=1 untuk baseline sequential)
+
+**Temuan:**
+- Semua run konvergen dalam 12-15 iterasi
+- Speed-up komputasi signifikan: N=4096 dari 0.668s (NP=1) ke 0.034s (NP=32) - speed-up ~19.6x
+- Tapi **komunikasi mendominasi** karena setiap iterasi butuh Allgather + Allreduce
+
+***Poin penting untuk esai:***
+
+- Jacobi itu **embarrassingly parallel** pada bagian komputasi (setiap proses independen menghitung x-nya)
+- Tapi **communication-bound** karena setiap iterasi perlu sinkronisasi (Allgather x, Allreduce convergence)
+- Semakin banyak iterasi = semakin banyak komunikasi = overhead makin besar
+
+### Pola Umum Program MPI di PR1
+
+Hampir semua program PR1 mengikuti pola yang sama:
+
+```
+1. MPI_Init
+2. Root generate data (srand(42) untuk reproducibility)
+3. MPI_Scatter data ke semua proses
+4. Setiap proses hitung bagiannya (COMPUTATION - diukur waktunya)
+5. MPI_Gather/Allgather hasil (COMMUNICATION - diukur waktunya)
+6. MPI_Reduce untuk ambil waktu max
+7. Root cetak hasil (waktu komputasi, waktu komunikasi, total)
+8. MPI_Finalize
+```
+
+**Yang dianalisis:**
+- **Computation time** - makin banyak proses, makin cepat (speed-up)
+- **Communication time** - makin banyak proses, overhead makin besar
+- **Speed-up** = T_sequential / T_parallel
+- **Perbandingan cluster vs multicore** - cluster punya overhead komunikasi jauh lebih besar
+
+### Mengukur Waktu di MPI
+
+```c
+double t_start = MPI_Wtime();
+// ... kode yang diukur ...
+double t_end = MPI_Wtime();
+double elapsed = t_end - t_start;
+
+// Ambil waktu max dari semua proses (bottleneck = yang paling lambat)
+double max_time;
+MPI_Reduce(&elapsed, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+```
+
+Kenapa pakai `MPI_MAX`? Karena total waktu program ditentukan oleh proses **paling lambat** (yang lain harus menunggu).
+
+---
+
 ## Tips Menghadapi UTS
 
 Rangkuman jebakan umum dan strategi menjawab soal pilihan ganda:
