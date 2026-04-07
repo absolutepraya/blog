@@ -9,7 +9,7 @@ toc: true
 
 ## What I Worked On
 
-Two major features this week — email integration (SIRA-160) and session management (SIRA-214) — both followed the SOLID principles that have been established in the codebase. The email feature in particular offered a good opportunity to show SRP in action: sending an email and rendering an email template are genuinely different responsibilities, and keeping them separate made both easier to test.
+Two major features this week, email integration (SIRA-160) and session management (SIRA-214), both followed the SOLID principles that have been established in the codebase. The email feature in particular offered a good opportunity to show SRP in action: sending an email and rendering an email template are genuinely different responsibilities, and keeping them separate made both easier to test.
 
 ---
 

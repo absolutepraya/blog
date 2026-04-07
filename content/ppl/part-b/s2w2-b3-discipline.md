@@ -54,7 +54,7 @@ Alongside CI work, four new features and several fixes landed:
 | !112 | SIRA-131 | Audit and complete toast notifications for all CRUD actions |
 | !100 | SIRA-145 | Fix payment page UI (invoice number display, filtering) |
 | !102 | SIRA-99 | Remove duplicate error toast on staff delete |
-| !111 | — | Enhance email template editor with toolbar and line numbers |
+| !111 | (no ticket) | Enhance email template editor with toolbar and line numbers |
 
 Each MR followed the full process: branch from main, commits with descriptive messages, merge request with pipeline passing, squash merge to main with the ticket code in the MR title.
 

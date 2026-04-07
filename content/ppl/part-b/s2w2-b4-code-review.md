@@ -15,9 +15,9 @@ Three substantial MRs reviewed this week: Bertrand's cancel invoice feature (SIR
 
 ## MR !118 — Cancel Invoice Feature (Bertrand)
 
-The implementation was solid on the happy path — TDD discipline visible from commit history, clean Router-Service-DB layering, rollback migration included. Review focused on API-level guard gaps that the frontend UI hid but the API did not enforce.
+The implementation was solid on the happy path: TDD discipline visible from commit history, clean Router-Service-DB layering, rollback migration included. Review focused on API-level guard gaps that the frontend UI hid but the API did not enforce.
 
-**P0 — CANCELED invoices can still be edited via direct API call**
+**P0: CANCELED invoices can still be edited via direct API call**
 
 The `update` method in `InvoiceService` only blocks PAID invoices. A direct `PUT /api/invoices/{id}` call can modify amount, due date, or client on a canceled invoice. The frontend hides the edit button but that is not sufficient.
 
@@ -27,7 +27,7 @@ if current.get("status") in ("PAID", "CANCELED"):
     raise PermissionError(f"{current.get('status')} invoice cannot be edited")
 ```
 
-**P0 — Payments can be recorded against a CANCELED invoice**
+**P0: Payments can be recorded against a CANCELED invoice**
 
 Same gap in `PaymentService.create()`. Only PAID is blocked, so `POST /api/payments` against a canceled invoice succeeds.
 
@@ -36,7 +36,7 @@ if invoice["status"] in ("PAID", "CANCELED"):
     raise ValueError(f"Cannot record payment on a {invoice['status'].lower()} invoice")
 ```
 
-**P0 — `CANCELED` added as a union type hack**
+**P0: `CANCELED` added as a union type hack**
 
 `CANCELED` was added as `InvoiceStatus | 'CANCELED'` instead of being added to the `INVOICE_STATUSES` array. This breaks the single source of truth and forces `as unknown as InvoiceStatus` casts in tests.
 
@@ -48,7 +48,7 @@ if invoice["status"] in ("PAID", "CANCELED"):
 
 The overall architecture was solid: Docker Compose profiles for slot separation, nginx upstream switching via a conf file volume mount, manual promote/rollback gates. Review focused on silent failure modes that could cause outages or data corruption.
 
-**P0 — Dual Celery Beat race condition**
+**P0: Dual Celery Beat race condition**
 
 Between the deploy job (starts full standby slot including beat) and the manual promote (stops old beat), two beat schedulers run against the same Redis broker for an unbounded window. Every scheduled task gets dispatched twice.
 
@@ -57,7 +57,7 @@ Between the deploy job (starts full standby slot including beat) and the manual 
 docker compose -f infra/docker-compose.yml stop beat-${STANDBY_SLOT} || true
 ```
 
-**P0 — nginx reload failure not checked**
+**P0: nginx reload failure not checked**
 
 If `nginx -s reload` fails, the script continues to stop old workers and update `.active-slot`. nginx still routes to the old slot but old workers are stopped, creating a silent outage.
 
@@ -66,11 +66,11 @@ docker exec sira-nginx nginx -t || { echo "ERROR: Nginx config invalid. Aborting
 docker exec sira-nginx nginx -s reload || { echo "ERROR: Nginx reload failed. Aborting."; exit 1; }
 ```
 
-**P0 — Destructive ops before post-promote health check**
+**P0: Destructive ops before post-promote health check**
 
 The promote job stops old workers and updates `.active-slot` before running a health check. If the health check fails, old workers are already dead. Correct order: switch nginx, health check, only then stop old slot.
 
-**P0 — `.active-slot` content never validated**
+**P0: `.active-slot` content never validated**
 
 If `.active-slot` contains garbage or whitespace, the ternary silently defaults to "blue", potentially deploying over the live slot.
 
@@ -91,9 +91,9 @@ fi
 
 `Record<InvoiceStatus, number>` for compile-time completeness and thorough test coverage (~1000 lines) were highlights. Review focused on a security gap and type safety issues.
 
-**P0 — Unsanitized sort column passed to PostgREST**
+**P0: Unsanitized sort column passed to PostgREST**
 
-`InvoiceFilter.sort` is `str | None` and is passed directly to `query.order()`. A crafted sort value goes straight to PostgREST without validation — SQL injection risk.
+`InvoiceFilter.sort` is `str | None` and is passed directly to `query.order()`. A crafted sort value goes straight to PostgREST without validation, creating a SQL injection risk.
 
 ```python
 _ALLOWED_SORT_COLUMNS = {"due_date", "amount", "invoice_number", "status"}
@@ -106,15 +106,15 @@ def _apply_invoice_query_sort(query: Any, filters: InvoiceFilter | None) -> Any:
     return query.order(filters.sort, desc=(filters.order == "desc"))
 ```
 
-**P1 — `if value:` truthiness bug**
+**P1: `if value:` truthiness bug**
 
 The filter loop uses `if value:`, so an empty string `""` (frontend sends empty instead of null) silently skips the filter, returning unfiltered results with no error.
 
-**P1 — `reverse=True` flips the entire composite sort key**
+**P1: `reverse=True` flips the entire composite sort key**
 
 `_sort_by_status_priority(descending=True)` passes `reverse=True` to `sorted()`, which reverses tiebreakers (due date, amount, client name) alongside status. Only the status priority component should be negated.
 
-**P1 — Missing fallback for unknown status in frontend sort**
+**P1: Missing fallback for unknown status in frontend sort**
 
 `INVOICE_STATUS_PRIORITY[status]` returns `undefined` for unknown statuses, causing NaN to propagate through the sort. The backend handles this with `.get(status, len(_STATUS_PRIORITY))`; the frontend should too.
 

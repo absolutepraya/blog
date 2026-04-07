@@ -1,7 +1,7 @@
 ---
 title: "PPL: TDD [Sprint 2, Week 2]"
 date: 2026-03-30
-description: "TDD discipline across session management, invoice cancellation, and auth hardening — with mock isolation and CI BDD visibility improvements this sprint."
+description: "TDD discipline across session management, invoice cancellation, and auth hardening, with mock isolation and CI BDD visibility improvements this sprint."
 tags: ["ppl", "tdd", "testing"]
 slug: s2w2-tdd
 toc: true
