@@ -47,7 +47,3 @@ name = "Posts"
 url = "/"
 weight = 2
 
-[[menu.main]]
-name = "Private"
-url = "/private/"
-weight = 3
