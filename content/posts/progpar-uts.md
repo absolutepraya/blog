@@ -949,10 +949,10 @@ Berikut 76 soal pilihan ganda UTS Pemrograman Paralel tahun 2025, sudah diverifi
 - **Jawaban: d. tunggal, satu atau lebih** - desktop punya satu chip, sedangkan setiap node HPC bisa punya satu atau lebih chip (multiprocessor).
 
 **4.** Resource hungry application memecahkan masalah memakai...
-- **Jawaban: b. pemodelan komputer, simulasi dan analisis** - perhatikan ada 3 kata kunci: pemodelan, simulasi, DAN analisis
+- **Jawaban: b. pemodelan komputer, simulasi dan analisis** - perhatikan harus ada TIGA komponen lengkap: pemodelan, simulasi, DAN analisis. Opsi a cuma dua (pemodelan dan simulasi tanpa analisis), jadi kurang lengkap.
 
 **5.** Resource hungry application antara lain dalam bidang...
-- **Jawaban: b. semuanya benar** - mencakup semua bidang (internet, CAD/CAM, life sciences, aerospace, military, digital biology)
+- **Jawaban: b. semuanya benar** - resource hungry apps mencakup SEMUA bidang yang disebutkan: internet dan e-commerce, digital biology, military, CAD/CAM, life sciences, dan aerospace. Tidak ada yang tidak termasuk.
 
 **6.** Dalam industri perminyakan, HPC digunakan untuk mencari...
 - **Jawaban: a. Sumber minyak baru** - perusahaan seperti Eni dan BP pakai HPC untuk simulasi reservoir dan eksplorasi sumber minyak baru.
@@ -961,10 +961,10 @@ Berikut 76 soal pilihan ganda UTS Pemrograman Paralel tahun 2025, sudah diverifi
 - **Jawaban: d. covid19** - angka-angka ini merujuk ke COVID-19 HPC Consortium yang dibentuk tahun 2020.
 
 **8.** Contoh proses paralel dalam pembangunan tembok melibatkan proses...
-- **Jawaban: d. benar semua** - pembuatan, pengiriman, penyusunan batu bata semuanya bisa paralel
+- **Jawaban: d. benar semua** - dalam analogi tembok, SEMUA tahap bisa diparalelkan: pembuatan batu bata bisa dilakukan banyak pabrik sekaligus, pengiriman bisa pakai banyak truk, dan penyusunan bisa dilakukan banyak pekerja di bagian tembok yang berbeda.
 
 **9.** Proses parallel dalam pembangunan tembok juga pada proses...
-- **Jawaban: d. semuanya benar** - sama seperti no 8, ketiga tahap bisa diparalelkan secara independen.
+- **Jawaban: d. semuanya benar** - soal ini mengulangi konsep yang sama dari no 8 dengan framing berbeda, tapi jawabannya tetap sama karena ketiga tahap (pembuatan, pengiriman, penyusunan) bisa berjalan paralel secara independen.
 
 **10.** Pengelompokan bidang terkait HPC terdiri dari...
 - **Jawaban: a. Benar semua** - empat bidang HPC: information simulation (compute), repository (storage), integration (system of systems), access (communication).
@@ -975,51 +975,51 @@ Berikut 76 soal pilihan ganda UTS Pemrograman Paralel tahun 2025, sudah diverifi
 - **Jawaban: d. beberapa nodes, master, pemroses, network/switch** - cluster terdiri dari beberapa nodes, satu jadi master (head node), sisanya worker/pemroses, terhubung via network/switch.
 
 **12.** Tujuan komputasi kinerja tinggi (HPC) adalah...
-- **Jawaban: a. Semuanya benar** - maximize performance, minimize waktu, maximize masalah yang bisa diselesaikan
+- **Jawaban: a. Semuanya benar** - tujuan HPC mencakup tiga hal sekaligus: memaksimalkan performa, meminimalkan waktu penyelesaian masalah spesifik, dan memaksimalkan jumlah masalah besar yang bisa diselesaikan dalam waktu singkat.
 
 **13.** Peningkatan kinerja superkomputer karena faktor...
-- **Jawaban: c. Benar semua** - banyak prosesor, pengurangan waktu per instruksi, pipelining
+- **Jawaban: c. Benar semua** - peningkatan kinerja datang dari kombinasi tiga faktor: banyak prosesor menangani program bersamaan, pengurangan waktu per instruksi (clock cycle lebih cepat), dan pipelining/eksekusi instruksi secara paralel di level hardware.
 
 **14.** Yang TIDAK termasuk taksonomi arsitektur komputer adalah...
 - **Jawaban: a.** SIMD dengan eksekusi "secara berurutan" - ***ini TRAP!*** Deskripsi SIMD-nya salah karena bilang "berurutan" padahal SIMD mengeksekusi secara BERSAMAAN pada data yang berbeda. Makanya ini "tidak termasuk" karena deskripsinya keliru.
 
 **15.** Yang BUKAN termasuk pemrograman shared memory adalah...
-- **Jawaban: b. Syncronus Execution** - shared memory punya: threads, global shared address space, local private address space, parallel operations. Synchronous execution bukan fiturnya.
+- **Jawaban: b. Syncronus Execution** - fitur shared memory programming yang benar adalah: threads of control, global shared address space, local private address space, dan parallel operations. Synchronous execution justru BUKAN fiturnya karena shared memory menggunakan eksekusi asynchronous antar thread.
 
 **16.** Dalam pemrograman shared memory, THREADS...
-- **Jawaban: b. Betul semua** - fork thread, bagi tugas, alokasi prioritas
+- **Jawaban: b. Betul semua** - semua pernyataan benar: thread bisa di-fork untuk menjalankan prosedur tertentu, digunakan untuk membagi program jadi tugas terpisah yang berjalan bersamaan, dan bisa dialokasikan prioritas berbeda untuk mengatur pembagian waktu CPU.
 
 **17.** Dalam pemrograman shared memory, THREADS...
-- **Jawaban: a. Betul semua** - sama seperti no 16
+- **Jawaban: a. Betul semua** - soal ini sama persis dengan no 16 tapi urutan opsinya berbeda, dan jawabannya tetap semua pernyataan tentang threads itu benar.
 
 **18.** Dalam pemrograman parallel menggunakan thread, yang TIDAK benar adalah...
 - **Jawaban: a. Semuanya salah** - ***TRICKY!*** Ini berarti TIDAK ADA pernyataan yang salah. Semua opsi b/c/d benar (threads ke prosesor berbeda = speedup, ada overhead sinkronisasi). "Semuanya salah" = tidak ada jawaban yang tidak benar.
 
 **19.** Thread scheduling untuk menentukan alokasi threads ke prosesor...
-- **Jawaban: c. Semuanya benar** - statis, dinamis, dan runtime semua valid
+- **Jawaban: c. Semuanya benar** - ada tiga metode scheduling thread: statis (pembagian tetap saat kompilasi), dinamis (pembagian saat runtime berdasarkan beban), dan runtime (ditentukan oleh environment variable saat eksekusi). Ketiganya valid dan digunakan di OpenMP.
 
 **20.** Yang TIDAK termasuk data parallel adalah...
-- **Jawaban: c. salah semua** - operasi bersyarat (WHERE), operasi larik (A=B+C), operasi pengurangan (SUM) semuanya TERMASUK data parallel. Tidak ada yang tidak termasuk.
+- **Jawaban: c. salah semua** - semua opsi yang disebutkan (operasi bersyarat WHERE, operasi larik A=B+C, operasi pengurangan SUM) semuanya TERMASUK dalam data parallel programming. Jadi tidak ada yang "tidak termasuk", makanya jawabannya "salah semua".
 
 ### Soal 21-30: Evaluasi Performa dan Cluster
 
 **21.** Evaluasi performa sistem komputer dapat dilakukan dengan...
-- **Jawaban: c. Benar semua** - benchmarking, evaluasi CPU, MIPS dan MFLOPS
+- **Jawaban: c. Benar semua** - evaluasi performa bisa dilakukan dengan berbagai cara sekaligus: benchmarking (menjalankan program standar untuk mengukur performa), evaluasi CPU secara langsung, dan menggunakan metrik MIPS (Million Instructions Per Second) serta MFLOPS (Million Floating-point Operations Per Second).
 
 **22.** Yang TIDAK termasuk bidang information access (communication demands) adalah...
-- **Jawaban: d. Image processing** - image processing = compute dominated (information simulation), bukan communication demands
+- **Jawaban: d. Image processing** - information access itu bidang yang didominasi oleh kebutuhan komunikasi/transfer data, seperti text on demand, imagery on demand, dan online transactions. Image processing justru termasuk information simulation yang didominasi komputasi, bukan komunikasi.
 
 **23.** Yang TIDAK benar dari pernyataan berikut...
-- **Jawaban: a.** "Dalam evaluasi MLOPS, semua operasi floating point dianggap sama" - salah karena dalam MFLOPS, operasi FP TIDAK dianggap sama (ada yang lebih kompleks)
+- **Jawaban: a.** Pernyataan "dalam evaluasi MFLOPS, semua operasi floating point dianggap sama" itu SALAH karena kenyataannya operasi floating point punya kompleksitas berbeda-beda (misalnya pembagian lebih lambat dari penjumlahan), sehingga tidak bisa dianggap sama bobotnya.
 
 **24.** Yang TIDAK termasuk information simulation (compute dominated) adalah...
-- **Jawaban: c. Seismic data analysis** - seismic data analysis = storage dominated (information repository)
+- **Jawaban: c. Seismic data analysis** - information simulation mencakup masalah yang didominasi komputasi seperti molecular dynamics, electromagnetic simulation, dan structural dynamics. Seismic data analysis lebih ke information repository (storage dominated) karena fokusnya pada penyimpanan dan pengolahan data seismik yang besar.
 
 **25.** Cara meningkatkan kinerja komputer...
-- **Jawaban: b. semuanya benar** - hardware cepat, algoritma optimal, banyak komputer
+- **Jawaban: b. semuanya benar** - ada tiga pendekatan untuk meningkatkan kinerja: memakai hardware yang lebih cepat (prosesor, memori), mengoptimumkan algoritma dan teknik pemecahan masalah, serta memakai beberapa komputer secara bersamaan (komputasi paralel).
 
 **26.** Hambatan kecepatan prosesor...
-- **Jawaban: d. benar semua** - kecepatan cahaya, hukum termodinamika, biaya produksi tinggi
+- **Jawaban: d. benar semua** - ada tiga hambatan fundamental dalam meningkatkan kecepatan prosesor tunggal: keterbatasan kecepatan cahaya (sinyal tidak bisa lebih cepat dari cahaya), hukum termodinamika (panas yang dihasilkan makin tinggi), dan biaya produksi prosesor yang sangat mahal untuk fabrikasi chip yang lebih canggih.
 
 **27.** Sistem klaster adalah sistem pemrosesan ___ yang terdiri dari ___ komputer, bekerja seperti sumber daya yang ___
 - **Jawaban: a. parallel, kumpulan, terintegrasi** - definisi cluster: pemrosesan paralel/terdistribusi, kumpulan komputer, bekerja terintegrasi sebagai satu kesatuan.
@@ -1031,7 +1031,7 @@ Berikut 76 soal pilihan ganda UTS Pemrograman Paralel tahun 2025, sudah diverifi
 - **Jawaban: b. benar semua** - arsitektur cluster terdiri dari interconnect, network interface, middleware, programming env, applications, dan software komunikasi.
 
 **30.** Yang BUKAN perkakas pemrograman parallel...
-- **Jawaban: c. MPI, PVM dan LaTex** - LaTeX bukan tools pemrograman paralel!
+- **Jawaban: c. MPI, PVM dan LaTex** - MPI dan PVM memang tools pemrograman paralel, tapi LaTeX adalah sistem typesetting untuk membuat dokumen, bukan untuk pemrograman paralel. Kehadiran LaTeX di opsi ini yang membuatnya jadi jawaban "bukan".
 
 ### Soal 31-40: True/False
 
@@ -1058,13 +1058,13 @@ Berikut 76 soal pilihan ganda UTS Pemrograman Paralel tahun 2025, sudah diverifi
 ### Soal 41-50: Aplikasi Cluster
 
 **41.** Cluster di industri manufaktur untuk...
-- **Jawaban: d. Memodelkan dan mensimulasikan produk sebelum produksi fisik** - simulasi produk (CAD/CAE) mengurangi biaya prototyping fisik.
+- **Jawaban: d. Memodelkan dan mensimulasikan produk sebelum produksi fisik** - di industri manufaktur, cluster digunakan untuk simulasi CAD/CAE sehingga produk bisa diuji secara virtual (stress test, aerodinamika, thermal) sebelum membuat prototipe fisik yang mahal.
 
 **42.** Cluster di industri keuangan/perbankan untuk...
-- **Jawaban: a. Analisis risiko dan prediksi pasar** - bank dan institusi keuangan pakai HPC untuk risk modeling dan market prediction.
+- **Jawaban: a. Analisis risiko dan prediksi pasar** - bank dan institusi keuangan memanfaatkan cluster untuk menjalankan model risiko yang kompleks, simulasi Monte Carlo untuk pricing derivatif, dan prediksi pergerakan pasar yang membutuhkan komputasi besar.
 
 **43.** Cluster di industri hiburan/desain untuk...
-- **Jawaban: b. Merender grafis 3D kompleks dan animasi** - render farm di studio film dan game pakai cluster untuk rendering paralel.
+- **Jawaban: b. Merender grafis 3D kompleks dan animasi** - studio film seperti Pixar dan game studio menggunakan render farm (cluster) untuk merender frame-frame animasi 3D secara paralel, karena satu frame bisa memakan waktu berjam-jam kalau pakai satu komputer.
 
 **44.** Pemantauan adalah aspek penting manajemen cluster - **True** - monitoring tools digunakan untuk mengawasi kinerja dan kesehatan setiap node.
 
@@ -1117,54 +1117,54 @@ Berikut 76 soal pilihan ganda UTS Pemrograman Paralel tahun 2025, sudah diverifi
 ### Soal 61-70: Pemrograman MPI
 
 **61.** Kode MPI_Scatter dengan sendbuf = {1,2,3,4}. Apa yang dilakukan?
-- **Jawaban: a. Mengirim nilai 1, 2, 3, dan 4 dari proses master ke setiap proses** - Scatter membagi array menjadi potongan dan mengirim satu elemen ke tiap proses.
+- **Jawaban: a. Mengirim nilai 1, 2, 3, dan 4 dari proses master ke setiap proses** - MPI_Scatter membagi array sendbuf yang ada di root (rank 0) menjadi potongan-potongan berukuran sama, lalu mengirimkan satu potongan ke masing-masing proses. Dengan 4 elemen dan 4 proses, setiap proses dapat tepat 1 elemen.
 
 **62.** Kode MPI_Scatter. Berapa nilai yang dicetak proses rank 2?
-- **Jawaban: c. 3** - Scatter distribusi per elemen secara berurutan: rank 0 dapat sendbuf[0]=1, rank 1 dapat 2, rank 2 dapat sendbuf[2]=3.
+- **Jawaban: c. 3** - MPI_Scatter mendistribusikan elemen secara berurutan berdasarkan rank: rank 0 dapat sendbuf[0]=1, rank 1 dapat sendbuf[1]=2, rank 2 dapat sendbuf[2]=3, rank 3 dapat sendbuf[3]=4. Jadi rank 2 menerima dan mencetak nilai 3.
 
 **63.** Fungsi MPI_Gather...
-- **Jawaban: b. Mengumpulkan data dari semua proses ke proses master** - Gather = kebalikan Scatter, kumpulkan data dari semua proses ke root.
+- **Jawaban: b. Mengumpulkan data dari semua proses ke proses master** - MPI_Gather adalah kebalikan dari MPI_Scatter: setiap proses mengirimkan datanya ke root process, dan root menyusun semua data tersebut ke dalam satu array recvbuf secara berurutan berdasarkan rank.
 
 **64.** Fungsi MPI_Bcast...
-- **Jawaban: b. Mengirim data dari proses master ke semua proses lainnya** - Bcast kirim data yang SAMA ke semua proses. Beda dengan Scatter yang pecah data berbeda.
+- **Jawaban: b. Mengirim data dari proses master ke semua proses lainnya** - MPI_Bcast (broadcast) mengirim data yang SAMA dari root ke semua proses lain. Bedakan dengan Scatter yang MEMECAH data sehingga setiap proses dapat bagian yang BERBEDA.
 
 **65.** Fungsi MPI_Scatter...
-- **Jawaban: c. Memecah data dan mengirimkan potongan ke setiap proses** - Scatter = pecah array di root lalu distribusikan potongan berbeda ke tiap proses.
+- **Jawaban: c. Memecah data dan mengirimkan potongan ke setiap proses** - MPI_Scatter mengambil array di root process, memecahnya menjadi potongan-potongan berukuran sama, lalu mendistribusikan setiap potongan ke proses yang berbeda berdasarkan urutan rank.
 
 **66.** MPI dalam pemrograman paralel...
-- **Jawaban: b. Message Passing Interface** - MPI adalah standar/spesifikasi untuk komunikasi antar proses di sistem distributed memory.
+- **Jawaban: b. Message Passing Interface** - MPI adalah standar/spesifikasi internasional untuk komunikasi antar proses di sistem distributed memory, diimplementasikan oleh library seperti OpenMPI dan MPICH.
 
 **67.** Fungsi MPI_Comm_rank...
-- **Jawaban: Mendapatkan rank dari proses saat ini** - rank = ID unik proses (0 sampai size-1) dalam communicator.
+- **Jawaban: Mendapatkan rank dari proses saat ini** - MPI_Comm_rank mengembalikan rank (ID unik) dari proses yang memanggilnya dalam communicator tertentu, nilainya dari 0 sampai size-1.
 
 **68.** Berapa total proses yang dijalankan program MPI?
-- **Jawaban: a. Tergantung pada jumlah argumen saat menjalankan program** - jumlah proses ditentukan saat runtime via `mpirun -np N`, bukan hardcoded di kode.
+- **Jawaban: a. Tergantung pada jumlah argumen saat menjalankan program** - jumlah proses MPI tidak ditentukan di dalam kode program, melainkan ditentukan saat runtime melalui perintah `mpirun -np N` atau `mpiexec -n N`, di mana N adalah jumlah proses yang diinginkan.
 
 **69.** Kode MPI_Bcast dengan data=10. Apa yang dilakukan?
-- **Jawaban: a. Mengirim nilai 10 dari proses master ke semua proses** - rank 0 set data=10, lalu Bcast kirim nilai yang sama ke semua proses.
+- **Jawaban: a. Mengirim nilai 10 dari proses master ke semua proses** - rank 0 menginisialisasi data=10, kemudian MPI_Bcast menyiarkan nilai tersebut ke semua proses lainnya sehingga setelah Bcast, semua proses punya data=10.
 
 **70.** Kode MPI_Bcast dengan data=5. Nilai yang dicetak semua proses?
-- **Jawaban: a. 5** - Bcast = broadcast, semua proses menerima nilai yang sama (5) dari root.
+- **Jawaban: a. 5** - karena MPI_Bcast menyiarkan nilai yang SAMA dari root ke semua proses, setelah Bcast selesai semua proses (termasuk root sendiri) punya data=5 dan mencetak angka 5.
 
 ### Soal 71-76: MPI Lanjutan
 
 **71.** Potongan kode mengirim data menggunakan MPI. Apa yang dilakukan?
-- **Jawaban: a. Mengirim data dari proses rank 0 ke proses rank 1** - pattern standar MPI_Send: rank 0 sebagai pengirim, rank 1 sebagai penerima.
+- **Jawaban: a. Mengirim data dari proses rank 0 ke proses rank 1** - ini adalah pattern point-to-point communication paling dasar di MPI: rank 0 memanggil MPI_Send untuk mengirim data, dan rank 1 memanggil MPI_Recv untuk menerima data tersebut.
 
 **72.** Fungsi MPI_Reduce...
-- **Jawaban: c. Menggabungkan data dari semua proses dan menjalankan operasi reduksi** - Reduce mengaplikasikan operasi (SUM, MAX, MIN, dll) ke data dari semua proses, hasilnya di root.
+- **Jawaban: c. Menggabungkan data dari semua proses dan menjalankan operasi reduksi** - MPI_Reduce mengambil data dari SEMUA proses, mengaplikasikan operasi tertentu (seperti SUM, MAX, MIN, PROD), dan menyimpan hasilnya HANYA di root process. Ini berbeda dari Gather yang hanya mengumpulkan tanpa operasi.
 
 **73.** Kode MPI_Reduce dengan MPI_SUM, sendbuf = rank+1. Apa yang dilakukan?
-- **Jawaban: c. Menghitung jumlah semua nilai dan menampilkan hasilnya di proses master** - setiap proses kirim rank+1, root menjumlahkan semuanya.
+- **Jawaban: c. Menghitung jumlah semua nilai dan menampilkan hasilnya di proses master** - setiap proses mengirim sendbuf = rank+1 (proses 0 kirim 1, proses 1 kirim 2, dst), lalu MPI_Reduce dengan operasi MPI_SUM menjumlahkan semua nilai tersebut dan hasilnya disimpan di recvbuf pada root (rank 0).
 
 **74.** Kode MPI_Gather, sendbuf = rank+1. Nilai yang dicetak proses rank 2 di master?
-- **Jawaban: b. 3** - rank 2 mengirim sendbuf = 2+1 = 3. Gather kumpulkan ke root, recvbuf[2] = 3.
+- **Jawaban: b. 3** - setiap proses mengirim sendbuf = rank+1, jadi rank 2 mengirim nilai 2+1 = 3. MPI_Gather mengumpulkan semua nilai ke root process, di mana recvbuf[2] berisi nilai dari rank 2, yaitu 3.
 
 **75.** Kode MPI_Reduce MPI_SUM, sendbuf = rank+1, 4 proses. Hasil?
-- **Jawaban: a. 10** - 4 proses kirim: 1+2+3+4 = 10. MPI_SUM menjumlahkan semua nilai.
+- **Jawaban: a. 10** - dengan 4 proses, masing-masing mengirim rank+1: proses 0 kirim 1, proses 1 kirim 2, proses 2 kirim 3, proses 3 kirim 4. MPI_SUM menjumlahkan semuanya: 1+2+3+4 = 10.
 
 **76.** Kode MPI_Gather, sendbuf = rank+1. Apa yang dilakukan?
-- **Jawaban: b. Mengumpulkan nilai dari setiap proses dan menampilkannya di proses master** - Gather kumpulkan sendbuf dari tiap proses ke recvbuf di root, lalu root print semuanya.
+- **Jawaban: b. Mengumpulkan nilai dari setiap proses dan menampilkannya di proses master** - MPI_Gather mengumpulkan sendbuf dari setiap proses ke array recvbuf di root process, kemudian root (rank 0) melakukan loop untuk mencetak recvbuf[i] untuk setiap proses i.
 
 ### Pola Soal yang Sering Muncul
 
