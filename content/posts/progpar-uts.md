@@ -940,13 +940,13 @@ Berikut 76 soal pilihan ganda UTS Pemrograman Paralel tahun 2025, sudah diverifi
 ### Soal 1-10: Pengantar HPC
 
 **1.** HPC adalah praktek agregasi pemakaian kekuatan komputasi yang memberikan kinerja lebih tinggi untuk mengatasi persoalan...
-- **Jawaban: b. Sains, engineering, bisnis yang besar**
+- **Jawaban: b. Sains, engineering, bisnis yang besar** - HPC digunakan untuk tiga domain utama ini. Kata kunci "besar" membedakan dari opsi c yang tanpa "besar".
 
 **2.** Aplikasi superkomputer terkait persoalan yang terlalu ___ untuk komputer standard, membutuhkan waktu yang ___
-- **Jawaban: d. Besar, sangat lama**
+- **Jawaban: d. Besar, sangat lama** - superkomputer menangani masalah yang terlalu besar dan butuh waktu sangat lama kalau pakai komputer biasa.
 
 **3.** Desktop mempunyai chip pemroses ___, HPC adalah jaringan node memuat ___ chip pemroses
-- **Jawaban: d. tunggal, satu atau lebih**
+- **Jawaban: d. tunggal, satu atau lebih** - desktop punya satu chip, sedangkan setiap node HPC bisa punya satu atau lebih chip (multiprocessor).
 
 **4.** Resource hungry application memecahkan masalah memakai...
 - **Jawaban: b. pemodelan komputer, simulasi dan analisis** - perhatikan ada 3 kata kunci: pemodelan, simulasi, DAN analisis
@@ -955,24 +955,24 @@ Berikut 76 soal pilihan ganda UTS Pemrograman Paralel tahun 2025, sudah diverifi
 - **Jawaban: b. semuanya benar** - mencakup semua bidang (internet, CAD/CAM, life sciences, aerospace, military, digital biology)
 
 **6.** Dalam industri perminyakan, HPC digunakan untuk mencari...
-- **Jawaban: a. Sumber minyak baru**
+- **Jawaban: a. Sumber minyak baru** - perusahaan seperti Eni dan BP pakai HPC untuk simulasi reservoir dan eksplorasi sumber minyak baru.
 
 **7.** HPC berperan dalam mengatasi wabah ___ (43 consortium, 165K nodes, 87 projects, 6.8M CPU cores, 50K GPU, 600 PFlops)
-- **Jawaban: d. covid19**
+- **Jawaban: d. covid19** - angka-angka ini merujuk ke COVID-19 HPC Consortium yang dibentuk tahun 2020.
 
 **8.** Contoh proses paralel dalam pembangunan tembok melibatkan proses...
 - **Jawaban: d. benar semua** - pembuatan, pengiriman, penyusunan batu bata semuanya bisa paralel
 
 **9.** Proses parallel dalam pembangunan tembok juga pada proses...
-- **Jawaban: d. semuanya benar**
+- **Jawaban: d. semuanya benar** - sama seperti no 8, ketiga tahap bisa diparalelkan secara independen.
 
 **10.** Pengelompokan bidang terkait HPC terdiri dari...
-- **Jawaban: a. Benar semua** - information simulation, repository, integration, dan access
+- **Jawaban: a. Benar semua** - empat bidang HPC: information simulation (compute), repository (storage), integration (system of systems), access (communication).
 
 ### Soal 11-20: Arsitektur dan Pemrograman Paralel
 
 **11.** Pada arsitektur cluster, terdapat ___ satu berfungsi sebagai ___ sisanya sebagai ___ dihubungkan dengan ___
-- **Jawaban: d. beberapa nodes, master, pemroses, network/switch**
+- **Jawaban: d. beberapa nodes, master, pemroses, network/switch** - cluster terdiri dari beberapa nodes, satu jadi master (head node), sisanya worker/pemroses, terhubung via network/switch.
 
 **12.** Tujuan komputasi kinerja tinggi (HPC) adalah...
 - **Jawaban: a. Semuanya benar** - maximize performance, minimize waktu, maximize masalah yang bisa diselesaikan
@@ -1022,149 +1022,149 @@ Berikut 76 soal pilihan ganda UTS Pemrograman Paralel tahun 2025, sudah diverifi
 - **Jawaban: d. benar semua** - kecepatan cahaya, hukum termodinamika, biaya produksi tinggi
 
 **27.** Sistem klaster adalah sistem pemrosesan ___ yang terdiri dari ___ komputer, bekerja seperti sumber daya yang ___
-- **Jawaban: a. parallel, kumpulan, terintegrasi**
+- **Jawaban: a. parallel, kumpulan, terintegrasi** - definisi cluster: pemrosesan paralel/terdistribusi, kumpulan komputer, bekerja terintegrasi sebagai satu kesatuan.
 
 **28.** Suatu node dalam sistem klaster...
-- **Jawaban: d. suatu system berprosesor tunggal atau banyak dengan memory, fasilitas I/O dan OS**
+- **Jawaban: d. suatu system berprosesor tunggal atau banyak dengan memory, fasilitas I/O dan OS** - node = unit dasar cluster, bisa single atau multiprocessor, punya memory, I/O, dan OS sendiri.
 
 **29.** Yang termasuk bagian arsitektur sistem cluster...
-- **Jawaban: b. benar semua** - interconnect, network interface, middleware, programming env, applications, software komunikasi
+- **Jawaban: b. benar semua** - arsitektur cluster terdiri dari interconnect, network interface, middleware, programming env, applications, dan software komunikasi.
 
 **30.** Yang BUKAN perkakas pemrograman parallel...
 - **Jawaban: c. MPI, PVM dan LaTex** - LaTeX bukan tools pemrograman paralel!
 
 ### Soal 31-40: True/False
 
-**31.** Tujuan HPC adalah maximize performance - **True**
+**31.** Tujuan HPC adalah maximize performance - **True** - salah satu tujuan utama HPC memang memaksimalkan performa komputasi.
 
-**32.** Cara memaksimalkan kinerja: menambah waktu per instruksi - **False** (menambah = memperlambat!)
+**32.** Cara memaksimalkan kinerja: menambah waktu per instruksi - **False** - menambah waktu per instruksi justru memperlambat, yang benar adalah mengurangi waktu per instruksi.
 
-**33.** Taksonomi termasuk SISD - **True**
+**33.** Taksonomi termasuk SISD - **True** - SISD (Single Instruction Single Data) adalah salah satu dari 4 kategori taksonomi Flynn.
 
-**34.** SIMD: SEBAGIAN prosesor mengeksekusi secara berurutan - **False** (SEMUA prosesor, secara bersamaan)
+**34.** SIMD: SEBAGIAN prosesor mengeksekusi secara berurutan - **False** - SIMD mengeksekusi di SEMUA prosesor secara BERSAMAAN, bukan sebagian dan bukan berurutan.
 
-**35.** Sama seperti 34 - **False**
+**35.** Sama seperti 34 - **False** - alasan sama: SIMD = semua prosesor, bersamaan.
 
-**36.** Message passing menargetkan MIMD dengan distributed memory - **True**
+**36.** Message passing menargetkan MIMD dengan distributed memory - **True** - MPI adalah contoh message passing yang dirancang untuk arsitektur MIMD dengan memori terdistribusi.
 
-**37.** Threads of Control termasuk fitur shared memory - **True**
+**37.** Threads of Control termasuk fitur shared memory - **True** - thread adalah mekanisme utama paralelisme di model shared memory (fork-join).
 
-**38.** Data parallel programming memproses data secara paralel pada beberapa komputer - **True**
+**38.** Data parallel programming memproses data secara paralel pada beberapa komputer - **True** - data parallel = operasi yang sama diterapkan ke banyak elemen data secara bersamaan.
 
-**39.** Distribusi data dan komunikasi ditangani compiler tanpa bimbingan programmer - **True** (contoh: HPF)
+**39.** Distribusi data dan komunikasi ditangani compiler tanpa bimbingan programmer - **True** - dalam data parallel (contoh HPF), compiler yang menangani distribusi dan komunikasi secara otomatis.
 
-**40.** Contoh data parallel languages adalah HPF - **True**
+**40.** Contoh data parallel languages adalah HPF - **True** - High Performance Fortran (HPF) adalah bahasa data parallel yang paling terkenal.
 
 ### Soal 41-50: Aplikasi Cluster
 
 **41.** Cluster di industri manufaktur untuk...
-- **Jawaban: d. Memodelkan dan mensimulasikan produk sebelum produksi fisik**
+- **Jawaban: d. Memodelkan dan mensimulasikan produk sebelum produksi fisik** - simulasi produk (CAD/CAE) mengurangi biaya prototyping fisik.
 
 **42.** Cluster di industri keuangan/perbankan untuk...
-- **Jawaban: a. Analisis risiko dan prediksi pasar**
+- **Jawaban: a. Analisis risiko dan prediksi pasar** - bank dan institusi keuangan pakai HPC untuk risk modeling dan market prediction.
 
 **43.** Cluster di industri hiburan/desain untuk...
-- **Jawaban: b. Merender grafis 3D kompleks dan animasi**
+- **Jawaban: b. Merender grafis 3D kompleks dan animasi** - render farm di studio film dan game pakai cluster untuk rendering paralel.
 
-**44.** Pemantauan adalah aspek penting manajemen cluster - **True**
+**44.** Pemantauan adalah aspek penting manajemen cluster - **True** - monitoring tools digunakan untuk mengawasi kinerja dan kesehatan setiap node.
 
 **45.** Apa yang dimaksud "pemulihan bencana" dalam cluster computing?
-- **Jawaban: c. Kemampuan menjalankan tugas dari node yang berbeda** - dalam konteks cluster, disaster recovery = node lain ambil alih tugas
+- **Jawaban: c. Kemampuan menjalankan tugas dari node yang berbeda** - dalam konteks cluster, disaster recovery berarti node lain bisa mengambil alih tugas jika satu node gagal (fail-over).
 
 **46.** Pertimbangan penting merancang cluster...
-- **Jawaban: c. Efisiensi energi dan manajemen daya**
+- **Jawaban: c. Efisiensi energi dan manajemen daya** - cluster besar konsumsi listrik tinggi, jadi efisiensi energi jadi pertimbangan desain utama.
 
 **47.** Peran manajer cluster...
-- **Jawaban: d. Mengatur distribusi tugas antara node-node**
+- **Jawaban: d. Mengatur distribusi tugas antara node-node** - cluster manager (seperti SLURM) bertanggung jawab menjadwalkan dan mendistribusikan job ke nodes.
 
 **48.** Jenis cluster untuk daya komputasi tinggi dalam waktu singkat...
-- **Jawaban: a. Cluster High-Performance (HPC)**
+- **Jawaban: a. Cluster High-Performance (HPC)** - HPC cluster dirancang khusus untuk komputasi intensif dengan performa maksimal.
 
 **49.** Tujuan utama cluster computing...
-- **Jawaban: a. Meningkatkan ketersediaan dan kinerja sistem**
+- **Jawaban: a. Meningkatkan ketersediaan dan kinerja sistem** - dua tujuan utama: high availability (kalau node mati, sistem tetap jalan) dan high performance.
 
-**50.** Langkah instalasi NFS: instalasi server, instalasi client, buat dir mirror, konfigurasi exports, konfigurasi fstab - **True**
+**50.** Langkah instalasi NFS: instalasi server, instalasi client, buat dir mirror, konfigurasi exports, konfigurasi fstab - **True** - urutan ini benar untuk setup NFS (Network File System) di cluster.
 
 ### Soal 51-60: SLURM dan Lanjutan
 
-**51.** Cluster HPC dirancang untuk daya komputasi tinggi dalam waktu lama - **False** (waktu SINGKAT, bukan lama!)
+**51.** Cluster HPC dirancang untuk daya komputasi tinggi dalam waktu lama - **False** - HPC cluster untuk waktu SINGKAT, bukan lama. Tujuannya menyelesaikan komputasi besar secepat mungkin.
 
 **52.** Singkatan SLURM...
-- **Jawaban: d. Simple Linux Utility for Resource Management**
+- **Jawaban: d. Simple Linux Utility for Resource Management** - SLURM adalah cluster manager open source yang paling banyak dipakai.
 
 **53.** Keuntungan cluster untuk bioinformatika...
-- **Jawaban: d. Kemampuan analisis data kompleks**
+- **Jawaban: d. Kemampuan analisis data kompleks** - bioinformatika butuh analisis data genomik yang sangat besar dan kompleks (DNA sequencing, protein folding).
 
-**54.** Cluster load balancing membagi beban kerja dengan adil - **True**
+**54.** Cluster load balancing membagi beban kerja dengan adil - **True** - load balancing cluster mendistribusikan request/job secara merata ke semua node.
 
 **55.** Manajemen pengguna dalam sistem cluster...
-- **Jawaban: d. Pembuatan, penghapusan, dan pengaturan akun pengguna**
+- **Jawaban: d. Pembuatan, penghapusan, dan pengaturan akun pengguna** - user management di cluster mencakup CRUD akun dan pengaturan akses/kuota.
 
 **56.** Flynn's taxonomy adalah...
-- **Jawaban: c. klasifikasi arsitektur komputasi** (SISD, SIMD, MISD, MIMD)
+- **Jawaban: c. klasifikasi arsitektur komputasi** - Flynn membagi arsitektur jadi 4: SISD, SIMD, MISD, MIMD berdasarkan aliran instruksi dan data.
 
 **57.** Minimum memori front node Rocks cluster...
-- **Jawaban: b. 1 GB**
+- **Jawaban: b. 1 GB** - Rocks cluster distribution membutuhkan minimal 1 GB RAM untuk front/head node.
 
 **58.** "Rolls" dalam Rocks cluster...
-- **Jawaban: c. Paket perangkat lunak yang telah dikonfigurasi sebelumnya**
+- **Jawaban: c. Paket perangkat lunak yang telah dikonfigurasi sebelumnya** - Rolls = bundled software packages yang tinggal diinstal ke cluster Rocks.
 
-**59.** Tugas manajer cluster: penjadwalan, alokasi resource, monitoring, manajemen - **True**
+**59.** Tugas manajer cluster: penjadwalan, alokasi resource, monitoring, manajemen - **True** - empat tugas utama cluster manager sesuai definisi.
 
 **60.** Cluster untuk komputasi kuantum...
-- **Jawaban: d. Mengelola dan mengendalikan kubus kuantum yang terhubung**
+- **Jawaban: d. Mengelola dan mengendalikan kubus kuantum yang terhubung** - cluster computing digunakan untuk mengontrol dan mengelola qubit-qubit dalam sistem quantum.
 
 ### Soal 61-70: Pemrograman MPI
 
 **61.** Kode MPI_Scatter dengan sendbuf = {1,2,3,4}. Apa yang dilakukan?
-- **Jawaban: a. Mengirim nilai 1, 2, 3, dan 4 dari proses master ke setiap proses**
+- **Jawaban: a. Mengirim nilai 1, 2, 3, dan 4 dari proses master ke setiap proses** - Scatter membagi array menjadi potongan dan mengirim satu elemen ke tiap proses.
 
 **62.** Kode MPI_Scatter. Berapa nilai yang dicetak proses rank 2?
-- **Jawaban: c. 3** - sendbuf[2] = 3, Scatter distribusi per elemen
+- **Jawaban: c. 3** - Scatter distribusi per elemen secara berurutan: rank 0 dapat sendbuf[0]=1, rank 1 dapat 2, rank 2 dapat sendbuf[2]=3.
 
 **63.** Fungsi MPI_Gather...
-- **Jawaban: b. Mengumpulkan data dari semua proses ke proses master**
+- **Jawaban: b. Mengumpulkan data dari semua proses ke proses master** - Gather = kebalikan Scatter, kumpulkan data dari semua proses ke root.
 
 **64.** Fungsi MPI_Bcast...
-- **Jawaban: b. Mengirim data dari proses master ke semua proses lainnya** - BUKAN scatter! Bcast kirim data SAMA ke semua
+- **Jawaban: b. Mengirim data dari proses master ke semua proses lainnya** - Bcast kirim data yang SAMA ke semua proses. Beda dengan Scatter yang pecah data berbeda.
 
 **65.** Fungsi MPI_Scatter...
-- **Jawaban: c. Memecah data dan mengirimkan potongan ke setiap proses**
+- **Jawaban: c. Memecah data dan mengirimkan potongan ke setiap proses** - Scatter = pecah array di root lalu distribusikan potongan berbeda ke tiap proses.
 
 **66.** MPI dalam pemrograman paralel...
-- **Jawaban: b. Message Passing Interface**
+- **Jawaban: b. Message Passing Interface** - MPI adalah standar/spesifikasi untuk komunikasi antar proses di sistem distributed memory.
 
 **67.** Fungsi MPI_Comm_rank...
-- **Jawaban: Mendapatkan rank dari proses saat ini**
+- **Jawaban: Mendapatkan rank dari proses saat ini** - rank = ID unik proses (0 sampai size-1) dalam communicator.
 
 **68.** Berapa total proses yang dijalankan program MPI?
-- **Jawaban: a. Tergantung pada jumlah argumen saat menjalankan program** - ditentukan oleh `mpirun -np N` saat runtime
+- **Jawaban: a. Tergantung pada jumlah argumen saat menjalankan program** - jumlah proses ditentukan saat runtime via `mpirun -np N`, bukan hardcoded di kode.
 
 **69.** Kode MPI_Bcast dengan data=10. Apa yang dilakukan?
-- **Jawaban: a. Mengirim nilai 10 dari proses master ke semua proses**
+- **Jawaban: a. Mengirim nilai 10 dari proses master ke semua proses** - rank 0 set data=10, lalu Bcast kirim nilai yang sama ke semua proses.
 
 **70.** Kode MPI_Bcast dengan data=5. Nilai yang dicetak semua proses?
-- **Jawaban: a. 5** - broadcast = semua proses dapat nilai yang sama
+- **Jawaban: a. 5** - Bcast = broadcast, semua proses menerima nilai yang sama (5) dari root.
 
 ### Soal 71-76: MPI Lanjutan
 
 **71.** Potongan kode mengirim data menggunakan MPI. Apa yang dilakukan?
-- **Jawaban: a. Mengirim data dari proses rank 0 ke proses rank 1** (kode tidak tampil di dokumen, tapi pattern standar MPI_Send)
+- **Jawaban: a. Mengirim data dari proses rank 0 ke proses rank 1** - pattern standar MPI_Send: rank 0 sebagai pengirim, rank 1 sebagai penerima.
 
 **72.** Fungsi MPI_Reduce...
-- **Jawaban: c. Menggabungkan data dari semua proses dan menjalankan operasi reduksi**
+- **Jawaban: c. Menggabungkan data dari semua proses dan menjalankan operasi reduksi** - Reduce mengaplikasikan operasi (SUM, MAX, MIN, dll) ke data dari semua proses, hasilnya di root.
 
 **73.** Kode MPI_Reduce dengan MPI_SUM, sendbuf = rank+1. Apa yang dilakukan?
-- **Jawaban: c. Menghitung jumlah semua nilai dan menampilkan hasilnya di proses master**
+- **Jawaban: c. Menghitung jumlah semua nilai dan menampilkan hasilnya di proses master** - setiap proses kirim rank+1, root menjumlahkan semuanya.
 
 **74.** Kode MPI_Gather, sendbuf = rank+1. Nilai yang dicetak proses rank 2 di master?
-- **Jawaban: b. 3** - rank 2: sendbuf = 2+1 = 3
+- **Jawaban: b. 3** - rank 2 mengirim sendbuf = 2+1 = 3. Gather kumpulkan ke root, recvbuf[2] = 3.
 
 **75.** Kode MPI_Reduce MPI_SUM, sendbuf = rank+1, 4 proses. Hasil?
-- **Jawaban: a. 10** - 1+2+3+4 = 10
+- **Jawaban: a. 10** - 4 proses kirim: 1+2+3+4 = 10. MPI_SUM menjumlahkan semua nilai.
 
 **76.** Kode MPI_Gather, sendbuf = rank+1. Apa yang dilakukan?
-- **Jawaban: b. Mengumpulkan nilai dari setiap proses dan menampilkannya di proses master**
+- **Jawaban: b. Mengumpulkan nilai dari setiap proses dan menampilkannya di proses master** - Gather kumpulkan sendbuf dari tiap proses ke recvbuf di root, lalu root print semuanya.
 
 ### Pola Soal yang Sering Muncul
 
