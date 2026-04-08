@@ -32,7 +32,7 @@ async def list_clients(
 
 The `_user` underscore prefix is intentional: the parameter exists to trigger the auth dependency check, but the resolved `AuthenticatedUser` object is not needed in the handler body. FastAPI evaluates all dependencies regardless of whether the handler uses them, so the auth check runs on every request.
 
-**Why `get_current_user` and not `require_admin` for reads?** Client data should be accessible to both admins and AR staff. `require_admin` would block AR staff from seeing the client list they need to manage reminders. `get_current_user` requires a valid JWT from any authenticated user.
+**Why `get_current_user` and not `require_admin` for reads?** Client data should be accessible to both admins and AR (Accounts Receivable) staff. `require_admin` would block AR staff from seeing the client list they need to manage reminders. `get_current_user` requires a valid JWT from any authenticated user.
 
 ---
 
@@ -50,7 +50,7 @@ const response = await fetch(`${API_URL}/clients/import`, {
 
 The project's `api` client (from `src/lib/api.ts`) uses an Axios interceptor that automatically injects `Authorization: Bearer <token>` from the Supabase session on every request. Native `fetch()` has no such interceptor, so every request goes out with no auth header. The server returns 401, and the client receives an error response with no helpful message.
 
-This is a classic auth bypass — not intentional malicious behavior, but a missing guard that would have shipped a feature where CSV import never works for any real user. The fix replaces the raw `fetch()` call with the auth-aware client.
+This is a classic auth bypass: not intentional malicious behavior, but a missing guard that would have shipped a feature where CSV import never works for any real user. The fix replaces the raw `fetch()` call with the auth-aware client.
 
 ---
 
