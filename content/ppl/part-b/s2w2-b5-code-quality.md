@@ -64,6 +64,8 @@ The net effect: a reviewer opening an MR now sees quality data inline without cl
 
 ---
 
+![SonarQube quality gate result posted as MR comment](/images/ppl/s2w2-b5-sonarqube.png)
+
 ## Before vs. After
 
 | Metric | Before (S2W1) | After (S2W2) |

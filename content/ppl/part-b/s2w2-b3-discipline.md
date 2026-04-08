@@ -90,6 +90,8 @@ No vague messages like "fix stuff" or "update". Each commit either maps to a SIR
 
 ## Results
 
+![Filtered MR list showing 19 MRs merged during Sprint 2 Week 2](/images/ppl/s2w2-b3-mr-list.png)
+
 | Category | MR Count |
 |----------|----------|
 | CI/CD pipeline improvements | 8 |

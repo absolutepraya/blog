@@ -44,6 +44,8 @@ if invoice["status"] in ("PAID", "CANCELED"):
 
 ---
 
+![Review thread on MR !118 showing P0/P1 issues](/images/ppl/s2w2-b4-review-mr127.png)
+
 ## MR !109 — Blue/Green Deployment (Erdafa)
 
 The overall architecture was solid: Docker Compose profiles for slot separation, nginx upstream switching via a conf file volume mount, manual promote/rollback gates. Review focused on silent failure modes that could cause outages or data corruption.
@@ -86,6 +88,8 @@ fi
 **P2/P3 items (7):** no frontend health check in deploy, GlitchTip release curl missing `-f` flag, stale docstring, and others.
 
 ---
+
+![Review thread on MR !109 showing P0 race conditions and silent failure issues](/images/ppl/s2w2-b4-review-mr109.png)
 
 ## MR !127 — Invoice Grouping by Status (Rifqi)
 
