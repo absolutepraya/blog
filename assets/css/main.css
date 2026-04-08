@@ -1084,6 +1084,87 @@ article.post {
   color: var(--text-muted);
 }
 
+/* --- Password Protection --- */
+.protected-hidden {
+  display: none !important;
+}
+
+.password-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40vh;
+  padding: 2rem 0;
+}
+
+.password-prompt {
+  text-align: center;
+  max-width: 24rem;
+  width: 100%;
+}
+
+.password-prompt h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.password-prompt p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+#password-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+#password-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-family-sans);
+  font-size: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#password-input:focus {
+  border-color: var(--color-blue);
+}
+
+#password-submit {
+  padding: 0.5rem 1rem;
+  font-family: var(--font-family-sans);
+  font-size: 1rem;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#password-submit:hover {
+  background: var(--color-blue);
+}
+
+.password-error {
+  color: var(--color-red);
+  font-size: 0.875rem;
+}
+
+.password-disclaimer {
+  margin-top: 1rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
 /* --- Responsive --- */
 /* Mermaid responsive containers */
 pre.mermaid svg {

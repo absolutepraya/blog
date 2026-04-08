@@ -7,6 +7,7 @@ Hugo static site with Solarized theme (light/dark), Mermaid diagram support, dep
 ```
 content/posts/       — Blog posts (Markdown)
 content/ppl/         — PPL course blogs (part-a/, part-b/, part-c/)
+content/private/     — Password-protected posts (client-side SHA-256 gate)
 content/about.md     — About page
 notes/               — Scratch notes for drafting posts (gitignored, not rendered)
                        When asked to save/take notes for a blog post, write them here
@@ -68,6 +69,18 @@ Post content here in standard Markdown.
 | `toc` | No | Side outline (default: `true`). Set `false` to hide the left-side TOC on desktop |
 | `math` | No | Set `true` to enable LaTeX math rendering via KaTeX |
 | `draft` | No | Set `true` to hide from production builds |
+| `password_hash` | No | SHA-256 hex digest of post password. Shows a client-side password prompt; cached in localStorage per post slug |
+
+## Private / Password-Protected Posts
+
+Posts in `content/private/` are listed under `/private/` (linked in the nav menu) and protected by a per-post client-side password gate. This is a casual UX lock, not real security - the content is still in the HTML source.
+
+To add a private post:
+1. Create the `.md` file in `content/private/` with a `password_hash` field in front matter
+2. Generate the hash: `echo -n "your-password" | shasum -a 256 | cut -d' ' -f1`
+3. Paste the hex digest as the `password_hash` value
+
+How it works: JS checks localStorage for `pw_<slug>`. If the cached hash matches the front matter hash, auto-unlock. Otherwise, prompt for password, SHA-256 hash it via Web Crypto API, compare, and cache on success.
 
 ## Images
 

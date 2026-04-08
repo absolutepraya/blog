@@ -691,5 +691,53 @@
             });
         })();
     </script>
+    <script>
+        (function() {
+            var overlay = document.getElementById('password-overlay');
+            if (!overlay) return;
+
+            var hash = overlay.getAttribute('data-hash');
+            var slug = overlay.getAttribute('data-slug');
+            var storageKey = 'pw_' + slug;
+            var wrapper = document.getElementById('post-content-wrapper');
+
+            function unlock() {
+                overlay.style.display = 'none';
+                wrapper.classList.remove('protected-hidden');
+                var toc = document.getElementById('side-outline');
+                if (toc) toc.classList.remove('protected-hidden');
+            }
+
+            var cached = localStorage.getItem(storageKey);
+            if (cached === hash) {
+                unlock();
+                return;
+            }
+
+            var form = document.getElementById('password-form');
+            var input = document.getElementById('password-input');
+            var error = document.getElementById('password-error');
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                var encoder = new TextEncoder();
+                var data = encoder.encode(input.value);
+                var hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                var hashArray = Array.from(new Uint8Array(hashBuffer));
+                var hashHex = hashArray.map(function(b) {
+                    return b.toString(16).padStart(2, '0');
+                }).join('');
+
+                if (hashHex === hash) {
+                    localStorage.setItem(storageKey, hash);
+                    unlock();
+                } else {
+                    error.style.display = 'block';
+                    input.value = '';
+                    input.focus();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
