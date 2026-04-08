@@ -58,6 +58,16 @@ Kenapa HPC diperlukan? Karena banyak masalah dunia nyata yang tidak bisa diseles
 - Machine learning untuk drug design (virtual screening)
 - SGD (Stochastic Gradient Descent) bisa diparalelkan dengan **mini-batch parallelism**
 
+### Cara Mempercepat Komputasi
+
+*Framework "3 cara" ini sering muncul:*
+
+| Cara | Analogi Komputer |
+|---|---|
+| **Work Harder** | Pakai hardware lebih cepat |
+| **Work Smarter** | Algoritma yang lebih efisien |
+| **Get Help** | Pakai banyak komputer (paralel) |
+
 ---
 
 ## Topik 2: Cluster Computing
@@ -107,6 +117,64 @@ Setiap cluster punya komponen-komponen ini - pahami fungsi masing-masing:
 | Cost effective | Manajemen intensif |
 | Flexibility | |
 
+### Mode Operasi Cluster
+
+*Ini penting - sering keluar di soal:*
+
+| Mode | Deskripsi |
+|---|---|
+| **High Performance** | Dedicated, untuk komputasi berat (simulasi, HPC) |
+| **High Throughput** | Memanfaatkan idle cycles dari banyak workstation. Pool of resources yang shared |
+| **High Availability** | Fail-over, untuk mission-critical apps (bank, kontrol nuklir). Kalau satu node mati, yang lain ambil alih |
+| **Unified** | Gabungan HP + HA dalam satu cluster. Tren ke depan |
+
+> **High Throughput** = bukan tentang kecepatan satu job, tapi tentang menjalankan BANYAK job secara kolektif. Contoh: SETI@home.
+
+> **High Availability** = menjamin uptime, bukan kecepatan. Kalau node gagal, service tetap jalan.
+
+### Klasifikasi Cluster (6 cara)
+
+| Klasifikasi | Contoh |
+|---|---|
+| Berdasarkan **aplikasi** | HP Cluster vs HA Cluster |
+| Berdasarkan **kepemilikan node** | Dedicated vs Non-dedicated |
+| Berdasarkan **hardware** | CoPs (PCs), COWs (Workstations), CLUMPs (SMPs) |
+| Berdasarkan **OS** | Linux (Beowulf), Solaris (Berkeley NOW), NT (HPVM) |
+| Berdasarkan **konfigurasi** | Homogeneous vs Heterogeneous |
+| Berdasarkan **skala** | Group (2-99), Departmental (10s-100s), National, International (Grid) |
+
+> **Beowulf** = cluster dari PC commodity yang menjalankan Linux, terhubung via Ethernet, menggunakan MPI/PVM. Nama paling terkenal untuk Linux cluster.
+
+> **CLUMPs** (Clusters of SMPs) = gabungan keunggulan SMP (mudah diprogram) dengan skalabilitas cluster.
+
+### Arsitektur Berlapis Cluster
+
+Dari bawah ke atas:
+- Network Interface Hardware + Cluster Interconnection
+- Communications Software
+- PC/Workstation nodes
+- **Cluster Middleware** (SSI + Availability Infrastructure)
+- Parallel Programming Environment (MPI, PVM)
+- Sequential/Parallel Applications
+
+> **SSI (Single System Image)** = cluster yang terlihat seperti satu komputer dari sisi pengguna. Ini yang membedakan cluster dari distributed system biasa.
+
+### Teknologi Jaringan Cluster
+
+*Tabel ini sering muncul di soal pilihan ganda:*
+
+| Teknologi | Bandwidth | Latency |
+|---|---|---|
+| Ethernet | 10 Mbps | Tinggi |
+| Fast Ethernet | 100 Mbps | Sedang |
+| Gigabit Ethernet | 1 Gbps | Sedang |
+| **Myrinet** | 1.28 Gbps | 5 us |
+| **InfiniBand** | Tinggi | Rendah |
+| **SCI** | - | 12 us |
+| **QsNet** (Quadrics) | - | 5 us |
+
+***Trap question:*** InfiniBand dan Myrinet sering muncul sebagai pilihan "jaringan tercepat untuk cluster". Myrinet punya on-board processor yang bisa diprogram.
+
 ---
 
 ## Topik 3: Membangun Cluster
@@ -140,6 +208,28 @@ Sekarang kita masuk ke bagaimana cluster dibangun - mulai dari arsitektur sampai
 - Satu node bisa single/multiprocessor system dengan memori, I/O, dan OS sendiri
 - Umumnya 2+ komputer yang terhubung
 - Bisa dalam satu cabinet atau terpisah secara fisik lewat LAN
+
+### Level Paralelisme (Code Granularity)
+
+*Ini taxonomy penting yang sering muncul di soal:*
+
+| Level | Granularity | Unit Kode | Tool |
+|---|---|---|---|
+| **Large grain** | Task level | Program | PVM, MPI |
+| **Medium grain** | Control level | Function/thread | Threads, OpenMP |
+| **Fine grain** | Data level | Loop | Compiler directives |
+| **Very fine grain** | Multiple issue | Instruksi | Hardware (CPU) |
+
+***Trap question:*** MPI = large grain (task level). OpenMP = medium grain (thread level). Compiler = fine grain (loop level). Jangan kebalik!
+
+### Amdahl's Law
+
+> **Amdahl's Law** = speed-up yang didapat dari prosesor lebih cepat dibatasi oleh komponen sistem yang paling lambat. Contoh: kalau 20% kode tidak bisa diparalelkan, speed-up maksimum hanya 5x, berapa pun jumlah prosesornya.
+
+### Fakta Top500
+
+- Tahun 2017: **87%** (437 dari 500) superkomputer terkuat dunia adalah cluster
+- Ini menunjukkan cluster sudah jadi arsitektur dominan, mengalahkan MPP dan SMP
 
 ### Langkah Membangun Cluster
 
@@ -261,6 +351,64 @@ mpirun -np 4 ./program              # Jalankan dengan 4 proses
 
 - `-np` menentukan jumlah proses. Kalau `-np 4`, maka rank = 0, 1, 2, 3
 
+### Blocking vs Non-Blocking
+
+| Tipe | Fungsi | Perilaku |
+|---|---|---|
+| **Blocking** | MPI_Send, MPI_Recv | Menunggu sampai operasi selesai. MPI_Recv selalu block sampai pesan diterima |
+| **Non-blocking** | MPI_Isend, MPI_Irecv | Menginisiasi komunikasi lalu lanjut kerja. Cek status dengan MPI_Wait atau MPI_Test |
+
+***Trap question:*** MPI_Send itu blocking, tapi perilakunya **implementation-dependent** - bisa buffer dulu (return cepat) atau block sampai receiver siap. Program yang mengandalkan buffering disebut **unsafe**.
+
+### Deadlock di MPI
+
+- Terjadi kalau semua proses panggil MPI_Send (blocking) sebelum MPI_Recv - tidak ada yang bisa terima pesan
+- Solusi: **MPI_Sendrecv** - gabungan send dan receive dalam satu panggilan, mencegah deadlock
+- Solusi lain: gunakan non-blocking (MPI_Isend/MPI_Irecv)
+
+### Message Tags dan Wildcards
+
+- Setiap pesan MPI punya **tag** (integer) untuk membedakan pesan
+- **MPI_ANY_SOURCE** - terima dari proses manapun
+- **MPI_ANY_TAG** - terima pesan dengan tag apapun
+- **MPI_Status** - struct yang berisi MPI_SOURCE, MPI_TAG, MPI_ERROR setelah receive
+
+### MPI_Scan (Prefix Reduction)
+
+> **MPI_Scan** = prefix reduction. Setiap proses i mendapat hasil reduce dari proses 0 sampai i. Contoh SUM: proses 0 dapat a0, proses 1 dapat a0+a1, proses 2 dapat a0+a1+a2, dst.
+
+***Trap question:*** MPI_Scan BUKAN running sum dalam satu proses. Ini operasi antar-proses. Jangan bingung dengan MPI_Reduce.
+
+### Distribusi Data
+
+| Tipe | Pola | Contoh (8 elemen, 4 proses) |
+|---|---|---|
+| **Block** | Elemen berurutan | P0:[0,1], P1:[2,3], P2:[4,5], P3:[6,7] |
+| **Cyclic** | Round-robin | P0:[0,4], P1:[1,5], P2:[2,6], P3:[3,7] |
+| **Block-cyclic** | Round-robin per blok | P0:[0,1,4,5], P1:[2,3,6,7] (block=2) |
+
+MPI_Scatter menggunakan distribusi **block** secara default.
+
+### Aturan Collective Communication
+
+- Semua proses HARUS panggil fungsi collective yang sama (ga bisa match Reduce dengan Recv)
+- Collective communication TIDAK pakai tags - di-match berdasarkan communicator dan urutan panggilan
+- **MPI_Reduce(&x, &x, ...)** pakai buffer yang sama untuk send dan receive itu **ILLEGAL**
+
+### Reduction Operators Lengkap
+
+Selain MPI_SUM, MPI_MAX, MPI_MIN, MPI_PROD, ada juga:
+- **MPI_MAXLOC, MPI_MINLOC** - return nilai + rank proses yang punya nilai tersebut
+- MPI_BAND, MPI_BOR, MPI_BXOR - bitwise AND, OR, XOR
+- MPI_LAND, MPI_LOR, MPI_LXOR - logical AND, OR, XOR
+
+### Hybrid MPI + OpenMP
+
+- MPI untuk komunikasi **antar node**, OpenMP untuk paralelisme **dalam node**
+- Keuntungan: menghindari overhead MPI intra-node, fine granularity + dynamic load balancing
+- Compile: `mpicc -fopenmp`, run: `mpiexec -n 4 ./program` (4 proses MPI, masing-masing bisa spawn OpenMP threads)
+- Performa: di 128 CPU, hybrid (4 thread) bisa **4.44x lebih cepat** dari pure MPI
+
 ---
 
 ## Topik 5: Pemrograman OpenMP
@@ -308,6 +456,31 @@ Clauses ditambahkan setelah directive untuk mengontrol perilaku:
 
 ***Trap question:*** Variabel yang dideklarasikan di dalam parallel region otomatis **private**. Variabel yang dideklarasikan di luar otomatis **shared**. Tapi ini bisa di-override dengan clause.
 
+### Directives Tambahan
+
+| Directive | Fungsi |
+|---|---|
+| `nowait` | Thread yang selesai bisa lanjut tanpa menunggu thread lain. Tanpa ini, ada implicit barrier di akhir work-sharing |
+| `ordered` | Block dieksekusi sesuai urutan iterasi sequential loop |
+| `default(shared)` | Semua variabel shared kecuali yang di-mark private |
+
+### Runtime Functions
+
+| Fungsi | Return |
+|---|---|
+| `omp_get_num_threads()` | Jumlah thread aktif saat ini |
+| `omp_get_thread_num()` | ID thread (0 sampai num_threads-1) |
+| `omp_get_num_procs()` | Jumlah prosesor yang tersedia |
+| `omp_set_num_threads(n)` | Set jumlah thread untuk parallel region berikutnya |
+
+### Default Sharing Rules
+
+- Semua variabel di work-sharing region default-nya **shared**
+- KECUALI **loop iteration counter** - otomatis **private**
+- Kalau ragu, pakai `default(none)` dan deklarasikan semua variabel secara eksplisit
+
+***Trap question:*** Loop counter (misal `i` di `for(int i=...)`) otomatis private di OpenMP parallel for. Tapi variabel lain yang dideklarasi di luar loop otomatis shared!
+
 ---
 
 ## Topik 6: MPI vs OpenMP
@@ -323,6 +496,7 @@ Ini perbandingan paling penting - hampir pasti muncul di UTS.
 | **Kompleksitas** | Lebih kompleks, harus tulis send/recv | Lebih simpel, tinggal tambah pragma |
 | **Use case** | Multi-node clusters | Multi-core single machine |
 | **Overhead** | Network communication | Thread creation/synchronization |
+| **Hybrid** | Bisa digabung dengan OpenMP (antar node) | Bisa digabung dengan MPI (dalam node) |
 
 ***Trap question:*** Soal mungkin tanya "mana yang lebih baik?" - jawabannya **tergantung konteks**. MPI untuk multi-node, OpenMP untuk single node. Bisa juga digabung (hybrid MPI+OpenMP) untuk cluster dengan node multi-core.
 
