@@ -637,3 +637,132 @@ Rangkuman jebakan umum dan strategi menjawab soal pilihan ganda:
 5. **CUDA thread indexing** - rumus menghitung index
 6. **Komponen cluster** dan fungsinya
 7. **SLURM** - fungsi utama dan tools-nya
+
+---
+
+## Tutorial: Akses Cluster dan Multicore Fasilkom UI
+
+Ini panduan praktis untuk akses kedua komputer yang dipakai di PR1. Berguna untuk bagian **praktik UTS** (30% bobot) yang mengharuskan login dan menjalankan program MPI.
+
+### Dua Lingkungan
+
+| | Cluster (Lingkungan A) | Multicore (Lingkungan B) |
+|---|---|---|
+| Alamat | `152.118.31.24` | `152.118.31.61` |
+| Username | `user04` (sesuai kelompok) | `user04` (sama) |
+| Tipe | Multi-node, 6 nodes x 8 cores | Single node, 64 cores |
+| Job runner | `sbatch` / `srun` (SLURM) | `mpirun` langsung |
+
+### Login via SSH
+
+Buka terminal (macOS/Linux) atau MobaXterm (Windows), lalu:
+
+```bash
+# Login ke Cluster
+ssh user04@152.118.31.24 -p 22
+
+# Login ke Multicore
+ssh user04@152.118.31.61 -p 22
+```
+
+Setelah login, masuk ke working directory:
+
+```bash
+cd pangeran_bercuda_mpi    # folder repo kita
+ls                          # lihat isi folder
+```
+
+### Kompilasi Program MPI
+
+```bash
+# Kompilasi satu file
+mpicc -O2 program.c -o program
+
+# Kompilasi dengan math library (untuk Jacobi)
+mpicc -O2 4-jacobi.c -o 4-jacobi -lm
+
+# Kompilasi semua (pakai Makefile)
+make
+```
+
+### Menjalankan di Multicore (Langsung)
+
+Di multicore, langsung pakai `mpirun`:
+
+```bash
+# Jalankan dengan 4 proses
+mpirun -np 4 ./1-hello_mpi
+
+# Jalankan matrix multiplication dengan N=1024 dan 8 proses
+mpirun -np 8 ./2-matmat 1024
+
+# Jalankan Jacobi dengan N=512 dan 16 proses
+mpirun -np 16 ./4-jacobi 512
+```
+
+### Menjalankan di Cluster (via SLURM)
+
+Di cluster, harus submit job lewat SLURM:
+
+**Cek status nodes dulu:**
+```bash
+sinfo-1
+```
+Output contoh:
+```
+PARTITION AVAIL  NODES  STATE NODELIST
+batch*       up      2  down* node-[02,05]
+batch*       up      4  alloc node-[01,03,06-07]
+batch*       up      1   idle node-08
+```
+- `idle` = bisa dipakai
+- `alloc` = sedang dipakai
+- `down` = mati, jangan pakai
+
+**Submit job dengan sbatch:**
+
+Buat file script, misal `run.sh`:
+```bash
+#!/bin/bash
+#SBATCH -J nama_job
+#SBATCH -n 8
+
+srun --mpi=pmix -n 8 /home/user04/pangeran_bercuda_mpi/1-hello_mpi
+```
+
+Lalu submit:
+```bash
+sbatch run.sh
+```
+
+**Cek antrian job:**
+```bash
+squeue-1            # lihat semua job
+squeue-1 -u user04  # lihat job kita saja
+```
+
+**Cancel job:**
+```bash
+scancel <JOB_ID>
+```
+
+**Lihat output:**
+Job SLURM menyimpan output di file `slurm-<JOB_ID>.out` secara default.
+
+### Perintah SLURM yang Penting
+
+| Perintah | Fungsi |
+|---|---|
+| `sinfo-1` | Lihat status nodes (idle/alloc/down) |
+| `squeue-1` | Lihat antrian job |
+| `sbatch script.sh` | Submit job |
+| `scancel JOB_ID` | Cancel job |
+| `sacct -j JOB_ID` | Lihat detail job yang sudah selesai |
+
+### Tips untuk Praktik UTS
+
+- **Buat folder UTS dulu** setelah login: `mkdir UTS-NamaAnda && cd UTS-NamaAnda`
+- Kalau diminta compile dan run, **multicore lebih gampang** (langsung `mpirun`, ga perlu sbatch)
+- Kalau cluster nodes penuh, jangan panik - kerja di multicore dulu
+- **Rekam layar** dari awal login sampai selesai (pakai OBS atau screen recorder bawaan)
+- Pastikan camera ON selama ujian
