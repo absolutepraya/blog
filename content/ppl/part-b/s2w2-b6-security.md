@@ -74,6 +74,8 @@ Bandit (Python SAST) and `pnpm audit` (JS dependency scan) were already running 
 
 ---
 
+![Security audit CI comment showing Bandit and pnpm audit results](/images/ppl/s2w2-b6-security.png)
+
 ## Results
 
 | Fix | OWASP Category | Scope |
