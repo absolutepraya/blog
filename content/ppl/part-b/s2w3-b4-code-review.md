@@ -57,7 +57,11 @@ The `papaparse` call had no `error` callback. Malformed rows (wrong delimiter, u
 
 ---
 
-![Review thread on MR !155 showing P0 auth bypass issue](/images/ppl/s2w3-b4-review-mr155.png)
+![MR !155 review: P0 auth bypass via raw fetch()](/images/ppl/s2w3-b4-review-mr155-1.png)
+
+![MR !155 review: P0 FileReader error silently ignored](/images/ppl/s2w3-b4-review-mr155-2.png)
+
+![MR !155 review: additional review points](/images/ppl/s2w3-b4-review-mr155-3.png)
 
 ## MR !128: Settings Page Management (hl)
 
@@ -92,8 +96,6 @@ The settings form called the API mutation but had no `onError` handler. A failed
 **P1 items:** settings category typed as bare `str` instead of a `Literal` type (losing compile-time exhaustiveness), missing integration tests for admin-only access verification.
 
 ---
-
-![Review thread on MR !128 showing P0 key whitelist gap](/images/ppl/s2w3-b4-review-mr128.png)
 
 ## MR !166: Rule-Based Risk Scoring Engine (qenthm)
 
@@ -146,6 +148,8 @@ result = db.table("payments").select("*").execute()
 ```
 
 The project's `CLAUDE.md` mandates: "Never call Supabase directly from services — use `db/queries/` layer." Moving the query to a dedicated `db/queries/risk_scoring.py` file keeps the service testable and the data access layer consistent.
+
+![MR !166 review: P0 broken cross-table join returning all payments across all clients](/images/ppl/s2w3-b4-review-mr166.png)
 
 ---
 

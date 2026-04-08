@@ -82,7 +82,9 @@ The `fix(ci)` prefix consistently meant "something was broken in the pipeline." 
 
 ---
 
-![Filtered MR list showing 19 MRs merged during Sprint 2 Week 3](/images/ppl/s2w3-b3-mr-list.png)
+![Filtered MR list showing 19 MRs merged during Sprint 2 Week 3 (page 1)](/images/ppl/s2w3-b3-mr-list-1.png)
+
+![Filtered MR list showing 19 MRs merged during Sprint 2 Week 3 (page 2)](/images/ppl/s2w3-b3-mr-list-2.png)
 
 ## Results
 
