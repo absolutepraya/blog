@@ -57,6 +57,8 @@ The `papaparse` call had no `error` callback. Malformed rows (wrong delimiter, u
 
 ---
 
+![MR !155 review: P0 auth bypass via raw fetch()](/images/ppl/s2w3-b4-review-mr155-0.png)
+
 ![MR !155 review: P0 auth bypass via raw fetch()](/images/ppl/s2w3-b4-review-mr155-1.png)
 
 ![MR !155 review: P0 FileReader error silently ignored](/images/ppl/s2w3-b4-review-mr155-2.png)
@@ -94,6 +96,8 @@ async def update_settings(db: Client, updates: dict[str, Any]) -> None:
 The settings form called the API mutation but had no `onError` handler. A failed save (validation error, network error) showed no feedback. The form appeared to submit successfully while nothing changed on the server.
 
 **P1 items:** settings category typed as bare `str` instead of a `Literal` type (losing compile-time exhaustiveness), missing integration tests for admin-only access verification.
+
+![MR !128 review: P0 no key whitelist and missing error state on frontend](/images/ppl/s2w3-b4-review-mr128.png)
 
 ---
 
