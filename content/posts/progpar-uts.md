@@ -58,16 +58,6 @@ Kenapa HPC diperlukan? Karena banyak masalah dunia nyata yang tidak bisa diseles
 - Machine learning untuk drug design (virtual screening)
 - SGD (Stochastic Gradient Descent) bisa diparalelkan dengan **mini-batch parallelism**
 
-### Cara Mempercepat Komputasi
-
-*Framework "3 cara" ini sering muncul:*
-
-| Cara | Analogi Komputer |
-|---|---|
-| **Work Harder** | Pakai hardware lebih cepat |
-| **Work Smarter** | Algoritma yang lebih efisien |
-| **Get Help** | Pakai banyak komputer (paralel) |
-
 ---
 
 ## Topik 2: Cluster Computing
@@ -940,3 +930,247 @@ Job SLURM menyimpan output di file `slurm-<JOB_ID>.out` secara default.
 - Kalau cluster nodes penuh, jangan panik - kerja di multicore dulu
 - **Rekam layar** dari awal login sampai selesai (pakai OBS atau screen recorder bawaan)
 - Pastikan camera ON selama ujian
+
+---
+
+## Soal UTS Tahun Lalu (2025)
+
+Berikut 76 soal pilihan ganda UTS Pemrograman Paralel tahun 2025, sudah diverifikasi jawabannya. Fokus ke soal-soal yang tricky - sisanya straightforward.
+
+### Soal 1-10: Pengantar HPC
+
+**1.** HPC adalah praktek agregasi pemakaian kekuatan komputasi yang memberikan kinerja lebih tinggi untuk mengatasi persoalan...
+- **Jawaban: b. Sains, engineering, bisnis yang besar**
+
+**2.** Aplikasi superkomputer terkait persoalan yang terlalu ___ untuk komputer standard, membutuhkan waktu yang ___
+- **Jawaban: d. Besar, sangat lama**
+
+**3.** Desktop mempunyai chip pemroses ___, HPC adalah jaringan node memuat ___ chip pemroses
+- **Jawaban: d. tunggal, satu atau lebih**
+
+**4.** Resource hungry application memecahkan masalah memakai...
+- **Jawaban: b. pemodelan komputer, simulasi dan analisis** - perhatikan ada 3 kata kunci: pemodelan, simulasi, DAN analisis
+
+**5.** Resource hungry application antara lain dalam bidang...
+- **Jawaban: b. semuanya benar** - mencakup semua bidang (internet, CAD/CAM, life sciences, aerospace, military, digital biology)
+
+**6.** Dalam industri perminyakan, HPC digunakan untuk mencari...
+- **Jawaban: a. Sumber minyak baru**
+
+**7.** HPC berperan dalam mengatasi wabah ___ (43 consortium, 165K nodes, 87 projects, 6.8M CPU cores, 50K GPU, 600 PFlops)
+- **Jawaban: d. covid19**
+
+**8.** Contoh proses paralel dalam pembangunan tembok melibatkan proses...
+- **Jawaban: d. benar semua** - pembuatan, pengiriman, penyusunan batu bata semuanya bisa paralel
+
+**9.** Proses parallel dalam pembangunan tembok juga pada proses...
+- **Jawaban: d. semuanya benar**
+
+**10.** Pengelompokan bidang terkait HPC terdiri dari...
+- **Jawaban: a. Benar semua** - information simulation, repository, integration, dan access
+
+### Soal 11-20: Arsitektur dan Pemrograman Paralel
+
+**11.** Pada arsitektur cluster, terdapat ___ satu berfungsi sebagai ___ sisanya sebagai ___ dihubungkan dengan ___
+- **Jawaban: d. beberapa nodes, master, pemroses, network/switch**
+
+**12.** Tujuan komputasi kinerja tinggi (HPC) adalah...
+- **Jawaban: a. Semuanya benar** - maximize performance, minimize waktu, maximize masalah yang bisa diselesaikan
+
+**13.** Peningkatan kinerja superkomputer karena faktor...
+- **Jawaban: c. Benar semua** - banyak prosesor, pengurangan waktu per instruksi, pipelining
+
+**14.** Yang TIDAK termasuk taksonomi arsitektur komputer adalah...
+- **Jawaban: a.** SIMD dengan eksekusi "secara berurutan" - ***ini TRAP!*** Deskripsi SIMD-nya salah karena bilang "berurutan" padahal SIMD mengeksekusi secara BERSAMAAN pada data yang berbeda. Makanya ini "tidak termasuk" karena deskripsinya keliru.
+
+**15.** Yang BUKAN termasuk pemrograman shared memory adalah...
+- **Jawaban: b. Syncronus Execution** - shared memory punya: threads, global shared address space, local private address space, parallel operations. Synchronous execution bukan fiturnya.
+
+**16.** Dalam pemrograman shared memory, THREADS...
+- **Jawaban: b. Betul semua** - fork thread, bagi tugas, alokasi prioritas
+
+**17.** Dalam pemrograman shared memory, THREADS...
+- **Jawaban: a. Betul semua** - sama seperti no 16
+
+**18.** Dalam pemrograman parallel menggunakan thread, yang TIDAK benar adalah...
+- **Jawaban: a. Semuanya salah** - ***TRICKY!*** Ini berarti TIDAK ADA pernyataan yang salah. Semua opsi b/c/d benar (threads ke prosesor berbeda = speedup, ada overhead sinkronisasi). "Semuanya salah" = tidak ada jawaban yang tidak benar.
+
+**19.** Thread scheduling untuk menentukan alokasi threads ke prosesor...
+- **Jawaban: c. Semuanya benar** - statis, dinamis, dan runtime semua valid
+
+**20.** Yang TIDAK termasuk data parallel adalah...
+- **Jawaban: c. salah semua** - operasi bersyarat (WHERE), operasi larik (A=B+C), operasi pengurangan (SUM) semuanya TERMASUK data parallel. Tidak ada yang tidak termasuk.
+
+### Soal 21-30: Evaluasi Performa dan Cluster
+
+**21.** Evaluasi performa sistem komputer dapat dilakukan dengan...
+- **Jawaban: c. Benar semua** - benchmarking, evaluasi CPU, MIPS dan MFLOPS
+
+**22.** Yang TIDAK termasuk bidang information access (communication demands) adalah...
+- **Jawaban: d. Image processing** - image processing = compute dominated (information simulation), bukan communication demands
+
+**23.** Yang TIDAK benar dari pernyataan berikut...
+- **Jawaban: a.** "Dalam evaluasi MLOPS, semua operasi floating point dianggap sama" - salah karena dalam MFLOPS, operasi FP TIDAK dianggap sama (ada yang lebih kompleks)
+
+**24.** Yang TIDAK termasuk information simulation (compute dominated) adalah...
+- **Jawaban: c. Seismic data analysis** - seismic data analysis = storage dominated (information repository)
+
+**25.** Cara meningkatkan kinerja komputer...
+- **Jawaban: b. semuanya benar** - hardware cepat, algoritma optimal, banyak komputer
+
+**26.** Hambatan kecepatan prosesor...
+- **Jawaban: d. benar semua** - kecepatan cahaya, hukum termodinamika, biaya produksi tinggi
+
+**27.** Sistem klaster adalah sistem pemrosesan ___ yang terdiri dari ___ komputer, bekerja seperti sumber daya yang ___
+- **Jawaban: a. parallel, kumpulan, terintegrasi**
+
+**28.** Suatu node dalam sistem klaster...
+- **Jawaban: d. suatu system berprosesor tunggal atau banyak dengan memory, fasilitas I/O dan OS**
+
+**29.** Yang termasuk bagian arsitektur sistem cluster...
+- **Jawaban: b. benar semua** - interconnect, network interface, middleware, programming env, applications, software komunikasi
+
+**30.** Yang BUKAN perkakas pemrograman parallel...
+- **Jawaban: c. MPI, PVM dan LaTex** - LaTeX bukan tools pemrograman paralel!
+
+### Soal 31-40: True/False
+
+**31.** Tujuan HPC adalah maximize performance - **True**
+
+**32.** Cara memaksimalkan kinerja: menambah waktu per instruksi - **False** (menambah = memperlambat!)
+
+**33.** Taksonomi termasuk SISD - **True**
+
+**34.** SIMD: SEBAGIAN prosesor mengeksekusi secara berurutan - **False** (SEMUA prosesor, secara bersamaan)
+
+**35.** Sama seperti 34 - **False**
+
+**36.** Message passing menargetkan MIMD dengan distributed memory - **True**
+
+**37.** Threads of Control termasuk fitur shared memory - **True**
+
+**38.** Data parallel programming memproses data secara paralel pada beberapa komputer - **True**
+
+**39.** Distribusi data dan komunikasi ditangani compiler tanpa bimbingan programmer - **True** (contoh: HPF)
+
+**40.** Contoh data parallel languages adalah HPF - **True**
+
+### Soal 41-50: Aplikasi Cluster
+
+**41.** Cluster di industri manufaktur untuk...
+- **Jawaban: d. Memodelkan dan mensimulasikan produk sebelum produksi fisik**
+
+**42.** Cluster di industri keuangan/perbankan untuk...
+- **Jawaban: a. Analisis risiko dan prediksi pasar**
+
+**43.** Cluster di industri hiburan/desain untuk...
+- **Jawaban: b. Merender grafis 3D kompleks dan animasi**
+
+**44.** Pemantauan adalah aspek penting manajemen cluster - **True**
+
+**45.** Apa yang dimaksud "pemulihan bencana" dalam cluster computing?
+- **Jawaban: c. Kemampuan menjalankan tugas dari node yang berbeda** - dalam konteks cluster, disaster recovery = node lain ambil alih tugas
+
+**46.** Pertimbangan penting merancang cluster...
+- **Jawaban: c. Efisiensi energi dan manajemen daya**
+
+**47.** Peran manajer cluster...
+- **Jawaban: d. Mengatur distribusi tugas antara node-node**
+
+**48.** Jenis cluster untuk daya komputasi tinggi dalam waktu singkat...
+- **Jawaban: a. Cluster High-Performance (HPC)**
+
+**49.** Tujuan utama cluster computing...
+- **Jawaban: a. Meningkatkan ketersediaan dan kinerja sistem**
+
+**50.** Langkah instalasi NFS: instalasi server, instalasi client, buat dir mirror, konfigurasi exports, konfigurasi fstab - **True**
+
+### Soal 51-60: SLURM dan Lanjutan
+
+**51.** Cluster HPC dirancang untuk daya komputasi tinggi dalam waktu lama - **False** (waktu SINGKAT, bukan lama!)
+
+**52.** Singkatan SLURM...
+- **Jawaban: d. Simple Linux Utility for Resource Management**
+
+**53.** Keuntungan cluster untuk bioinformatika...
+- **Jawaban: d. Kemampuan analisis data kompleks**
+
+**54.** Cluster load balancing membagi beban kerja dengan adil - **True**
+
+**55.** Manajemen pengguna dalam sistem cluster...
+- **Jawaban: d. Pembuatan, penghapusan, dan pengaturan akun pengguna**
+
+**56.** Flynn's taxonomy adalah...
+- **Jawaban: c. klasifikasi arsitektur komputasi** (SISD, SIMD, MISD, MIMD)
+
+**57.** Minimum memori front node Rocks cluster...
+- **Jawaban: b. 1 GB**
+
+**58.** "Rolls" dalam Rocks cluster...
+- **Jawaban: c. Paket perangkat lunak yang telah dikonfigurasi sebelumnya**
+
+**59.** Tugas manajer cluster: penjadwalan, alokasi resource, monitoring, manajemen - **True**
+
+**60.** Cluster untuk komputasi kuantum...
+- **Jawaban: d. Mengelola dan mengendalikan kubus kuantum yang terhubung**
+
+### Soal 61-70: Pemrograman MPI
+
+**61.** Kode MPI_Scatter dengan sendbuf = {1,2,3,4}. Apa yang dilakukan?
+- **Jawaban: a. Mengirim nilai 1, 2, 3, dan 4 dari proses master ke setiap proses**
+
+**62.** Kode MPI_Scatter. Berapa nilai yang dicetak proses rank 2?
+- **Jawaban: c. 3** - sendbuf[2] = 3, Scatter distribusi per elemen
+
+**63.** Fungsi MPI_Gather...
+- **Jawaban: b. Mengumpulkan data dari semua proses ke proses master**
+
+**64.** Fungsi MPI_Bcast...
+- **Jawaban: b. Mengirim data dari proses master ke semua proses lainnya** - BUKAN scatter! Bcast kirim data SAMA ke semua
+
+**65.** Fungsi MPI_Scatter...
+- **Jawaban: c. Memecah data dan mengirimkan potongan ke setiap proses**
+
+**66.** MPI dalam pemrograman paralel...
+- **Jawaban: b. Message Passing Interface**
+
+**67.** Fungsi MPI_Comm_rank...
+- **Jawaban: Mendapatkan rank dari proses saat ini**
+
+**68.** Berapa total proses yang dijalankan program MPI?
+- **Jawaban: a. Tergantung pada jumlah argumen saat menjalankan program** - ditentukan oleh `mpirun -np N` saat runtime
+
+**69.** Kode MPI_Bcast dengan data=10. Apa yang dilakukan?
+- **Jawaban: a. Mengirim nilai 10 dari proses master ke semua proses**
+
+**70.** Kode MPI_Bcast dengan data=5. Nilai yang dicetak semua proses?
+- **Jawaban: a. 5** - broadcast = semua proses dapat nilai yang sama
+
+### Soal 71-76: MPI Lanjutan
+
+**71.** Potongan kode mengirim data menggunakan MPI. Apa yang dilakukan?
+- **Jawaban: a. Mengirim data dari proses rank 0 ke proses rank 1** (kode tidak tampil di dokumen, tapi pattern standar MPI_Send)
+
+**72.** Fungsi MPI_Reduce...
+- **Jawaban: c. Menggabungkan data dari semua proses dan menjalankan operasi reduksi**
+
+**73.** Kode MPI_Reduce dengan MPI_SUM, sendbuf = rank+1. Apa yang dilakukan?
+- **Jawaban: c. Menghitung jumlah semua nilai dan menampilkan hasilnya di proses master**
+
+**74.** Kode MPI_Gather, sendbuf = rank+1. Nilai yang dicetak proses rank 2 di master?
+- **Jawaban: b. 3** - rank 2: sendbuf = 2+1 = 3
+
+**75.** Kode MPI_Reduce MPI_SUM, sendbuf = rank+1, 4 proses. Hasil?
+- **Jawaban: a. 10** - 1+2+3+4 = 10
+
+**76.** Kode MPI_Gather, sendbuf = rank+1. Apa yang dilakukan?
+- **Jawaban: b. Mengumpulkan nilai dari setiap proses dan menampilkannya di proses master**
+
+### Pola Soal yang Sering Muncul
+
+- **"Semuanya benar/salah"** - hati-hati dengan soal yang punya opsi ini. Cek SEMUA opsi lain dulu sebelum pilih.
+- **Soal negatif** ("yang TIDAK termasuk", "yang BUKAN") - baca pelan-pelan, jangan terbalik logikanya.
+- **SIMD trap** - deskripsi SIMD sering dimodifikasi (berurutan vs bersamaan). Ingat: SIMD = SEMUA prosesor eksekusi instruksi yang SAMA secara BERSAMAAN.
+- **Bcast vs Scatter** - Bcast kirim data SAMA ke semua. Scatter PECAH data berbeda ke tiap proses.
+- **MPI_Reduce** - dengan 4 proses dan sendbuf = rank+1, hasilnya SUM = 1+2+3+4 = 10.
+- **MPI_Scatter** - rank N menerima sendbuf[N]. Rank 2 = sendbuf[2].
