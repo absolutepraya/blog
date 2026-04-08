@@ -57,13 +57,13 @@ The `papaparse` call had no `error` callback. Malformed rows (wrong delimiter, u
 
 ---
 
-![MR !155 review: P0 auth bypass via raw fetch()](/images/ppl/s2w3-b4-review-mr155-0.png)
+![MR !155 review thread 1](/images/ppl/s2w3-b4-review-mr155-0.png)
 
-![MR !155 review: P0 auth bypass via raw fetch()](/images/ppl/s2w3-b4-review-mr155-1.png)
+![MR !155 review thread 2](/images/ppl/s2w3-b4-review-mr155-1.png)
 
-![MR !155 review: P0 FileReader error silently ignored](/images/ppl/s2w3-b4-review-mr155-2.png)
+![MR !155 review thread 3](/images/ppl/s2w3-b4-review-mr155-2.png)
 
-![MR !155 review: additional review points](/images/ppl/s2w3-b4-review-mr155-3.png)
+![MR !155 review thread 4](/images/ppl/s2w3-b4-review-mr155-3.png)
 
 ## MR !128: Settings Page Management (hl)
 
