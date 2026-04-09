@@ -1,7 +1,7 @@
 ---
 title: "PPL: New Learnings Applied to SIRA [Sprint 2, Week 2]"
 date: 2026-04-09
-description: "Six new technologies and concepts learned outside coursework and applied to SIRA: mutation testing (mutmut + Stryker), integration test isolation with psycopg, sequential invoice numbering, Celery observability via Sentry, and AI context engineering through CLAUDE.md."
+description: "Five new technologies and concepts learned outside coursework and applied to SIRA: mutation testing (mutmut + Stryker), integration test isolation with psycopg, Celery observability via Sentry, and AI context engineering through CLAUDE.md."
 tags: ["ppl", "aptitude", "learning", "mutation-testing", "integration-testing", "sentry"]
 slug: s2w2-aptitude
 toc: true
@@ -89,36 +89,7 @@ The FK-safe truncation order (children before parents) was another learning: tru
 
 ---
 
-## 4. Sequential Invoice Number Generation
-
-SIRA needed auto-generated invoice numbers in the format `INV-{CLIENT_CODE}-YYYYMM-NNN`. The challenge was making this a pure function with no side effects.
-
-### What I Learned
-
-- **Pure function design for stateful-looking operations**: the function takes `existing_numbers` as a parameter rather than querying the database itself. This makes it fully testable without mocks.
-- **Overflow protection as a design constraint**: sequence numbers are capped at 999. Rather than silently wrapping, the function raises `ValueError` on overflow, forcing the caller to handle an exceptional case explicitly.
-- **Prefix-based scanning**: extracting the max sequence number from a list of existing invoice numbers by prefix matching and integer parsing, with graceful handling of malformed entries.
-
-```python
-def generate_invoice_number(
-    client_code: str, month: date, existing_numbers: list[str]
-) -> str:
-    prefix = f"INV-{client_code}-{month.strftime('%Y%m')}-"
-    max_seq = 0
-    for number in existing_numbers:
-        if number.startswith(prefix):
-            seq = int(number[len(prefix):])
-            if seq > max_seq:
-                max_seq = seq
-    next_seq = max_seq + 1
-    if next_seq > 999:
-        raise ValueError(f"Invoice sequence overflow for {client_code}")
-    return f"{prefix}{next_seq:03d}"
-```
-
----
-
-## 5. CeleryIntegration for Sentry
+## 4. CeleryIntegration for Sentry
 
 Celery tasks run in background workers, separate from the FastAPI process. Without explicit instrumentation, task failures are invisible to error monitoring.
 
@@ -138,7 +109,7 @@ sentry_sdk.init(
 
 ---
 
-## 6. CLAUDE.md as AI Context Engineering
+## 5. CLAUDE.md as AI Context Engineering
 
 This is a meta-level learning: structuring project documentation specifically to improve AI assistant output quality.
 
@@ -155,8 +126,7 @@ This is a meta-level learning: structuring project documentation specifically to
 - MR !144 — [SIRA-242](https://linear.app/ppl-sira/issue/SIRA-242): integration test infrastructure + domain tests
 - MR !153 — test(api): strengthen integration tests for mutation testing
 - MR !156 — [SIRA-242](https://linear.app/ppl-sira/issue/SIRA-242): mutation-killing unit tests for services
-- MR !130 — [SIRA-123](https://linear.app/ppl-sira/issue/SIRA-123): auto-generate invoice number
 - MR !105 — [SIRA-135](https://linear.app/ppl-sira/issue/SIRA-135): Sentry instrumentation for Celery
 - MR !142 — docs: update CLAUDE.md
 - MR !145, !146, !147, !148, !149, !152, !158, !159 — mutation testing CI series
-- Source: `apps/api/pyproject.toml`, `apps/web/stryker.config.json`, `apps/api/tests/conftest.py`, `apps/api/src/app/lib/invoice_number.py`, `apps/api/src/app/workers/celery_app.py`
+- Source: `apps/api/pyproject.toml`, `apps/web/stryker.config.json`, `apps/api/tests/conftest.py`, `apps/api/src/app/workers/celery_app.py`
