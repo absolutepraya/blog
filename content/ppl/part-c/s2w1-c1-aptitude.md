@@ -124,7 +124,7 @@ The challenge was making all of this transparent to the developer. After setup, 
 
 ## 6. Schema-Test CI Hardening
 
-Iterated on the Schemathesis CI job through seven rounds of fixes (detailed in the [Part A TDD & QA blog]({{< ref "/ppl/part-a/a1a3-tdd-and-qa" >}})). Key new concepts learned:
+Iterated on the Schemathesis CI job through seven rounds of fixes (detailed in the [Part A QA blog]({{< ref "/ppl/part-a/a3-qa" >}})). Key new concepts learned:
 
 - **JWT generation in CI**: generate valid test tokens using `PyJWT` so Schemathesis tests actual endpoint logic, not just auth rejection
 - **Rate limiter bypass for test environments**: `ENVIRONMENT=test` disables the rate limiter so the fuzzer can fire rapid requests without getting 429s
