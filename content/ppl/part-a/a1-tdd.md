@@ -306,7 +306,7 @@ We mapped every surviving mutant to its service and wrote targeted tests:
 | `session_service` | 2 survived | 2 survived | User agent parsing "Unknown" fallback |
 | `payment_service` | 1 survived | 0 survived | `_to_response` invoice number fallback chain |
 
-The total went from 764 mutants (492 with no coverage, 272 survived) to 1916 mutants with a 66.6% kill rate (1277 killed, 461 survived, 178 with no test coverage). That is not a perfect score, but it is a fundamentally different position from 0%: every major service function is now covered by tests that make specific assertions, and the remaining survivors are in code paths that genuinely need more granular testing.
+The total went from 764 mutants (492 with no coverage, 272 survived) to 1916 mutants with an 80.3% kill rate (1539 killed, 261 survived, 116 with no test coverage). Three rounds of targeted test writing, each guided by per-method survivor counts from the CI report, brought the score from 0% to 80%. The remaining 261 survivors are in deeply nested async code paths where mocking overhead outweighs the marginal gain.
 
 ### Why Mutation Testing is Non-Negotiable
 
@@ -357,7 +357,7 @@ This test had been passing for weeks. Not because it was correct, but because it
 | Frontend tests | 200 | 371 (+171) |
 | Test types | 1 (unit) | 7 (unit, integration, property, BDD, schema, load, mutation) |
 | Coverage | 91% line | 91% line+branch (enforced at 85%) |
-| Mutation score (Python) | no coverage | 66.6% (1277 killed, 461 survived, 178 no tests) |
+| Mutation score (Python) | no coverage | 80.3% (1539 killed, 261 survived, 116 no tests) |
 | Mutation score (TypeScript) | no coverage | 69% ([Stryker](https://stryker-mutator.io/)) |
 | BDD scenarios | 0 | 13 (39 more planned) |
 
