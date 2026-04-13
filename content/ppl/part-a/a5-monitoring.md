@@ -277,6 +277,8 @@ curl -sS -X POST \
 
 This creates a timeline of deployments in GlitchTip. When a new error appears, you can see which release introduced it. When an error disappears, you can see which release fixed it. The release creation is non-blocking (`|| true` on failure) so a GlitchTip outage never blocks a production deploy.
 
+![GlitchTip releases page showing deployments tagged by commit SHA](/images/ppl/a5-glitchtip-releases.png)
+
 ## Alert Rules
 
 Monitoring data is useless if nobody looks at it. Both projects (sira-api and sira-web) have identical alert rules configured:
@@ -286,6 +288,8 @@ Monitoring data is useless if nobody looks at it. Both projects (sira-api and si
 This is intentionally aggressive. In production, any unhandled exception is worth investigating immediately. The team receives an email within seconds of the first occurrence, before users have a chance to notice or report the issue.
 
 The 1-event-in-1-minute threshold means the alert fires on the first occurrence, not after accumulation. For a system that should have zero unhandled exceptions in steady state, any exception is a signal worth acting on.
+
+![GlitchTip alert configuration: 1 event in 1 minute triggers email to team](/images/ppl/a5-glitchtip-alert-config.png)
 
 ## What This Architecture Enables
 
