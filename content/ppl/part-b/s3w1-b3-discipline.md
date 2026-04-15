@@ -100,6 +100,8 @@ These sit inside merged MRs in the history above. They show up here so the week'
 
 The commit count is larger than the MR count because each MR typically squashes three to five iteration commits. The feature work (Sentry spans, CSV export fix) happened in teammate MRs where I contributed commits; they are counted under the teammate's MR.
 
+![Filtered MR list showing 5 MRs merged by Daffa Abhipraya during Sprint 3 Week 1 (April 9–16)](/images/ppl/s3w1-b3-mr-list.png)
+
 ---
 
 ## Evidence

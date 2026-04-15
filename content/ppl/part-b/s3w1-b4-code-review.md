@@ -50,7 +50,30 @@ A constant rename snuck into this MR:
 const CONFIGURATION_AND_SETTINGS_LABEL = 'Konfigurasi & Pengaturan'
 ```
 
-But the settings page heading, the dashboard tile, and the update toast still said `'Pengaturan'`. So the sidebar would say "Konfigurasi & Pengaturan" and the page you land on would say "Pengaturan". Also completely out of scope for SIRA-128 (read-only client access). My review recommendation: either revert the rename here, or do the full rename in a dedicated MR. Partial renames across a single MR are how inconsistent labels get into production.
+But the settings page heading, the dashboard tile, and the update toast still said `'Pengaturan'`. So the sidebar would say "Konfigurasi & Pengaturan" and the page you land on would say "Pengaturan". Also completely out of scope for SIRA-128 (read-only client access). Either revert here, or do the full rename in a dedicated MR. Partial renames across a single MR are how inconsistent labels get into production.
+
+**P1: Read-only gating tests asserting English names, source renders Indonesian**
+
+`clients-page.test.tsx:152` had:
+
+```tsx
+expect(screen.queryByRole('button', { name: 'Add Client' })).not.toBeInTheDocument()
+expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+```
+
+But the actual buttons render in Indonesian ("Tambah Klien", "Ubah", "Hapus"). The test queries would never find a match regardless of the gating logic — they pass trivially because the button names simply do not exist, not because the read-only guard works. Tests that always pass are not testing anything.
+
+**P1: No test for the "Ubah Klien" button being hidden in read-only mode**
+
+`ClientDetailPage` shows an "Ubah Klien" button for admins. The `readOnly` prop is supposed to hide it for AR Staff. There was no test verifying this. Without it, someone could remove the `!readOnly` guard on `client-detail.tsx:272` and all tests would still pass:
+
+```tsx
+it('hides Ubah Klien button in read-only mode', () => {
+    render(<ClientDetailPage readOnly />)
+    expect(screen.queryByRole('button', { name: 'Ubah Klien' })).not.toBeInTheDocument()
+})
+```
 
 ---
 
@@ -131,11 +154,15 @@ The "a few things i liked" section at the top is not boilerplate. It names speci
 
 ## Results
 
-| MR | Author | My Review Threads | P0 | P1 | Impact |
-|----|--------|-------------------|----|----|--------|
-| !171 AR Staff read-only | fadhliraihan | 2 | 0 | 2 | Prevented broken breadcrumb in the exact feature shipped; caught out-of-scope rename |
-| !177 Communication history | fernanda.nadhiftya | 3 | 2 | 0 | Caught double-prefix 404 and missing React key before merge |
-| **Total** | | **5** | **2** | **2** | |
+| MR | Author | P0 | P1 | Impact |
+|----|--------|----|----|--------|
+| !171 AR Staff read-only | fadhliraihan | 0 | 4 | Broken breadcrumb, out-of-scope rename, trivially-passing gating tests, missing read-only UI test |
+| !177 Communication history | fernanda.nadhiftya | 2 | 0 | Double-prefix 404, missing React key caught before merge |
+| **Total** | | **2** | **4** | |
+
+![My review thread on MR !171 (SIRA-128) showing 4 items](/images/ppl/s3w1-b4-review-mr171.png)
+
+![Manual testing note on MR !177 showing the "Not Found" toast and SIRA-263 ticket created](/images/ppl/s3w1-b4-review-mr177-manual-testing.png)
 
 Both MRs merged after the fixes were applied. The double-prefix bug in particular would have been a user-visible regression (empty UI with no data) that was invisible to the backend tests passing.
 

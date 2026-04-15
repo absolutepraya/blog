@@ -114,7 +114,15 @@ I left these alone. The mutation score will not hit 100% and does not need to. T
 | 3 | `fe69e036` | Per-method surviving mutants | ~200 |
 | Total | | | **400+** |
 
-Mutation score moved from roughly 66% before this week to higher 70s after round 3, with the remaining gap consisting mostly of the low-value categories above.
+The before/after is concrete. Before round 3 (screenshot from MR !185 CI report, API section):
+
+![Mutation report before round 3: 1390 killed, 410 survived, 72.5% score](/images/ppl/s3w1-b1-mutation-score-before.png)
+
+After the round 3 tests landed (same MR, CI report updated):
+
+![Mutation report after round 3: 1539 killed, 261 survived, 80.3% score](/images/ppl/s3w1-b1-mutation-score-after.png)
+
+149 more mutants killed. Survived count dropped from 410 to 261. Score: 72.5% → 80.3%. The total (1916) is unchanged because mutmut ran against the same source files; only test coverage changed. The remaining gap consists mostly of the low-value categories described above.
 
 ---
 

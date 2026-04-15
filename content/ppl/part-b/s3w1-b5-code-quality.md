@@ -29,16 +29,20 @@ revealing a coverage gap. Target: **85%** killed.
 
 ### API (mutmut)
 
-| Killed | Survived | No Coverage | Timeout | Score |
-|-------:|---------:|------------:|--------:|------:|
-| 412 | 88 | 15 | 2 | 80.3% |
-
-### Web (Stryker)
-
-| Killed | Survived | No Coverage | Timeout | Score |
-|-------:|---------:|------------:|--------:|------:|
-| 352 | 228 | 8 | 0 | 59.8% |
+| Metric | Count |
+|--------|------:|
+| Killed | 1539 |
+| Survived | 261 |
+| No coverage | 0 |
+| No tests | 116 |
+| Timeout | 0 |
+| Total | 1916 |
+| Score | 80.3% |
 ```
+
+The report from MR !185 (the MR that included both the report wiring and the 400+ mutation-killing tests) shows this progression directly. Before the round 3 tests were added: 1390 killed / 410 survived / 72.5%. After: 1539 killed / 261 survived / 80.3%.
+
+![Mutation report on MR !185 showing final score of 80.3% after mutation-killing tests](/images/ppl/s3w1-b1-mutation-score-after.png)
 
 The explanation text at the top was added in MR !185 so reviewers unfamiliar with mutation testing can read the block without needing separate documentation. Mutation testing is specialized enough that "killed/survived" sounds ambiguous without the framing.
 
@@ -124,7 +128,7 @@ Stryker (Web) sits at around 60% because the frontend lib code has different cha
 | Mutation testing feedback | Main branch only, after merge | Every MR, in the CI comment |
 | mutmut baseline failures | All mutants "not checked" in CI | Baseline runs cleanly on unit tests only |
 | Stryker runtime | Manual only, 38 min | Manual, 28 min (typescript-checker removed) |
-| API mutation score | ~66% | ~80% (after rounds 2 and 3) |
+| API mutation score | 72.5% (1390/1916 killed) | 80.3% (1539/1916 killed) |
 
 The shift from "main-only" to "every MR" is the structural improvement. Mutation score is a number that only matters if it has a feedback loop tight enough to influence the code being written. Posting it on every MR comment is the minimum viable loop.
 
