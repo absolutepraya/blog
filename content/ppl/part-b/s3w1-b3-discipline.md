@@ -42,9 +42,9 @@ Walking back a commit by writing a new commit (not a force-push, not a revert wi
 
 ---
 
-## Current Branch: SIRA-274 Parallel Supabase Stacks
+## SIRA-274: Parallel Supabase Stacks (MR !197, Merged)
 
-The branch `abhip/chore/SIRA-274-parallel-ci-supabase` has four commits as of this blog. Not merged yet, but the work happened this week:
+The branch `abhip/chore/SIRA-274-parallel-ci-supabase` started with four commits and was squash-merged to main as MR !197 (`f6c2d0cb`). A disposable test MR (!198) was also opened to verify concurrent slot allocation, then closed after the pipeline confirmed both slots worked simultaneously. The commits:
 
 ```
 dba63d41 chore(ci): shard mutation:python Supabase stacks across 3 slots
@@ -93,12 +93,12 @@ These sit inside merged MRs in the history above. They show up here so the week'
 | Category | MR Count | Commit Count |
 |----------|---------:|-------------:|
 | Mutation testing CI integration | 5 | 15+ |
-| Parallel Supabase sharding (current branch, unmerged) | 0 | 4 |
+| Parallel Supabase sharding | 1 (+1 test MR) | 4 (squash-merged) |
 | Security (axios CVE) | 0 | 1 |
 | Mutation-killing test suites | 0 (in MRs above) | 3+ |
-| **Total attributable this week** | **5** | **~25** |
+| **Total attributable this week** | **6** | **~25** |
 
-The commit count is larger than the MR count because each MR typically squashes three to five iteration commits. The feature work (Sentry spans, CSV export fix) happened in teammate MRs where I contributed commits; they are counted under the teammate's MR.
+Pipeline 15028 (post-merge of !197) ran all green: `api:integration-test` 1m59s, `mutation:python` 4m36s, SonarQube 85% coverage gate passed.
 
 ![Filtered MR list showing 5 MRs merged by Daffa Abhipraya during Sprint 3 Week 1 (April 9–16)](/images/ppl/s3w1-b3-mr-list.png)
 
@@ -107,6 +107,7 @@ The commit count is larger than the MR count because each MR typically squashes 
 ## Evidence
 
 - MR !183, !184, !185, !186, !187 — mutation testing CI series
-- Branch `abhip/chore/SIRA-274-parallel-ci-supabase` — four commits on parallel Supabase sharding
+- MR !197 — [SIRA-274](https://linear.app/ppl-sira/issue/SIRA-274): parallel Supabase sharding (squash-merged as `f6c2d0cb`)
+- MR !198 — disposable concurrency test MR (opened, verified, closed)
 - Commit `2e5bc2fd` — axios SSRF upgrade
 - Source: `.gitlab-ci.yml`, `apps/api/pyproject.toml`, `scripts/ci-supabase-slot.sh`, `apps/web/stryker.config.json`

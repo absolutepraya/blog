@@ -164,6 +164,22 @@ done
 
 `fuser -k` sends SIGKILL to processes holding the port. `|| true` ensures the loop continues if no process holds the port (the expected case on a healthy runner).
 
+The initial version only swept the 3 known ports. When the script hit production CI, we discovered a 4th: Supabase starts `inbucket` (an SMTP testing server) on port 54324 by default, which is not listed in `config.toml` and was not in our `--exclude` list. Two slots both tried to bind it. The fix was two-fold: add `inbucket` to `--exclude` in the Supabase start command, and extend the port sweep to include 54324.
+
+---
+
+## Three More Bugs the CI Runner Found
+
+The initial 4-commit version of the script worked in theory. The CI runner found three more issues that required defensive additions:
+
+**Cross-user permissions.** The `/tmp/sira-sb/` directory was created during a manual smoke test as `ubuntu`. When the `gitlab-runner` user tried to write lock files there, permission denied. Fix: `chmod 1777` on the directory (sticky bit preserves per-user ownership) and `umask 000` before creating files so any user on the runner can claim slots.
+
+**Orphan containers from unknown project IDs.** A Supabase stack from a prior run (`lalvvkkgycwrliipqufv`, not matching any of our `sira-0`/`sira-1`/`sira-2` project IDs) was squatting on ports 54321 through 54324. The `fuser -k` port sweep already handled this, but the initial `npx supabase stop` used `--project-id` which only stops containers matching that specific project. Orphans with different project IDs survived. Fix: also `docker rm -f` any container listening on the slot's ports, regardless of project name.
+
+**Inbucket port collision (described above).** Supabase silently starts services not listed in `config.toml`. The `--exclude` flag is the only way to prevent them, and the list of excludable services is not well-documented. Each new collision requires reading the error log and adding the service name.
+
+These three bugs share a pattern: they only surface in multi-user, multi-run CI environments with persistent state across pipeline runs. None are reproducible on a clean local machine. The script grew from 92 to 110 lines, with every addition defending against a real failure mode observed on the Nashta runner.
+
 ---
 
 ## Results
@@ -181,8 +197,7 @@ Moving `mutation:python` and `api:integration-test` to this script removed `reso
 
 ## Evidence
 
-- Commit `1b5a697d` — chore(ci): add ci-supabase-slot.sh for parallel local Supabase stacks
-- Commit `00bfa6ea` — chore(ci): fix ci-supabase-slot.sh subshell FD bug
-- Commit `8c2f9970` — chore(ci): shard api:integration-test Supabase stacks across 3 slots
-- Commit `dba63d41` — chore(ci): shard mutation:python Supabase stacks across 3 slots
-- Source: `scripts/ci-supabase-slot.sh`, `.gitlab-ci.yml` (jobs `api:integration-test` and `mutation:python`)
+- MR !197 — [SIRA-274](https://linear.app/ppl-sira/issue/SIRA-274): parallel Supabase stacks for CI (squash-merged as `f6c2d0cb`)
+- MR !198 — disposable test MR to verify concurrent slot allocation (opened, verified, closed)
+- Pipeline 15028 — all green: `api:integration-test` 1m59s, `mutation:python` 4m36s
+- Source: `scripts/ci-supabase-slot.sh` (110 lines), `.gitlab-ci.yml`

@@ -110,6 +110,7 @@ This is the meta-level AI skill: a well-maintained instruction file is worth mor
 | `ci-supabase-slot.sh` | Drafted script structure, wrote initial bash primitives | Caught subshell bug, enforced trap ordering, added intent comments | 92-line script that hardened against partial failure |
 | MR !186 walk-back | Proposed `when: manual` + `allow_failure` shape | Framed the problem as "28 min is still too slow" | Quick revert MR (!187), no latency cost |
 | Cross-agent skill sync | Fetched 3 agent docs in parallel, identified skill paths | Caught symlink loop, verified existing `.agents -> .claude` setup | Confirmed all skills work in all 3 agents with zero changes |
+| CI slot debugging (!197) | Proposed fixes for each failure (permissions, orphan containers, inbucket) | Ran the pipeline, identified failure context from runner logs | 4 bugs fixed iteratively, MR merged, pipeline 15028 all green |
 | `.claude/rules/personal.md` updates | N/A (human-written) | Distilled CI review conventions into persistent instructions | Future sessions know the gitlab discussion pattern |
 
 ---
