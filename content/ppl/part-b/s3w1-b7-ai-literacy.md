@@ -1,7 +1,7 @@
 ---
-title: "PPL: AI for Tricky Bash and Mutation Tests at Scale [Sprint 3, Week 1]"
+title: "PPL: AI for Mutation Tests, Bash, and Cross-Agent Research [Sprint 3, Week 1]"
 date: 2026-04-15
-description: "AI this week split across two very different tasks: generating 400+ mutation-killing tests where the AI knows the pattern but I know the target, and designing a bash script with flock file descriptors where the AI knew the API and I had to catch its subshell bug."
+description: "Three AI patterns this week: bulk test generation (400+ mutation-killing tests with human-curated targets), bash script design (flock FD semantics where AI missed a subshell bug), and multi-agent documentation research (verifying skill portability across Claude Code, Codex, and OpenCode)."
 tags: ["ppl", "ai-literacy", "claude-code"]
 slug: s3w1-ai-literacy
 toc: true
@@ -68,6 +68,26 @@ This week pushed me toward a more structured way of prompting for CI and test wo
 
 ---
 
+## Pattern 3: AI for Cross-Agent Skill Discovery Research
+
+A third AI task this week was less about code and more about research: verifying that the project's custom skills (like `linear-management` for Linear ticket management) work across all three coding agents the team uses: Claude Code, OpenAI Codex CLI, and OpenCode.
+
+Each agent has its own skill discovery system:
+
+| Agent | Skill Search Path | Command Search Path |
+|-------|-------------------|---------------------|
+| Claude Code | `.claude/skills/<name>/SKILL.md` | `.claude/commands/<name>.md` |
+| Codex CLI | `.agents/skills/<name>/SKILL.md` | N/A (uses skills) |
+| OpenCode | `.claude/skills/` AND `.agents/skills/` | `.opencode/commands/<name>.md` |
+
+The project already had `.agents -> .claude` as a symlink and `.opencode/commands -> ../.claude/commands`. So all skills and commands were already available to all three agents through symlink indirection. But I only discovered this AFTER asking AI to research each agent's docs, drafting a sync plan, and then accidentally breaking `.claude/skills/` by creating a self-referencing symlink inside it (the `.agents -> .claude` symlink meant my `mkdir -p .agents/skills` created `.claude/skills/`, then my `ln -s` turned it into a loop).
+
+The AI was useful for the research phase: fetching and summarizing the skill directory conventions from three different documentation sites in parallel. But the symlink interaction bug was exactly the kind of context-dependent composition error from Pattern 2. AI read the docs correctly for each agent in isolation; it did not predict that `.agents -> .claude` would turn `mkdir -p .agents/skills` into a silent modification of `.claude/skills/`.
+
+The fix was `git restore .claude/skills/` after realizing no code changes were needed. The investigation was valuable anyway: it confirmed the cross-agent architecture is already working and documented exactly which paths each agent reads.
+
+---
+
 ## The CLAUDE.md Feedback Loop
 
 A related piece of AI literacy: this week I also updated `.claude/rules/personal.md` with specific patterns from the CI work. Things like:
@@ -89,6 +109,7 @@ This is the meta-level AI skill: a well-maintained instruction file is worth mor
 | 400+ mutation-killing tests | Generated 500+ test drafts from patterns + mutant lists | Prioritized targets, filtered low-value kills | Mutation score ~66% → ~80% |
 | `ci-supabase-slot.sh` | Drafted script structure, wrote initial bash primitives | Caught subshell bug, enforced trap ordering, added intent comments | 92-line script that hardened against partial failure |
 | MR !186 walk-back | Proposed `when: manual` + `allow_failure` shape | Framed the problem as "28 min is still too slow" | Quick revert MR (!187), no latency cost |
+| Cross-agent skill sync | Fetched 3 agent docs in parallel, identified skill paths | Caught symlink loop, verified existing `.agents -> .claude` setup | Confirmed all skills work in all 3 agents with zero changes |
 | `.claude/rules/personal.md` updates | N/A (human-written) | Distilled CI review conventions into persistent instructions | Future sessions know the gitlab discussion pattern |
 
 ---
@@ -99,4 +120,5 @@ This is the meta-level AI skill: a well-maintained instruction file is worth mor
 - Commit `fe69e036` — test(api): round 3 per-method survivor targeting
 - Commit `1b5a697d` — chore(ci): add ci-supabase-slot.sh
 - Commit `00bfa6ea` — chore(ci): fix ci-supabase-slot.sh subshell FD bug
+- Cross-agent skill discovery: `.agents -> .claude` symlink, `.opencode/commands -> ../.claude/commands` symlink
 - Source: `apps/api/tests/test_*_service.py`, `scripts/ci-supabase-slot.sh`, `.claude/rules/personal.md`
