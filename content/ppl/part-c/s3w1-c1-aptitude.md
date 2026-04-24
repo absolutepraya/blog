@@ -26,6 +26,10 @@ This is configured in `scripts/superset-setup-env.sh`, which runs once when a ne
 
 The result was concrete this week: I left the Tiptap MR baking on CI in one workspace, switched windows, and ran the Telegram feature with its own Supabase containing the new `telegram_event_toggles` table. Both ran simultaneously, both were testable in the browser, neither blocked the other.
 
+![Superset showing multiple SIRA workspaces in the sidebar, each a separate worktree with its own infrastructure](/images/ppl/s3w1-superset-workspace.png)
+
+The sidebar in the screenshot shows what this looks like day-to-day: the `SIRA` top-level has two active workspaces (`rev-daptek` for the main checkout running migrations, and another for a separate feature), plus unrelated projects (`Accountant`, `ALSA 2026`, `merchandise`, `Blog`) each with their own worktrees. The right pane is the AI agent running an MR review inside one of the SIRA workspaces, and the bottom-left terminal is applying migrations in a different workspace. Both run without interfering with each other because their infrastructure is fully separated.
+
 ## CI Slot Orphan Race
 
 Our integration tests use three parallel Supabase slots managed by `flock` (added in MR !197). Jobs were failing with `no Supabase slot free after 30 min` even when no tests were running. I SSH'd into the runner and found that a previous job had been killed by a GitLab timeout, leaving both the flock lock and the Docker containers in place.

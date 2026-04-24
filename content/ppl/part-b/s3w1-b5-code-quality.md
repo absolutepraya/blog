@@ -29,6 +29,10 @@ The initial CI run on MR !200 showed:
 
 The 28.5% coverage was because the new `rich-editor` component had zero tests. I wrote `rich-editor.test.tsx` with targeted assertions for each user-visible behavior: toolbar buttons, variable chip rendering, link insertion, and aria-pressed states. The test file is only 90 lines but exercises the component surface thoroughly.
 
+![SonarQube Quality Gate passing on MR !200 after the coverage fix](/images/ppl/s3w1-b5-sonarqube-mr200.png)
+
+The final dashboard tells the story: 938 new lines, 97.7% coverage on the 358 new lines that required coverage, 0 new issues, 0.0% duplications, and 6 fixed issues rolled up from earlier commits. All three new-code conditions green.
+
 The 2 issues were code smells in the editor's variable node implementation. One was an unused import, the other a complex conditional. Both were straightforward to fix, but SonarQube caught them before human review did.
 
 ## SAST Cleanliness

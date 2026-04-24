@@ -11,6 +11,10 @@ toc: true
 
 Code review is not only about reading other people's diffs. This week my review feedback came from two sources: the automated CI pipeline on MR !200, and a post-merge review on MR !195 that flagged silent error handling in export modals. I addressed both through focused follow-up commits.
 
+Three of my MRs landed in the week's deploy window (MR !200 Tiptap editor, MR !195 CSV export fix, MR !197 parallel CI Supabase slots), each with its own review cycle:
+
+![My merged MRs deployed between 2026-04-16 and 2026-04-23, filtered by author](/images/ppl/s3w1-b4-filtered-mr-list.png)
+
 ## SonarQube Gate Failure on MR !200
 
 The first CI run on MR !200 failed the SonarQube quality gate with two problems:

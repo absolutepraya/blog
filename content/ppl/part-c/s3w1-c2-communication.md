@@ -21,6 +21,12 @@ I packaged the share for the team in three pieces:
 2. A short demo video walking through creating a workspace, watching it auto-allocate ports, and running both the Telegram feature branch and the main branch side by side.
 3. A pointer to the codebase config so anyone wanting to dig in could read it: `.superset/config.json`, `.superset/process-compose.yaml`, and the four scripts under `scripts/superset-*.sh`.
 
+![Discord share to the team channel with pitch, quick-guide link, and demo video attached](/images/ppl/s3w1-discord-superset-share.png)
+
+The Discord message linked out to a short Cap recording so people could see the tool in motion before trying it:
+
+![Superset demo video preview showing the app's landing page and parallel-agent framing](/images/ppl/s3w1-superset-demo-video.png)
+
 The config is the load-bearing part. `scripts/superset-setup-env.sh` runs once when a new workspace is created and does this:
 
 - Allocates a 10-port block by reading `~/.superset/sira-port-allocations.json` and finding the next free base (3001, 3011, 3021, ...).
