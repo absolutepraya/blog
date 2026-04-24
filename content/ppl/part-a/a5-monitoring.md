@@ -1,15 +1,71 @@
 ---
 title: "PPL: Self-Hosted Error Monitoring with Custom Instrumentation"
-date: 2026-04-11
-description: "Why we self-hosted error monitoring instead of using Sentry Cloud, how custom performance spans on database queries and background tasks give visibility into what actually matters, and what alert rules catch before users notice."
+date: 2026-04-24
+description: "Why we self-hosted error monitoring instead of using Sentry Cloud, how custom performance spans on database queries and background tasks give visibility into what actually matters, and what alert rules catch before users notice. With real production cases and the exact configuration knobs you can turn."
 tags: ["ppl", "monitoring", "sentry", "glitchtip", "observability", "devops"]
 slug: monitoring
 toc: true
 ---
 
-Error monitoring is one of those things that feels optional until the first production bug slips through unnoticed. A user reports "the page is broken," you check the server, everything looks fine, and three hours later you discover a background task has been silently failing since the last deploy. This blog covers how we built monitoring that catches those failures before users do.
+Error monitoring is one of those things that feels optional until the first production bug slips through unnoticed. A user reports "the page is broken," you check the server, everything looks fine, and three hours later you discover a background task has been silently failing since the last deploy. This blog covers how we built monitoring that catches those failures before users do, what it has actually caught for us, and the configuration knobs you can turn when adopting this for your own project.
 
 > **Note:** Our project is hosted on an internal GitLab instance, so we use the term **MR (Merge Request)** throughout this blog. If you're coming from GitHub, MRs are the equivalent of **Pull Requests (PRs)**.
+
+## Nilai Manfaat: What This Monitoring Actually Caught
+
+Before diving into architecture, here is the concrete value we have gotten from running this. A snapshot of our production GlitchTip instance right now shows 14 issues captured across the two projects (`sira-api` and `sira-web`):
+
+![Production GlitchTip Issues list: 14 real issues captured across sira-api and sira-web](/images/ppl/a5-glitchtip-issues-list.png)
+
+Four of these illustrate the kinds of bugs monitoring catches that would otherwise reach users first:
+
+1. **`KeyError: 'app.workers.check_overdue.check_overdue_invoices'`** (2 months old, now resolved). Our Celery beat scheduler was trying to dispatch a task that wasn't registered with the worker. Without monitoring, the daily overdue-invoice scan would have silently never run, and our first indication would have been users reporting "why didn't I get a reminder yesterday?" Instead, the alert email hit the team inbox within seconds of the scheduler's first failed dispatch. See the section "The Alert Email" below for what that email looked like.
+
+2. **`APIError: Could not find a relationship between 'invoices' and 'invoice_versions' in the schema cache`** (12 events, 1 day old). PostgREST caches the database schema and did not pick up a new foreign key relationship after a migration. Twelve list-invoices requests failed before the dev noticed and issued a `NOTIFY pgrst, 'reload schema';`. The monitoring dashboard showed the exact file and line (`app/db/queries/invoices.py:92`) AND PostgREST's own hint for the fix (more on this in the case study below).
+
+3. **`Failed to decrypt field pic_email for client ... (key mismatch or corrupted data)`** (2 distinct events). An encryption key rotation was incomplete: one environment had the new key, another still had the old. The monitoring caught the decryption failure at the exact point the record was being read, with the client ID embedded in the error message for immediate triage.
+
+4. **`Error: useAuth must be used within an AuthProvider`** (sira-web, 2 events). A React context error that would have produced a blank white screen for the user. The frontend error boundary caught it, showed a fallback UI, and reported the component stack trace so we could find the component tree that was rendering outside the provider.
+
+The common thread: every one of these would have either reached users silently or taken substantially longer to diagnose without captured context (stack traces, component trees, PostgREST hints, client IDs). Monitoring turned "something is broken somewhere" into "here is the exact line, here is the user who hit it, here is what the database was telling us."
+
+## The Alert Email That Actually Reached Our Inbox
+
+When the `check_overdue` KeyError fired, this is what hit our Gmail within seconds:
+
+![Real alert email from sira@noreply.abhipraya.dev: "Error: KeyError: 'app.workers.check_overdue.check_overdue_invoices'" with project tag and a direct "View on GlitchTip" button](/images/ppl/glitchtip-email-notification.png)
+
+The email itself is spartan on purpose: a one-line summary of the exception, the project name (`sira-api`), a "View on GlitchTip" button that deep-links to the issue detail page, and a "Manage Email Notifications" footer for recipients who want to tune the noise. The sender address is `sira@noreply.abhipraya.dev` because GlitchTip is wired into the same Resend SMTP relay the main application uses (no separate mail provider).
+
+In practice, the three pieces of information on this email are exactly what the on-call developer needs to decide whether to keep working or to open the dashboard: the error type, the project, and a one-click path to the full stack trace. Anything more would be noise.
+
+## Case Study: From Alert to Fix in Under a Minute
+
+To show the end-to-end flow, here is the most recent high-event issue from our production dashboard. A developer opened an MR that added a foreign key between `invoices` and `invoice_versions`. After deploying to their dev environment, any request that hit `GET /api/invoices` returned a 400. Twelve of these errors landed in GlitchTip within two minutes.
+
+Clicking into the issue shows the full event:
+
+![GlitchTip issue detail: APIError with tags (release, user.id, environment, server_name) and event count of 12](/images/ppl/a5-glitchtip-issue-detail.png)
+
+The event page tells us exactly what we need on first glance:
+
+- **Event count**: 12 occurrences (this is a real pattern, not a fluke)
+- **First seen / last seen**: both "1 day ago" within a 2-minute window (the errors happened in a tight burst, suggesting a deploy-triggered regression)
+- **User context**: `admin@sira.nashtagroup.co.id` (the developer testing their MR, not a real customer yet, good)
+- **Environment**: `development` (caught before it reached production, better)
+- **Tags**: release SHA, server name, environment, user ID (all automatic, all searchable for future errors)
+
+Scrolling down to the stack trace closes the loop:
+
+![Stack trace showing PostgREST error hint "Perhaps you meant 'payment_versions' instead of 'invoice_versions'" with the SIRA code frames underneath](/images/ppl/a5-glitchtip-issue-stacktrace.png)
+
+Two things are worth noting here.
+
+First, **PostgREST's own error message tells us the fix**: `hint="Perhaps you meant 'payment_versions' instead of 'invoice_versions'."` The schema cache has `payment_versions` but not `invoice_versions`, which means the PostgREST daemon has an older view of the schema than the database does. The standard fix is to issue `NOTIFY pgrst, 'reload schema';` to force a cache refresh.
+
+Second, **the stack trace ends in our code**, not in a vendored library: `app/db/queries/invoices.py` in `get_all_invoices` at line 92 → `app/services/invoice_service.py` in `list_all` at line 50 → `app/routers/invoices.py` in `list_invoices` at line 50. From the alert email, to clicking "View on GlitchTip," to reading this stack trace, a developer gets from "something is wrong" to "I know the exact line and the exact fix" in well under a minute.
+
+That is the nilai manfaat. Not just "errors are captured" but "errors are turned into actionable, self-documenting artifacts that cut the mean time to resolution from hours to minutes."
 
 ## Why Self-Hosted Monitoring
 
@@ -58,9 +114,9 @@ A few things worth noting:
 
 Nginx routes `sira-glitchtip.nashtagroup.co.id` to the GlitchTip web container, giving the team a dedicated dashboard separate from the application.
 
-## Conditional Initialization: Zero Overhead in Dev
+## Configuration Knobs: What You Can Customize
 
-The SDK is only initialized when a DSN is configured. In development, where `SENTRY_DSN` is empty, the Sentry SDK is a complete no-op: no network calls, no performance overhead, no error reporting.
+The init block below is the single most important piece of code in this entire blog, because every parameter is a decision you have to make when adopting this for your own project. Here it is, with each knob explained as a decision, not just a setting:
 
 ```python
 # apps/api/src/app/main.py
@@ -74,9 +130,32 @@ if settings.sentry_dsn:
     )
 ```
 
-The `send_default_pii=False` flag deserves attention. By default, Sentry captures request bodies and headers, which in our case would include JWT bearer tokens. A single flag prevents authentication tokens from leaking into a third-party monitoring service (even a self-hosted one) while still capturing the full exception stack trace and request metadata.
+| Knob | Required? | What it does | When to change it |
+|------|:--:|---|---|
+| `dsn` | Yes | Tells the SDK where to send events. This is the Data Source Name URL from your GlitchTip project settings page. | Always required. Read from env var, never hardcode. |
+| `release` | Recommended | Tags every event with the deploying commit SHA so you can correlate errors to deploys. | Change the source (`settings.commit_sha`) if your CI/CD uses a different version scheme (semver tags, build numbers). |
+| `traces_sample_rate` | Optional | Fraction of requests for which full performance traces are captured. `1.0` means every request, `0.1` means 10%. | Lower this (0.1 or 0.01) if your traffic is high enough that full sampling is expensive. For a pre-launch app like ours, `1.0` is fine. |
+| `environment` | Recommended | Tags every event with `development`, `staging`, or `production`. Lets you filter the dashboard by environment. | Change if you have more environments (e.g., `preview`, `canary`). |
+| `send_default_pii` | Security-critical | When `True`, Sentry captures request bodies and headers. In our case, those headers include JWT bearer tokens. We set `False` to prevent auth tokens leaking into monitoring. | Leave `False` unless you have a specific reason to log request bodies AND you have no sensitive headers. |
 
-The `release=settings.commit_sha` parameter tags every error and performance trace with the exact git commit that produced it. When a new error appears after a deploy, you can immediately identify which commit introduced it.
+**The one knob nobody thinks about first but probably should.** `send_default_pii=False` is the quiet security-critical flag. By default, the SDK captures everything it thinks might help debug, including the `Authorization` header. Setting it to `False` preserves the full stack trace and request metadata (method, path, status code, timing) while redacting anything that looks like a credential. This is the default every team should adopt before their first deploy.
+
+The frontend configuration mirrors this same pattern, with `browserTracingIntegration()` added for page-load and navigation performance:
+
+```typescript
+// apps/web/src/main.tsx
+if (import.meta.env.VITE_SENTRY_DSN) {
+    Sentry.init({
+        dsn: import.meta.env.VITE_SENTRY_DSN,
+        release: import.meta.env.VITE_COMMIT_SHA || 'development',
+        integrations: [Sentry.browserTracingIntegration()],
+        tracesSampleRate: 1.0,
+        environment: import.meta.env.MODE,
+    })
+}
+```
+
+Two things to note: the init is wrapped in a DSN check so the SDK is a complete no-op in development (no network calls, no overhead), and the release tag has a fallback to `'development'` so local runs do not show up as `undefined` in the dashboard.
 
 ## Custom Performance Spans: Monitoring What Matters
 
@@ -120,6 +199,21 @@ async def get_dashboard_summary(db: Client) -> DashboardSummaryResponse:
 ```
 
 Without custom spans, a slow dashboard load would require manual profiling to identify which of four queries is the bottleneck. With spans, the monitoring dashboard shows it immediately.
+
+## Performance Dashboard: Real Numbers from Production
+
+The custom span instrumentation above feeds into the Performance view. Here is a snapshot of our production GlitchTip sorted by slowest transaction:
+
+![GlitchTip Performance view showing 57 transaction groups across sira-web and sira-api, sorted by average duration](/images/ppl/a5-glitchtip-performance.png)
+
+A few things jump out from this view:
+
+- **Frontend pageloads dominate the top**: `/dashboard`, `/`, and `/admin/staff` pageloads all sit between 1.7 and 2.4 seconds. These are full React hydration times including API calls fired during mount, so the high numbers are expected but still worth watching. If `/dashboard` pageload drifts past 3 seconds after a new feature, we know to check which of the parallel dashboard queries got slower.
+- **The `GET /api/dashboard/summary` endpoint** shows up at 336ms average across 26 transactions. That is the exact endpoint with four custom `start_span` calls shown above, so any regression in the dashboard query layer is directly observable here.
+- **`POST /api/clients/{client_id}/score`** at 335ms is our risk-scoring endpoint, which runs an ML inference. Monitoring it as a named transaction group lets us catch ML latency regressions without waiting for a user to report "the score button feels slow."
+- **Celery task transactions** (`app.workers.check_overdue.check_overdue_invoices`, `app.workers.watchdog.watchdog_overdue_check`) appear alongside HTTP transactions. Background tasks are often the hardest thing to monitor precisely because they have no HTTP context, but the Celery integration captures their timing and failures as first-class transactions.
+
+This is the kind of dashboard you check once a week to spot trends, not once an hour. The alert email handles the urgent case; this view handles the slow drift.
 
 ## Celery Worker Monitoring: The Invisible Layer
 
@@ -226,22 +320,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 }
 ```
 
-The `componentStack` in the `extra` field is critical. A JavaScript error like "Cannot read property 'name' of undefined" could come from anywhere. The component stack trace shows the exact React component tree: `App > Dashboard > InvoiceTable > InvoiceRow`, which pinpoints the failing component without requiring reproduction.
-
-The frontend Sentry initialization mirrors the backend pattern: conditional on DSN, tagged with commit SHA for release correlation:
-
-```typescript
-// apps/web/src/main.tsx
-if (import.meta.env.VITE_SENTRY_DSN) {
-    Sentry.init({
-        dsn: import.meta.env.VITE_SENTRY_DSN,
-        release: import.meta.env.VITE_COMMIT_SHA || 'development',
-        integrations: [Sentry.browserTracingIntegration()],
-        tracesSampleRate: 1.0,
-        environment: import.meta.env.MODE,
-    })
-}
-```
+The `componentStack` in the `extra` field is critical. A JavaScript error like "Cannot read property 'name' of undefined" could come from anywhere. The component stack trace shows the exact React component tree: `App > Dashboard > InvoiceTable > InvoiceRow`, which pinpoints the failing component without requiring reproduction. This is exactly how we caught the two `useAuth must be used within an AuthProvider` issues listed in the Nilai Manfaat section.
 
 ## Structured JSON Logging
 
@@ -279,17 +358,25 @@ This creates a timeline of deployments in GlitchTip. When a new error appears, y
 
 ![GlitchTip releases page showing deployments tagged by commit SHA](/images/ppl/a5-glitchtip-releases.png)
 
-## Alert Rules
+## Alert Rules: The Tunable Part
 
-Monitoring data is useless if nobody looks at it. Both projects (sira-api and sira-web) have identical alert rules configured:
+Monitoring data is useless if nobody looks at it. Both projects (`sira-api` and `sira-web`) have an alert rule configured: **"If an event happens 1 time in 1 minute, send an alert."** The recipients are the team's email distribution AND a Discord webhook that posts into our `#alerts` channel.
 
-**Rule: If an event happens 1 time in 1 minute, send an email to all team members.**
+![GlitchTip Alert configuration for sira-api showing the "1 event / 1 minute" rule, email recipient, and Discord webhook recipient](/images/ppl/a5-glitchtip-alert-config-detail.png)
 
-This is intentionally aggressive. In production, any unhandled exception is worth investigating immediately. The team receives an email within seconds of the first occurrence, before users have a chance to notice or report the issue.
+This is intentionally aggressive. In production, any unhandled exception is worth investigating immediately. The team receives both the email and a Discord ping within seconds of the first occurrence, before users have a chance to notice or report the issue.
 
-The 1-event-in-1-minute threshold means the alert fires on the first occurrence, not after accumulation. For a system that should have zero unhandled exceptions in steady state, any exception is a signal worth acting on.
+The alert rule itself has three knobs you can tune:
 
-![GlitchTip alert configuration: 1 event in 1 minute triggers email to team](/images/ppl/a5-glitchtip-alert-config.png)
+| Knob | Default | When to change |
+|------|---------|----------------|
+| Quantity (events) | 1 | Raise to 5-10 for noisy endpoints where a single timeout is normal but a pattern is not. |
+| Timespan (minutes) | 1 | Extend to 5-15 if your quantity is higher; prevents alert storms during an outage. |
+| Recipients | Email | Add webhooks for each channel you want to notify (Discord, Slack, Teams). GlitchTip supports generic webhook URLs so any modern chat system works. |
+
+The 1-event-in-1-minute threshold means the alert fires on the first occurrence, not after accumulation. For a system that should have zero unhandled exceptions in steady state, any exception is a signal worth acting on. If our error volume grows past what the team can triage, the quantity knob is the first thing to raise.
+
+![GlitchTip alert configuration detail: conditions, recipients, and webhook URL for Discord](/images/ppl/a5-glitchtip-alert-config.png)
 
 ## What This Architecture Enables
 
@@ -302,3 +389,5 @@ The 1-event-in-1-minute threshold means the alert fires on the first occurrence,
 | CI/CD | Release correlation | Commit SHA tagged on every deploy |
 
 The key insight is that monitoring is not a single tool or dashboard. It is layers: error capture for crashes, performance spans for latency, context tagging for debugging, structured logging for everything in between, and alerts for immediacy. Each layer answers a different question, and together they provide visibility into a system where three services (API, workers, frontend) run across two processes and one browser.
+
+The 14 issues captured in the Nilai Manfaat section are the proof: every one of them is a bug that this layered setup caught before it reached a user. The most expensive bug is the one that runs silently for weeks; the cheapest bug is the one that emails you within seconds of its first occurrence.
