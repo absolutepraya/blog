@@ -304,21 +304,14 @@ Both coverage outputs are uploaded to SonarQube, which enforces the 85% new-code
 
 ### The Gate Flow
 
-```
-Developer opens MR
-  ↓
-CI runs tests, generates coverage.xml + lcov.info
-  ↓
-Coverage files uploaded to SonarQube via sonar-scanner
-  ↓
-SonarQube evaluates quality gate:
-  - new_coverage (new code only) >= 85%
-  - no new issues of severity "critical" or "high"
-  - no new duplications above 3%
-  ↓
-Gate status posted back to MR as green/red check
-  ↓
-If red: merge blocked until fixed
+```mermaid
+flowchart TB
+    A([Developer opens MR]) --> B[CI runs tests<br>generates coverage.xml + lcov.info]
+    B --> C[Upload coverage to SonarQube<br>via sonar-scanner]
+    C --> D{Quality gate:<br>new_coverage &ge; 85%<br>new issues = 0<br>duplications &le; 3%}
+    D -->|pass| E([Gate green<br>merge unblocked])
+    D -->|fail| F([Gate red<br>merge blocked])
+    F -->|author adds tests| B
 ```
 
 The phrase **new-code coverage** is where the design pays off. Project-wide coverage is a lagging indicator ("we were at 85% last quarter, still at 85% this quarter"). New-code coverage is a leading indicator ("every PR must maintain the bar *on the code it changes*"). It prevents the classic regression where overall coverage stays stable because legacy code covers for uncovered new code.
@@ -327,7 +320,9 @@ The phrase **new-code coverage** is where the design pays off. Project-wide cove
 
 A recent MR introduced a new Tiptap rich-text editor component. Initial CI run showed SonarQube new-code coverage at **28.5%** (well below the 85% threshold). The gate failed, the MR could not merge, the author added a test file with branch-covering assertions for toolbar state, chip rendering, and link insertion. Coverage jumped to **97.7%** on the same changeset. Gate passed. The feature shipped without the "I'll write tests later" technical-debt accretion that plagues teams that treat coverage as advisory rather than enforced.
 
-The SonarQube dashboard shows the before/after as a first-class project state, not a blog post claim. This is a concrete demonstration that branch coverage as a CI gate converts "best effort" into "required" without bureaucracy.
+![SonarQube quality gate Passed on the Tiptap MR: 938 new lines, 97.7% coverage on the 358 new lines requiring coverage, 0 new issues, 0.0% duplications](/images/ppl/s3w1-b5-sonarqube-mr200.png)
+
+The dashboard makes the before/after a first-class project state, not a blog post claim. The three new-code conditions (coverage, issues, duplications) each show their actual value against the required threshold, and the gate's single green check is what gates the merge. This is the concrete demonstration that branch coverage as a CI gate converts "best effort" into "required" without bureaucracy.
 
 ### Why Branch, Not Just Line
 
