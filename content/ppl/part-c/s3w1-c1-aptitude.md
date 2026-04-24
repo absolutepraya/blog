@@ -30,6 +30,10 @@ The result was concrete this week: I left the Tiptap MR baking on CI in one work
 
 The sidebar in the screenshot shows what this looks like day-to-day: the `SIRA` top-level has two active workspaces (`rev-daptek` for the main checkout running migrations, and another for a separate feature), plus unrelated projects (`Accountant`, `ALSA 2026`, `merchandise`, `Blog`) each with their own worktrees. The right pane is the AI agent running an MR review inside one of the SIRA workspaces, and the bottom-left terminal is applying migrations in a different workspace. Both run without interfering with each other because their infrastructure is fully separated.
 
+![Three AI coding agents running in parallel across three different SIRA workspaces (feat-telegram, rev-daptek, tes-load), each working on a different feature in its own worktree with its own isolated infrastructure stack so ports and migrations never collide](/images/ppl/s3w1-superset-parallel-agents.png)
+
+This second screenshot shows the payoff more directly: three separate SIRA workspaces (`feat-telegram`, `rev-daptek`, `tes-load`) each have their own AI coding agent active at the same time, each making progress on a different task. Because every workspace owns its port block, its Redis container, and its Supabase stack, the three agents cannot step on each other. No "port 3001 already in use," no "migration conflict with another branch," no "one agent's `make dev` killed another's." This is the concrete operating mode that lets me delegate parallel feature work without manual coordination.
+
 ## CI Slot Orphan Race
 
 Our integration tests use three parallel Supabase slots managed by `flock` (added in MR !197). Jobs were failing with `no Supabase slot free after 30 min` even when no tests were running. I SSH'd into the runner and found that a previous job had been killed by a GitLab timeout, leaving both the flock lock and the Docker containers in place.
