@@ -110,9 +110,14 @@ Cloudflare Dashboard > nashtagroup.co.id > SSL/TLS > Edge Certificates
 > Minimum TLS Version > set to 1.2
 ```
 
-We don't have admin access to the `nashtagroup.co.id` Cloudflare zone (owned by NashtaGroup, the project's industry partner). The change request was sent to their infrastructure team along with a scoped alternative using Configuration Rules to apply the setting only to the SIRA subdomains rather than zone-wide. Round 2 of this audit will document the before/after once the change propagates.
+We don't have admin access to the `nashtagroup.co.id` Cloudflare zone (owned by NashtaGroup, the project's industry partner). After thinking through what asking would actually require, we decided **not to pursue this fix at the CDN layer**, for two reasons:
 
-This is a useful reminder that **security findings have ownership boundaries**. Some findings the application engineer can fix unilaterally (the gitleaks finding below is a perfect example). Others require coordination with the team that owns the affected layer. Filing the right ticket against the right team is itself a security skill.
+1. **Zone-wide scope.** The Cloudflare "Minimum TLS Version" setting applies to every subdomain on `nashtagroup.co.id`, not just the three SIRA hostnames. Any other NashtaGroup service running on that zone (which we don't fully visibility into) could potentially break for legacy clients we don't know about. The scoped alternative (Configuration Rules) would limit the change to SIRA subdomains only, but even that is asking another team to make a change in their tooling for a finding that practically affects no real user (modern browsers all negotiate TLS 1.2 or 1.3 by default).
+2. **Practical exploitability is low.** This is a LOW-severity finding. It requires an active MitM with cipher-suite manipulation AND exploitation of CBC weaknesses (BEAST, POODLE) to extract anything. Real production user impact is essentially zero given that no one in our user base is on a TLS-1.0-era client.
+
+The right call here is **document the finding, recommend the fix, do not push for it**. Logged in this blog as a known LOW-severity finding scoped to the layer of infrastructure we don't own.
+
+This is a useful reminder that **security findings have ownership boundaries**. Some findings the application engineer can fix unilaterally (the gitleaks finding below is a perfect example, fix shipped same day). Others require coordination with another team, and that coordination has a real cost (relationship capital, their queue time, their risk model). Part of doing security work in a real organisation is judging which findings are worth pushing for and which to leave as documented recommendations. Treating every finding as "must fix immediately, file ticket against whoever owns the layer" is how application engineers burn out their relationship with platform teams.
 
 ## Tool 2 of 4: testssl.sh
 
@@ -171,7 +176,7 @@ The picture testssl draws is "the modern half of the configuration is excellent 
 
 This is exactly the depth Nuclei alone cannot produce. Nuclei reported "TLS 1.0/1.1 enabled" and that was it. testssl reports the specific cipher IDs, the related attacks (BEAST, Lucky13), the certificate expiration window, the missing security headers at the edge, and the post-quantum readiness of the modern half. Running both tools together is what produces a defensible picture.
 
-The certificate expiration finding (41 days) is itself a useful catch that none of the other tools surfaced. Worth confirming with Mas Esa that Cloudflare's auto-renewal is configured.
+The certificate expiration finding (41 days) is itself a useful catch that none of the other tools surfaced. Cloudflare's auto-renewal should handle it before expiry, but it goes on the watchlist as something to verify if the renewal hasn't fired by mid-May.
 
 ## Tool 3 of 4: gitleaks (Real Finding, Same-Day Fix)
 
@@ -371,19 +376,19 @@ flowchart LR
     B --> C[Real finding:<br>SonarQube token leak]
     C --> D[Fix shipped same day:<br>commit 88697bdd]
     D --> E[Round 1.5 - this blog:<br>before/after evidence ready]
-    E --> F{CDN team applies<br>min TLS 1.2}
-    F -->|done| G[Round 2: Re-run Nuclei + testssl<br>show TLS before/after]
-    G --> H([Round 3: Wire scans into CI<br>scheduled weekly])
+    E --> F[Round 2: Wire scans into CI<br>scheduled weekly job]
+    F --> G([Continuous DAST + secret scan<br>as sustained guardrail])
+    B --> H[TLS 1.0/1.1 finding:<br>logged as recommendation,<br>not pursued cross-team]
 ```
 
 The score evidence as it stands:
 
 | Round | Evidence shipped | Rubric mapping |
 |-------|------------------|----------------|
-| 1.0 (initial blog) | Nuclei baseline, fix recommendation queued | Level 3 (tool used, findings documented, fix path identified) |
-| 1.5 (this update) | Layered audit + real gitleaks finding + same-day fix verified by re-scan | **Level 4** (before/after of code improved based on screening tool results, verified by re-scan) |
-| 2 (TLS fix lands) | Nuclei and testssl re-run after Cloudflare TLS 1.2 enforced | Level 4 reinforced (a second independent before/after) |
-| 3 (CI integration) | Nuclei or gitleaks on scheduled weekly job, results posted to Linear | Level 4 sustained (continuous, not point-in-time) |
+| 1.0 (initial blog) | Nuclei baseline, fix path identified | Level 3 (tool used, findings documented, fix path identified) |
+| **1.5 (this update)** | **Layered 6-tool audit + real gitleaks finding + same-day fix verified by re-scan** | **Level 4** (before/after of code improved based on screening tool results, verified by re-scan) |
+| 2 (next iteration) | One or more tools wired into CI as scheduled job (gitleaks pre-commit + Nuclei weekly) | Level 4 sustained (continuous monitoring, not point-in-time) |
+| (deprioritised) | TLS 1.0/1.1 fix at Cloudflare edge | Logged as recommendation, not pursued because zone-scope spans services we don't own |
 
 The gitleaks before/after is what specifically meets the rubric's level-4 wording:
 
@@ -422,8 +427,8 @@ Three things this exercise crystallised about real-world security work:
 
 **1. Real findings often hide in scanner noise.** Gitleaks reported 474 raw findings on first scan. The naïve response is panic; the correct response is triage. Grouping by file and rule reveals that 473 are placeholders, env-var references, or test fixtures. The remaining 1 is a real production credential. Skipping the triage step would either waste hours fixing nothing or skip the one finding that actually matters.
 
-**2. Same-day fixes are the strongest possible level-4 evidence.** The IR rubric asks for "before/after of code improved based on screening tool results." That phrasing assumes a process: scan, find, fix, re-scan, document. The gitleaks SonarQube finding produced exactly this process within an hour of detection. The TLS fix from Mas Esa will produce a second independent before/after when it lands. Two before/after cycles in one audit is qualitatively different from one.
+**2. Same-day fixes are the strongest possible level-4 evidence.** The IR rubric asks for "before/after of code improved based on screening tool results." That phrasing assumes a process: scan, find, fix, re-scan, document. The gitleaks SonarQube finding produced exactly this process within an hour of detection: scanner found the leak, refactored the configs, rotated the token, re-scanned, leak is gone. That is a complete cycle on something the application engineer can fix unilaterally.
 
 **3. Tools change the cost curve, not the underlying work.** Without gitleaks, finding the leaked SonarQube token would have required reading every committed file by hand, hoping to spot a pattern. With gitleaks it took 65 seconds and produced the file paths and line numbers. The hours saved on detection got reinvested in the work that does not automate: triaging the noise, deciding fix priority, refactoring the configs to use env vars, coordinating the token rotation, updating the team's slash command, and writing this blog. The right shape for security tooling is to automate the search and free human attention for the judgment.
 
-Round 2 of this audit will land when the Cloudflare TLS 1.2 minimum propagates. Round 3 will wire one or more of these tools into a scheduled CI job so the baseline becomes a sustained guardrail rather than a point-in-time snapshot. The layered story stays the same: SAST + dependency audit + DAST + deep TLS + secret scan + port scan, each one closing a gap the others structurally cannot.
+Round 2 of this audit will wire one or more of these tools (most likely gitleaks as a pre-commit hook plus Nuclei on a weekly schedule) into the CI pipeline so the baseline becomes a sustained guardrail rather than a point-in-time snapshot. The layered story stays the same: SAST + dependency audit + DAST + deep TLS + secret scan + port scan, each one closing a gap the others structurally cannot. The TLS 1.0/1.1 finding stays on the recommendations list, available for whoever inherits the project to push for if their relationship with the CDN team allows it.
