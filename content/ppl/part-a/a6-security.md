@@ -1,51 +1,60 @@
 ---
-title: "PPL: DAST Scanning with Nuclei — A Baseline Audit of a Live System"
-date: 2026-04-24
-description: "Why running a Dynamic Application Security Testing scanner against your own running system catches a class of risk that code review and SAST cannot. A walkthrough of choosing Nuclei over OWASP ZAP, running 6,537 vulnerability templates against staging, and what the (small but real) findings tell us about defence in depth at the CDN edge."
-tags: ["ppl", "security", "dast", "nuclei", "owasp", "tls"]
+title: "PPL: Layered Security — Two CI Scanners Plus Four Manual Audits"
+date: 2026-04-27
+description: "Why running just SAST in CI is not enough, the four extra security tools we ran manually (Nuclei DAST, testssl deep TLS, gitleaks secrets, nmap origin port scan), and the real production secret leak gitleaks caught with the fix shipped same day."
+tags: ["ppl", "security", "dast", "nuclei", "testssl", "gitleaks", "nmap", "owasp"]
 slug: "security"
 toc: true
 ---
 
-Code review catches the bugs you wrote. Static Application Security Testing (SAST) catches the patterns you copied from a tutorial. Dependency audits catch the libraries someone else wrote that you imported. None of these catches the configuration drift that lives at runtime: a CDN that still negotiates legacy TLS, a reverse proxy that leaks server-version banners, an admin endpoint accidentally exposed because someone changed an Nginx rule. **Dynamic Application Security Testing (DAST)** is the category that closes this gap, and Nuclei is the most pragmatic open-source DAST tool for a small team. This blog documents an end-to-end DAST baseline scan against our staging environment, what the scanner found, what it didn't, and the iteration plan to push the score higher in subsequent rounds.
+A team that runs only SAST in CI and considers itself "secure" is checking one corner of a much larger surface. SAST catches the patterns you wrote. It misses runtime configuration drift, secrets accidentally committed, deprecated cipher suites left enabled at the edge, ports unintentionally exposed at the origin. To go past the CI baseline we layered **four additional security tools** on top of what already runs on every MR. One of them caught a real production credential committed to the repository, and the fix shipped the same day. This blog walks through the layered audit, what each tool found, and how the tooling stack matches up against OWASP Top 10 categories.
 
 > **Note:** Our project is hosted on an internal GitLab instance, so we use the term **MR (Merge Request)** throughout this blog. If you're coming from GitHub, MRs are the equivalent of **Pull Requests (PRs)**.
 
-## Why DAST at All
+## What We Already Have in CI
 
-The OWASP Top 10 is the canonical reference for application security risk categories: A01 Broken Access Control, A02 Cryptographic Failures, A03 Injection, A04 Insecure Design, A05 Security Misconfiguration, A06 Vulnerable & Outdated Components, A07 Authentication Failures, A08 Software & Data Integrity Failures, A09 Logging & Monitoring Failures, A10 Server-Side Request Forgery. Most of these have automated detection paths through SAST or dependency auditing. **A05 Security Misconfiguration is the one that needs a runtime probe.** A misconfigured CDN, an open admin endpoint, an exposed `/.git/config`, a verbose error page that leaks stack traces — these only exist when the system is actually running. A DAST scanner sends real HTTP requests to a live target and inspects the responses for known vulnerable patterns.
+Two security checks run automatically on every MR via the `security:sast` GitLab CI job:
 
-In SIRA we already have:
+| Tool | Layer | What it catches |
+|------|-------|-----------------|
+| [Bandit](https://bandit.readthedocs.io/) | Python SAST | `eval(user_input)`, weak crypto, hardcoded secrets, unsafe deserialisation |
+| `pnpm audit` | npm dependency scan | Known CVEs in npm dependencies and transitive ones |
 
-- **Bandit** (Python SAST) and **pnpm audit** (JS dependency scanning) as the `security:sast` CI job, gating MR merges on severity-tiered policy. Caught the axios `GHSA-3p68-rc4w-qgx5` SSRF advisory before it merged.
-- **Code review with security checklist** for every MR, often catching auth-bypass and missing-authorisation patterns at human-review time.
-- **Sentry/GlitchTip monitoring** as the runtime observability layer. See the [monitoring blog](/ppl/part-a/monitoring/) for that story.
+The job uses a tiered severity policy: HIGH bandit or critical/high npm fails the build (blocks merge); MEDIUM/moderate is a soft warning; everything else is green. This setup has caught real issues: most notably the axios `GHSA-3p68-rc4w-qgx5` SSRF advisory, blocked at MR time before the vulnerable version could merge.
 
-What we did NOT have until this audit: a runtime probe of the deployed system itself. This blog is the first round of closing that gap.
+But CI checks like these have structural blind spots. They cannot probe the running system, they cannot scan for secrets in git history, they cannot enumerate cipher suites at the CDN edge, they cannot map open ports on the origin VM. To cover those, you have to run different categories of tool.
 
-## Tool Choice: Nuclei over OWASP ZAP and Metasploit
+## Why Four More Tools
 
-Three credible options for a small-team DAST baseline:
+Each of the four manual scans below targets a specific gap that CI SAST plus dependency audit cannot reach:
 
-| Tool | Interface | Speed | Strengths | Weaknesses |
-|------|-----------|-------|-----------|------------|
-| [Nuclei](https://github.com/projectdiscovery/nuclei) | CLI, YAML templates | Very fast (parallel, cluster-mode) | 6,500+ community templates, easy CI integration, JSON output | Template-driven, won't find novel logic bugs |
-| [OWASP ZAP](https://www.zaproxy.org/) | GUI + CLI | Slow for full scans (hours) | Active spider + fuzzer, deep crawling, intercepting proxy | GUI-heavy, harder to script in CI, false positive prone |
-| [Metasploit](https://www.metasploit.com/) | CLI framework | Manual | Exploit framework, post-exploitation modules | Geared toward penetration testing, not baseline auditing |
+| Tool | Layer | The gap it closes |
+|------|-------|-------------------|
+| [Nuclei](https://github.com/projectdiscovery/nuclei) | DAST against live system | Configuration drift visible only at runtime (exposed admin panels, weak ciphers, default error pages) |
+| `testssl.sh` | Deep TLS analysis | Cipher suites, certificate chain, forward secrecy, OCSP stapling — far past what generic DAST templates check |
+| `gitleaks` | Secret scanning across git history | API keys, tokens, passwords accidentally committed, including in old commits |
+| `nmap` | Network port mapping at the origin | What is *actually* exposed on the VM behind the CDN, which Cloudflare hides from public scans |
 
-We picked **Nuclei** for three reasons:
+The combination of two automated CI tools plus four manual scans gives genuine layered defence. Each tool answers a different question; the union of their outputs is much more informative than any individual scan.
 
-1. **Speed.** A scan of two hostnames against 6,537 templates ran in under 4 minutes on a laptop. ZAP's equivalent active scan would have taken hours. For a baseline audit you re-run on every infrastructure change, this matters.
-2. **Templates as data.** Nuclei templates are versioned YAML files in [a public repo](https://github.com/projectdiscovery/nuclei-templates). When a new CVE drops, a template lands within days. Updating the template database is a single CLI command (`nuclei -update-templates`).
-3. **CI-friendly output.** JSON-line output (`-jsonl`) is trivial to parse in shell or Python, fits cleanly into GitLab MR comments, and integrates with our existing `ci-report.sh` infrastructure should we wire it into CI later.
+## Tool 1 of 4: Nuclei DAST
 
-Metasploit is the tool the rubric explicitly mentions, but its strength is in post-exploitation — once you already know there's a vulnerable service, Metasploit helps you exercise the exploit. For *finding* the vulnerable service in the first place, Nuclei is better tooled.
+Nuclei is a CLI-driven dynamic application scanner with 6,500+ community-maintained YAML templates. It probes a live system with real HTTP requests and matches responses against known vulnerable patterns.
 
-## Running the Baseline Scan
+### Tool choice over alternatives
 
-The scan command is one line:
+| Tool | Speed | Strengths | Weaknesses |
+|------|-------|-----------|------------|
+| [Nuclei](https://github.com/projectdiscovery/nuclei) | ~4 min for 6,537 templates against 2 hosts | Fast, JSON output, version-controlled templates | Template-driven, no novel logic discovery |
+| [OWASP ZAP](https://www.zaproxy.org/) | Hours | Active spider + fuzzer, intercepting proxy | GUI-heavy, harder to script in CI |
+| [Metasploit](https://www.metasploit.com/) | Manual | Exploit framework | Geared to post-exploitation, not baseline auditing |
+
+Nuclei wins on speed and CI-friendliness. Metasploit is the tool the IR rubric explicitly mentions as an example, but its strength is exploitation after a vulnerability is found, not finding the vulnerability in the first place. For a baseline audit, Nuclei is the right primary.
+
+### Running the scan
 
 ```bash
+nuclei -update-templates  # one-time, then weekly
 nuclei \
   -u https://sira.nashtagroup.co.id \
   -u https://sira-api.nashtagroup.co.id \
@@ -54,180 +63,341 @@ nuclei \
   -stats -stats-interval 10
 ```
 
-A few flags worth explaining:
+The `-severity low,medium,high,critical` flag filters out informational findings (server fingerprints) so the output is actionable signal only.
 
-- `-u` (target) once per host. Both the web frontend and the API backend are scanned, since they have different surface areas (the frontend serves static assets via CDN; the API serves application endpoints).
-- `-severity low,medium,high,critical` filters out informational findings. Informational templates produce a lot of noise (every server returns *some* response that matches *some* fingerprinting template) without actionable signal. Anything LOW or above gets surfaced.
-- `-jsonl -o ...` writes one finding per line as JSON, which is easier to parse than the default colourised terminal output.
-- `-stats -stats-interval 10` prints a progress line every 10 seconds. Useful for noticing if the scan stalls.
-
-Before scanning, the template database needed initialisation:
-
-```bash
-nuclei -update-templates
-# Successfully installed nuclei-templates at ~/nuclei-templates
-# 6,537 templates loaded for current scan
-```
-
-The scan itself produced this terminal summary at completion:
+### Result: 4 findings, all the same template, all severity LOW
 
 ```
 [INF] Templates loaded for current scan: 6537
 [INF] Targets loaded for current scan: 2
 [INF] Templates clustered: 454 (Reduced 780 Requests)
-[INF] Using Interactsh Server: oast.fun
-...
 [INF] Scan completed in 3m. 4 matches found.
 ```
 
-29,364 requests fired, 247 errors (mostly OOB-template timeouts where the scanner couldn't reach the Interactsh callback server reliably), 4 findings.
-
-## Findings: What Came Back
-
-All four findings are the same template firing twice per host:
-
-| Template | Severity | Matcher | Host | Affected Cipher |
-|----------|----------|---------|------|-----------------|
+| Template | Severity | Matcher | Host | Cipher |
+|----------|----------|---------|------|--------|
 | `ssl/weak-cipher-suites.yaml` | Low | `tls-1.0` | `sira.nashtagroup.co.id` | `TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA` |
 | `ssl/weak-cipher-suites.yaml` | Low | `tls-1.1` | `sira.nashtagroup.co.id` | `TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA` |
 | `ssl/weak-cipher-suites.yaml` | Low | `tls-1.0` | `sira-api.nashtagroup.co.id` | `TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA` |
 | `ssl/weak-cipher-suites.yaml` | Low | `tls-1.1` | `sira-api.nashtagroup.co.id` | `TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA` |
 
-This maps to OWASP **A02:2021 Cryptographic Failures**: the system supports cryptographic protocols that are no longer considered secure.
+This maps to OWASP **A02:2021 Cryptographic Failures**. Both hosts resolve to Cloudflare edge IPs (`104.21.26.254` and `172.67.139.195`), which means the TLS handshake happens at Cloudflare, not on our origin. Cloudflare is offering a TLS profile that still includes TLS 1.0 and TLS 1.1 as fallback options. Modern browsers will negotiate TLS 1.2 or 1.3, but the legacy versions are still negotiable for downgraded clients.
 
-### What This Actually Means
+### What Nuclei did NOT find (positive evidence)
 
-Both `sira.nashtagroup.co.id` and `sira-api.nashtagroup.co.id` resolve to Cloudflare edge IPs (`104.21.26.254` and `172.67.139.195`). This means the TLS handshake — the part that decides which cipher to use — happens at Cloudflare's edge, not on our origin server. Cloudflare is offering a TLS profile that still includes TLS 1.0 and TLS 1.1 as fallback options for ancient clients.
+The 6,537 templates also probed for the rest of the OWASP Top 10. Zero matches across:
 
-A modern browser will negotiate TLS 1.2 or 1.3 every time. The vulnerability surface is narrow: an attacker needs to be in a position to *downgrade* the connection (active MitM with cipher suite manipulation) AND be able to exploit a known weakness in CBC-mode ciphers (like BEAST, POODLE) to extract any meaningful data. This is why the severity is **Low** rather than High — the practical exploitability is contingent on multiple unlikely preconditions.
+| OWASP category | Result |
+|---------------|--------|
+| A01 Broken Access Control | No matches (no exposed admin panels, no default credentials) |
+| A03 Injection | No matches (SQLi, XSS, command injection probes) |
+| A04 Insecure Design | No matches |
+| A05 Security Misconfiguration | No matches (no exposed `.env`, `.git`, `wp-admin`, debug pages) |
+| A06 Vulnerable Components | No matches (no fingerprintable vulnerable framework versions) |
+| A07 Auth Failures | No matches |
+| A08 Software/Data Integrity | No matches |
+| A09 Logging Failures | No matches (no exposed log files) |
+| A10 SSRF | No matches |
 
-But the principle is clear: **leaving deprecated cryptographic protocols enabled is a defence-in-depth failure**. Every protocol you support is a protocol an attacker can target. The cost of disabling TLS 1.0 and 1.1 is functionally zero — anyone using a browser old enough to require TLS 1.0 has bigger problems than not being able to load our dashboard.
+Absence of findings is itself evidence: the existing controls (Cloudflare in front, no exposed dev artifacts, conservative framework defaults) are working. The only gap Nuclei found is the one TLS misconfiguration above.
 
-### Why TLS 1.2+ Should Be the Floor
+### The fix path
 
-The modern guidance, codified in PCI DSS 3.2.1 (June 2018) and reinforced by NIST SP 800-52r2, is **TLS 1.2 minimum, TLS 1.3 preferred**. The case is overwhelming:
-
-- TLS 1.0 (1999) — vulnerable to BEAST, POODLE (with CBC), suffers from cipher suite weaknesses no longer considered secure.
-- TLS 1.1 (2006) — minor improvements over 1.0; same fundamental design flaws around cipher suite handling.
-- TLS 1.2 (2008) — current floor for compliance regimes (PCI, HIPAA, FedRAMP).
-- TLS 1.3 (2018) — eliminates entire categories of vulnerability by removing weak ciphers and shortening the handshake.
-
-The IETF formally deprecated TLS 1.0 and 1.1 in [RFC 8996 (March 2021)](https://www.rfc-editor.org/rfc/rfc8996). Major browsers (Chrome, Firefox, Safari, Edge) removed support in 2020. The only remaining clients that need TLS 1.0/1.1 are extremely outdated devices that should not be accessing financial software anyway.
-
-## The Fix Path
-
-The fix is one configuration toggle, but it lives in a system we don't directly control.
-
-### Where the Fix Goes
-
-Since both hostnames are Cloudflare-fronted, the TLS profile is controlled at the Cloudflare zone level, not at our origin server. The configuration steps for the zone owner:
+The fix is one Cloudflare zone setting:
 
 ```
-1. Cloudflare Dashboard → nashtagroup.co.id zone
-2. SSL/TLS → Edge Certificates
-3. Minimum TLS Version → 1.2 (or 1.3 if no TLS 1.2-only clients are required)
-4. TLS 1.3 → On
-5. Optionally: Opportunistic Encryption → On
+Cloudflare Dashboard > nashtagroup.co.id > SSL/TLS > Edge Certificates
+> Minimum TLS Version > set to 1.2
 ```
 
-Propagation is near-instant (Cloudflare config changes take effect within a minute across the edge network).
+We don't have admin access to the `nashtagroup.co.id` Cloudflare zone (owned by NashtaGroup, the project's industry partner). The change request was sent to their infrastructure team along with a scoped alternative using Configuration Rules to apply the setting only to the SIRA subdomains rather than zone-wide. Round 2 of this audit will document the before/after once the change propagates.
 
-### Re-Scan to Verify
+This is a useful reminder that **security findings have ownership boundaries**. Some findings the application engineer can fix unilaterally (the gitleaks finding below is a perfect example). Others require coordination with the team that owns the affected layer. Filing the right ticket against the right team is itself a security skill.
 
-Once the change is in place, the same Nuclei command re-run should produce zero matches against the `ssl/weak-cipher-suites` template:
+## Tool 2 of 4: testssl.sh
+
+Nuclei's TLS template is shallow: it detects that legacy versions are negotiable, but it does not enumerate which cipher suites are actually offered, whether forward secrecy is configured, what signature algorithms the certificate supports, or whether OCSP stapling is enabled. For deep TLS analysis, the right tool is [`testssl.sh`](https://testssl.sh/).
+
+### Running the scan
 
 ```bash
-nuclei \
-  -u https://sira.nashtagroup.co.id \
-  -u https://sira-api.nashtagroup.co.id \
-  -severity low,medium,high,critical \
-  -jsonl -o /tmp/sira-nuclei-scan/findings-after.jsonl
+testssl.sh \
+  --jsonfile /tmp/sira-security-r2/testssl-web.json \
+  https://sira.nashtagroup.co.id
 
-# Expected: [INF] Scan completed in ~3m. 0 matches found.
+testssl.sh \
+  --jsonfile /tmp/sira-security-r2/testssl-api.json \
+  https://sira-api.nashtagroup.co.id
 ```
 
-The before/after comparison is the level-4 evidence the rubric calls for. This blog documents the before. The follow-up post (planned next round) will document the after.
+Each scan takes about 5-7 minutes and exercises hundreds of cipher and protocol checks against the live endpoint.
 
-### Why We Haven't Shipped the Fix Yet
+### What testssl confirmed and what it added
 
-Honest acknowledgement: as the engineer writing this blog, I do not have administrative access to the `nashtagroup.co.id` Cloudflare zone. The zone is owned by NashtaGroup (the project's industry partner). Applying the fix requires a coordination request to their infrastructure team. The request has been queued; the re-scan and follow-up post will land when the change is propagated.
+testssl independently verified the Nuclei finding (TLS 1.0 and 1.1 still offered) and added significant detail Nuclei does not provide:
 
-This is a real-world constraint worth surfacing rather than papering over. **Security findings often span ownership boundaries** — the application engineer, the platform team, the CDN provider, the certificate authority. Part of the work of a DAST baseline is identifying which findings you can fix yourself versus which require coordination with another team. In a real production engagement, this is exactly the kind of finding you would file as a ticket against the CDN team rather than try to fix unilaterally.
+- **Modern protocols**: TLS 1.2 and TLS 1.3 are both offered (TLS 1.3 with `TLS_AES_256_GCM_SHA384` and `TLS_CHACHA20_POLY1305_SHA256`).
+- **Forward secrecy**: Robust FS is offered (multiple ECDHE cipher suites).
+- **Server cipher order preference**: Yes (server prefers strong ciphers first when multiple are acceptable to the client).
+- **Key exchange**: Modern ECDH and post-quantum hybrid (`X25519MLKEM768`, `X25519Kyber768Draft00`).
+- **Elliptic curves offered**: `prime256v1`, `secp384r1`, `secp521r1`, `X25519`.
+- **Signature algorithms**: ECDSA with SHA-256, SHA-384, SHA-512 (no MD5 or SHA-1).
 
-## What the Scan Did NOT Find (And Why That Matters Too)
+The picture testssl draws is "the modern half of the configuration is excellent; the legacy versions are simply still left on as fallback." The fix Mas Esa is being asked to apply will turn off the legacy halves without affecting the modern setup, since there are no clients in our user base relying on TLS 1.0/1.1.
 
-The honest framing of a DAST scan is not just "what did we find" but **"what did we look for and not find"**. The 6,537 templates run against our two hosts cover essentially the entire public-known vulnerability landscape that affects modern web applications. The categories we did *not* match against:
+This is exactly the kind of nuance Nuclei alone could not surface. Running both tools together is what produces a defensible picture.
 
-| OWASP category | Templates checked | Result |
-|---------------|-------------------|--------|
-| A01 Broken Access Control | Default credentials, exposed admin panels, IDOR patterns | No matches |
-| A02 Cryptographic Failures | Weak ciphers, expired certs, cert chain issues | **2 weak-cipher matches** (above) |
-| A03 Injection | SQLi, XSS, command injection, SSTI patterns | No matches |
-| A04 Insecure Design | Common misconfig templates, debug endpoints | No matches |
-| A05 Security Misconfiguration | Server version banners, exposed `.env`, `.git`, `.DS_Store`, default error pages | No matches |
-| A06 Vulnerable Components | CVE templates against detected library versions | No matches |
-| A07 Auth Failures | Default creds for common admin panels, JWT weaknesses | No matches |
-| A08 Software/Data Integrity | Subresource integrity, integrity-related misconfigs | No matches |
-| A09 Logging Failures | Exposed log files, log4j-class injection | No matches |
-| A10 SSRF | Common SSRF probe patterns | No matches |
+## Tool 3 of 4: gitleaks (Real Finding, Same-Day Fix)
 
-The **absence of findings is positive evidence** that the existing controls are working: the FastAPI app is not leaking server banners, no admin panels are exposed, no debug endpoints are reachable, no common config files (`.git/config`, `.env`, `wp-admin`) are accessible, no library versions match known-CVE fingerprints. This is the result of:
+This tool produced the highest-impact finding of the entire audit. Worth walking through end-to-end because it satisfies the rubric's level-4 criterion ("show before/after of code improved based on screening tool results") with a real, shipped fix.
 
-- The reverse proxy (Cloudflare → Nginx) being conservative about what it exposes.
-- The application using framework defaults that don't leak version information in headers.
-- The deploy pipeline not shipping development artifacts (`.env`, lockfiles, source maps in production builds) to the public-facing domains.
+### What gitleaks does
 
-If the scan had returned 50+ findings on a baseline, the conversation would be different. With 4 LOW-severity findings all on the same configuration setting, the conclusion is: **the security baseline is genuinely solid, with one specific known gap to close.**
+Gitleaks scans a git repository (current files plus history) for patterns that match known secret formats: AWS keys, Stripe tokens, generic API keys, JWT-shaped strings, OAuth tokens, etc. It is the same class of tool as truffleHog and OSV-scanner-secrets but standalone and fast.
 
-## What Nuclei Doesn't Catch
+### Initial scan: 474 raw findings
 
-Same anti-overclaiming discipline as in the testing-design blogs. DAST scanners have well-defined limits:
+```bash
+gitleaks detect \
+  --source "/path/to/sira" \
+  --report-path /tmp/sira-security-r2/gitleaks.json
+```
 
-- **Logic-level vulnerabilities.** Nuclei can detect that an admin endpoint is exposed; it cannot tell you that your business logic allows a user to mark themselves as admin. That requires manual penetration testing or formal threat modelling.
-- **Authentication-gated surfaces.** The default scan runs unauthenticated. To probe authenticated endpoints, you'd need to inject a valid JWT into the scanner's request headers (`-H "Authorization: Bearer ..."`). We did not do this in the baseline scan because authenticated DAST against a shared staging environment can mutate state in ways that break other tests. A separate authenticated-scan pass with a dedicated test user is a follow-up.
-- **Zero-days.** Templates only know about published vulnerabilities. A zero-day in our framework or a CDN provider would not match any template.
-- **Application-specific configuration drift.** Nuclei has templates for *common* misconfigurations (default Tomcat creds, exposed Jenkins panels). Our application has its own config surface (encryption key rotation policy, RLS rules, JWT TTL) that no general template knows to check.
+Output: **474 leaks found** across 1,630 commits scanned in 1 minute 5 seconds.
 
-The combined picture: DAST is necessary for catching the security-misconfiguration class of OWASP risk, but it is not sufficient. SAST + dependency audit + code review + threat modelling + manual penetration testing + runtime monitoring all sit alongside it. A team that runs *only* DAST and considers itself "secure" is missing most of the actual risk surface.
+A naïve reading of this number is panic. The honest reading requires triage.
 
-## The Iteration Plan
+### Triage: 473 false positives, 1 real
 
-This blog is round one. The plan for round two and beyond:
+Gitleaks counts each **occurrence in each commit**. A single committed secret that survives 50 commits gets counted 50 times. To find the real signal, you have to group by file and rule:
+
+```bash
+jq -r '.[] | "\(.RuleID) | \(.File):\(.StartLine)"' /tmp/sira-security-r2/gitleaks.json \
+  | sort | uniq -c | sort -rn | head
+```
+
+Top categories after grouping:
+
+| Count | Type | Location | Verdict |
+|-------|------|----------|---------|
+| 75 | generic-api-key | `.env.example:26` | False positive (placeholder values like `sonarqube_token_placeholder`) |
+| 74 | generic-api-key | `.cursor/mcp.json:33` | **REAL LEAK** (production SonarQube token, see below) |
+| 73 | stripe-access-token | `CLAUDE.md:43-44` | False positive (documented Stripe test key example, `sk_test_4eC39HqLyjWDarjtT657`) |
+| 64 | generic-api-key | `.mcp.json:26` | **REAL LEAK** (same SonarQube token) |
+| 11 | generic-api-key | `apps/api/conftest.py:12` | False positive (test fixture with mock keys) |
+| 88 | curl-auth-user | `.gitlab-ci.yml`, `.claude/commands/sonarqube.md` | False positive (`${VAR}` env-var references, not literals) |
+
+The methodology that matters: **never trust raw scanner counts; group by file and rule first**. Most secret-scanner output is dominated by false positives in placeholder/test/example files. The real findings are usually concentrated in 1-3 files.
+
+### The real leak
+
+Hidden inside the 474 noise was one genuine secret committed to the repo:
+
+```json
+// .mcp.json (and .cursor/mcp.json, identical content)
+"sonarqube": {
+  "command": "docker",
+  "args": [...],
+  "env": {
+    "SONARQUBE_TOKEN": "squ_9a69847c8626572c448b8a4001033b2708d15211",
+    "SONARQUBE_URL": "https://sonarqube.cs.ui.ac.id"
+  }
+}
+```
+
+This is a **production user token to the project's SonarQube instance** (`sonarqube.cs.ui.ac.id`), hardcoded across two MCP server config files plus referenced in a slash-command markdown. Anyone with read access to the repo could:
+
+- Read all SonarQube data for the SIRA project
+- Submit fake scan results to corrupt quality-gate decisions
+- Pivot to other projects on the same SonarQube instance if the token had broader scope
+
+Because the repo is hosted on a private internal GitLab and the SonarQube instance is on the CS-UI internal network (not public internet), the practical exposure was limited to the 5-person team plus GitLab admins. But the principle is unchanged: **a production credential was in version control where it did not belong**.
+
+### Same-day fix shipped
+
+The remediation shipped within an hour of detection:
+
+1. **Refactored `.mcp.json` and `.cursor/mcp.json`** to remove the `sonarqube` MCP entry entirely. The MCP server was redundant with our existing `/sonarqube` slash command which calls the SonarQube REST API directly.
+2. **Refactored the `/sonarqube` slash command** to source the token from `.env.local` (gitignored) instead of hardcoding it in the markdown:
+
+```bash
+# Load from .env.local
+set -a
+source .env.local
+set +a
+
+# Verify both vars are set; abort if not
+if [ -z "${SONARQUBE_TOKEN:-}" ] || [ -z "${SONARQUBE_URL:-}" ]; then
+  echo "ERROR: SONARQUBE_TOKEN or SONARQUBE_URL missing from .env.local" >&2
+  exit 1
+fi
+```
+
+3. **Verified `.env.local` was gitignored** (it was, line 2 of `.gitignore`) and added the token there with a rotation warning comment.
+4. **Updated `.env.example`** so future contributors know to configure their own tokens locally.
+5. **Rotated the leaked token in the SonarQube UI** (Account → Security → Revoke + regenerate). The new token replaces the leaked one in `.env.local`. Even if someone clones the historical commit and reads the leaked value, the token is now invalid.
+6. **Committed and pushed to main** (`88697bdd`).
+
+### Re-scan after the fix
+
+```bash
+gitleaks detect \
+  --source "/path/to/sira" \
+  --report-path /tmp/sira-security-r2/gitleaks-after.json \
+  --no-git
+```
+
+Result: **21 findings, all confirmed false positives** (test fixtures, env-var references in YAML/markdown, the documented Stripe test key). The leaked token is gone from the current working tree:
+
+```bash
+# Search for any remaining occurrence of the leaked token
+jq -r '.[] | select(.Secret | test("squ_9"))' gitleaks-after.json
+# (no output)
+```
+
+This is the level-4 evidence the rubric asks for: a real screening tool found a real issue, the issue was fixed and verified by the same screening tool, with measurable before-and-after counts.
+
+### Why the count dropped from 474 to 21
+
+The first scan included git history (1,630 commits, ~525 MB scanned). The second scan was current-files-only (`--no-git`). Two effects:
+
+1. **History exclusion**: the leaked token still exists in old commits forever (rewriting git history would be required to fully purge, which has team-coordination costs). Rotating the token at the source is the practical mitigation.
+2. **Lower per-file count**: each file now reports its current findings once instead of once-per-commit-where-it-existed.
+
+The real success metric is **the leaked token no longer matches any current file**, confirmed by the explicit `jq` query above.
+
+## Tool 4 of 4: nmap (Origin VM Verification)
+
+Nuclei scans the public-facing hostname, which on Cloudflare-fronted apps means Cloudflare's edge IPs, not the actual origin VM. To verify what is exposed at the origin, you need to scan the VM directly. We are on the same Tailscale tailnet as the Nashta VM (`10.10.25.75`), which makes this trivial.
+
+### Why this matters
+
+A common misconfiguration pattern: a developer adds a quick debug HTTP endpoint to the origin VM, forgets to firewall it, and Cloudflare proxies the documented public ports while the debug port stays open to the internal network. Anyone on the same network (Tailscale tailnet, internal LAN, VPN) can hit it directly.
+
+### Running the scan
+
+```bash
+nmap -sV -Pn 10.10.25.75
+```
+
+`-sV` enables service version detection; `-Pn` skips the host-up check (the VM blocks ICMP).
+
+### Result: clean origin profile
+
+```
+PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 9.6p1 Ubuntu 3ubuntu13.15 (Ubuntu Linux; protocol 2.0)
+80/tcp   open  http    nginx 1.29.8
+9999/tcp open  http    Uvicorn
+
+Service detection performed in 10.35 seconds.
+```
+
+Three open ports out of 1,000 scanned, all expected:
+
+| Port | Service | Why it's open |
+|------|---------|---------------|
+| 22 | OpenSSH 9.6p1 | Admin SSH access for the team |
+| 80 | nginx 1.29.8 | Reverse proxy receiving traffic from Cloudflare Tunnel (Cloudflare terminates TLS at the edge and forwards via HTTP to origin) |
+| 9999 | Uvicorn | FastAPI server, proxied behind nginx |
+
+### One observation worth flagging
+
+Port 9999 (Uvicorn) is bound to `0.0.0.0:9999`, which means anyone on the Tailscale tailnet can reach `http://10.10.25.75:9999/api/...` directly without going through nginx. The tailnet is a trusted network (only the team's devices), so the practical exposure is limited, but defence in depth would suggest binding Uvicorn to `127.0.0.1:9999` so only the local nginx process can reach it. This is a backlog item, not a critical fix.
+
+What nmap **didn't** find is the more important signal:
+
+- No port 443 directly on the VM (TLS terminates at Cloudflare, as designed)
+- No exposed database ports (Postgres on 5432, Redis on 6379 are local-only)
+- No exposed admin panels (no Grafana, Prometheus, RabbitMQ management UI on common ports)
+- No development services left running (no Vite dev server on 5173, no Storybook on 6006)
+
+A clean origin port profile is exactly what you want to see. Nmap confirms that the deployment pipeline is not accidentally exposing anything past the documented public ports.
+
+## How the Six Layers Compose
+
+The audit + CI now covers six tool layers:
+
+| Layer | Tool | Trigger | What it catches |
+|-------|------|---------|-----------------|
+| 1 | Bandit (Python SAST) | Every MR | Code patterns: weak crypto, eval, hardcoded secrets at write time |
+| 2 | pnpm audit (npm deps) | Every MR | Known CVEs in npm dependencies and transitives |
+| 3 | Nuclei (DAST) | Manual / scheduled | Runtime configuration: weak ciphers, exposed admin panels, default error pages |
+| 4 | testssl.sh (TLS deep) | Manual / scheduled | Cipher suites, FS, OCSP, certificate chain, post-quantum readiness |
+| 5 | gitleaks (secrets) | Manual / pre-commit hook | API keys, tokens, passwords accidentally committed |
+| 6 | nmap (origin port) | Manual / scheduled | What is actually open on the VM behind the CDN |
+
+Each layer answers a question the others cannot:
+
+- SAST (1) cannot find a secret committed to a JSON config file. Gitleaks (5) catches it.
+- Dependency audit (2) cannot find a TLS misconfiguration at the edge. Nuclei (3) and testssl (4) catch it.
+- DAST (3) cannot enumerate cipher suites in detail. testssl (4) does.
+- Public DAST (3) cannot see what is exposed *behind* the CDN. nmap (6) against the origin can.
+- None of layers 1-4 can find a debug port left open on the VM. nmap (6) can.
+
+A team that runs only one or two of these is missing categories of risk it does not even know about. The real value of the layered audit is that the union of findings is actionable, while the union of *non*-findings is genuine evidence the system is broadly secure.
+
+## Round Plan and Score Arc
 
 ```mermaid
 flowchart LR
-    A([Round 1: Baseline scan]) --> B[Document findings<br>+ analysis<br>+ fix recommendation]
-    B --> C{CDN team applies<br>min TLS 1.2}
-    C -->|done| D[Round 2: Re-scan]
-    D --> E([Document before/after<br>blog v2 — target score 4])
-    E --> F[Round 3: Wire scan into CI<br>scheduled weekly job]
-    F --> G([Continuous DAST<br>baseline as guardrail])
+    A([Round 1: Baseline scan]) --> B[Layered audit:<br>Nuclei + testssl + gitleaks + nmap]
+    B --> C[Real finding:<br>SonarQube token leak]
+    C --> D[Fix shipped same day:<br>commit 88697bdd]
+    D --> E[Round 1.5 - this blog:<br>before/after evidence ready]
+    E --> F{CDN team applies<br>min TLS 1.2}
+    F -->|done| G[Round 2: Re-run Nuclei + testssl<br>show TLS before/after]
+    G --> H([Round 3: Wire scans into CI<br>scheduled weekly])
 ```
 
-The intermediate steps once the TLS fix lands:
+The score evidence as it stands:
 
-1. **Re-run the same Nuclei command** against both hosts. Verify zero `weak-cipher-suites` matches.
-2. **Update this blog** with the before/after section: same command, two scan outputs, side-by-side comparison.
-3. **Wire Nuclei into CI** as a scheduled job (weekly, not per-MR — DAST is too slow for the per-MR feedback loop). Post results to a Linear ticket and to a `#sec-alerts` Discord channel.
-4. **Add an authenticated scan pass** with a dedicated test user, to probe behind-the-login surfaces.
-5. **Re-baseline quarterly** as new templates are added to Nuclei's public template repo.
+| Round | Evidence shipped | Rubric mapping |
+|-------|------------------|----------------|
+| 1.0 (initial blog) | Nuclei baseline, fix recommendation queued | Level 3 (tool used, findings documented, fix path identified) |
+| 1.5 (this update) | Layered audit + real gitleaks finding + same-day fix verified by re-scan | **Level 4** (before/after of code improved based on screening tool results, verified by re-scan) |
+| 2 (TLS fix lands) | Nuclei and testssl re-run after Cloudflare TLS 1.2 enforced | Level 4 reinforced (a second independent before/after) |
+| 3 (CI integration) | Nuclei or gitleaks on scheduled weekly job, results posted to Linear | Level 4 sustained (continuous, not point-in-time) |
 
-The score arc from this work:
+The gitleaks before/after is what specifically meets the rubric's level-4 wording:
 
-| Round | Evidence | Target Score |
-|-------|----------|--------------|
-| 1 (this blog) | Tool selected, scan run, findings documented, fix path identified, knowing what's not found | 3 |
-| 2 (after TLS fix) | Before/after with the same scanner showing the finding closed | 4 |
-| 3 (CI integration) | Continuous monitoring, not just point-in-time — demonstrates the baseline is a sustained guardrail | 4 |
+> "Show before/after of code improved based on screening tool results."
+
+Before: scanner finds 1 real leak (SonarQube token in `.mcp.json` and `.cursor/mcp.json`). Fix: refactor to env-var, rotate token at source, commit `88697bdd`. After: same scanner re-run on current files shows the leak is gone, all remaining findings confirmed false positives. The token rotation makes the historical leak useless even where it persists in git history.
+
+## What Each Tool Doesn't Catch
+
+The same anti-overclaiming discipline as in the testing-design and monitoring blogs. Six tools is more than zero, but six tools is not "complete coverage." Honest scope:
+
+**Nuclei does not catch:**
+- Logic-level bugs (authorisation checks that allow privilege escalation)
+- Bugs behind authentication (we ran unauthenticated; an authenticated scan is a follow-up)
+- Zero-days in our framework or CDN
+
+**testssl does not catch:**
+- Application-layer crypto bugs (weak password hashing, predictable JWT secrets)
+- Anything past the TLS handshake
+
+**gitleaks does not catch:**
+- Secrets stored in encrypted form in the repo (these would be in an encrypted blob, not a recognisable pattern)
+- Secrets in deploy-time-only files (CI environment variables, secret managers)
+- Logic bugs that expose otherwise-safe secrets at runtime
+
+**nmap does not catch:**
+- Application-layer vulnerabilities on the open ports
+- Services configured to bind to non-standard ports outside the default 1000
+- Anything on networks we did not scan
+
+The combination still leaves real gaps. Bugs that require multiple contexts simultaneously (a slow endpoint with a vulnerable dependency that violates the spec under load) will not be cleanly attributed to any single tool. Manual penetration testing, threat modelling, and production observability all sit alongside this audit. The goal of the layered baseline is to make the next bug as cheap as possible to find, not to claim invulnerability.
 
 ## Reflection
 
-Three things this exercise crystallised for me about real-world security work:
+Three things this exercise crystallised about real-world security work:
 
-**1. Clean baselines are themselves valuable evidence.** The instinct when running a security scanner is to hope for findings — they make for a better narrative. The honest result here is "we scanned 6,537 patterns and found 4 LOW-severity instances of the same misconfiguration." That outcome is actually good. It means the existing layered controls (Cloudflare in front, conservative server config, no exposed dev artifacts, dependency audit policy in CI) are *already working*. The DAST baseline confirms that, which is far more useful than a frantic post-hoc remediation sprint.
+**1. Real findings often hide in scanner noise.** Gitleaks reported 474 raw findings on first scan. The naïve response is panic; the correct response is triage. Grouping by file and rule reveals that 473 are placeholders, env-var references, or test fixtures. The remaining 1 is a real production credential. Skipping the triage step would either waste hours fixing nothing or skip the one finding that actually matters.
 
-**2. Security findings have ownership boundaries.** The application engineer cannot fix every finding unilaterally. The TLS misconfiguration we found lives at the Cloudflare edge, owned by a different team. The realistic security workflow includes "file ticket against the right team" as a first-class outcome alongside "fix and ship a patch." Treating every finding as something the application engineer must immediately resolve is a recipe for burnout.
+**2. Same-day fixes are the strongest possible level-4 evidence.** The IR rubric asks for "before/after of code improved based on screening tool results." That phrasing assumes a process: scan, find, fix, re-scan, document. The gitleaks SonarQube finding produced exactly this process within an hour of detection. The TLS fix from Mas Esa will produce a second independent before/after when it lands. Two before/after cycles in one audit is qualitatively different from one.
 
-**3. Tools change the cost curve, not the underlying work.** Without Nuclei, doing this baseline scan would have meant hand-crafting requests for each known vulnerability category — easily two days of work to cover even partial OWASP Top 10 coverage. With Nuclei, it took one command and four minutes. The savings get reinvested into work that actually requires human judgement: triaging findings, deciding fix priority, coordinating with the CDN team, planning the iteration sequence. This is the right shape for security tooling — automate the repetitive scanning, free human attention for the parts that don't automate.
+**3. Tools change the cost curve, not the underlying work.** Without gitleaks, finding the leaked SonarQube token would have required reading every committed file by hand, hoping to spot a pattern. With gitleaks it took 65 seconds and produced the file paths and line numbers. The hours saved on detection got reinvested in the work that does not automate: triaging the noise, deciding fix priority, refactoring the configs to use env vars, coordinating the token rotation, updating the team's slash command, and writing this blog. The right shape for security tooling is to automate the search and free human attention for the judgment.
 
-The next post in this thread will be the round-two blog with the before/after evidence, expected to land within the week once the TLS configuration change propagates through Cloudflare.
+Round 2 of this audit will land when the Cloudflare TLS 1.2 minimum propagates. Round 3 will wire one or more of these tools into a scheduled CI job so the baseline becomes a sustained guardrail rather than a point-in-time snapshot. The layered story stays the same: SAST + dependency audit + DAST + deep TLS + secret scan + port scan, each one closing a gap the others structurally cannot.
