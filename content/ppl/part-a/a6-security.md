@@ -134,18 +134,44 @@ Each scan takes about 5-7 minutes and exercises hundreds of cipher and protocol 
 
 ### What testssl confirmed and what it added
 
-testssl independently verified the Nuclei finding (TLS 1.0 and 1.1 still offered) and added significant detail Nuclei does not provide:
+testssl ran 378 individual checks per host. Headline findings, grouped by severity:
 
-- **Modern protocols**: TLS 1.2 and TLS 1.3 are both offered (TLS 1.3 with `TLS_AES_256_GCM_SHA384` and `TLS_CHACHA20_POLY1305_SHA256`).
-- **Forward secrecy**: Robust FS is offered (multiple ECDHE cipher suites).
-- **Server cipher order preference**: Yes (server prefers strong ciphers first when multiple are acceptable to the client).
-- **Key exchange**: Modern ECDH and post-quantum hybrid (`X25519MLKEM768`, `X25519Kyber768Draft00`).
-- **Elliptic curves offered**: `prime256v1`, `secp384r1`, `secp521r1`, `X25519`.
-- **Signature algorithms**: ECDSA with SHA-256, SHA-384, SHA-512 (no MD5 or SHA-1).
+**MEDIUM severity (5 distinct, both hosts):**
 
-The picture testssl draws is "the modern half of the configuration is excellent; the legacy versions are simply still left on as fallback." The fix Mas Esa is being asked to apply will turn off the legacy halves without affecting the modern setup, since there are no clients in our user base relying on TLS 1.0/1.1.
+| Finding ID | Detail | What it means |
+|------------|--------|---------------|
+| `overall_grade` | **B** | Overall TLS posture grade. Cannot reach A while TLS 1.0/1.1 are offered. |
+| `cert_expirationStatus` | `expires < 60 days (41)` | Certificate expires on **2026-06-07** (41 days from this scan). Cloudflare manages auto-renewal but worth confirming the renewal will trigger. |
+| `cert_notAfter` | `2026-06-07 17:18` | Exact expiration. |
+| `BEAST_CBC_TLS1` | `ECDHE-ECDSA-AES128-SHA ECDHE-ECDSA-AES256-SHA` | BEAST attack: CBC ciphers in TLS 1.0 are theoretically downgrade-attackable. Same root cause as the Nuclei finding (TLS 1.0 enabled), but testssl names the specific ciphers. |
+| `security_headers` (web only) | missing | CSP, HSTS, X-Frame-Options, etc. not set at edge. Cloudflare can inject these. |
+| `BREACH` (web only) | possible | BREACH attack: HTTPS compression on responses with secrets. Often a false positive for read-only public pages, worth investigating per-endpoint. |
 
-This is exactly the kind of nuance Nuclei alone could not surface. Running both tools together is what produces a defensible picture.
+**LOW severity (concentrated on cipher details):**
+
+- `TLS1`, `TLS1_1` — confirms Nuclei finding that legacy versions are negotiable.
+- `cipherlist_OBSOLETED` — obsolete cipher list still offered.
+- `cipher-tls1_xc009`, `cipher-tls1_xc00a`, plus several `cipher-tls1_1_*` and `cipher-tls1_2_*` — specific cipher suite IDs flagged (each one is a CBC variant testssl prefers be removed).
+- `LUCKY13` — Lucky13 timing attack on CBC ciphers. Related to TLS 1.0/1.1 enablement.
+- `cert_trust_wildcard` — wildcard certificate trust note (informational about how trust resolves).
+- `DNS_CAArecord` — no CAA DNS record published (recommendation to add `CAA` records pinning the issuing CA).
+- `FS_TLS12_sig_algs` — note about TLS 1.2 signature algorithms.
+
+**What's actually GOOD (positive evidence from testssl):**
+
+- TLS 1.2 and TLS 1.3 are both offered (TLS 1.3 with modern `TLS_AES_256_GCM_SHA384` and `TLS_CHACHA20_POLY1305_SHA256`).
+- Robust forward secrecy (multiple ECDHE cipher suites).
+- Server cipher order preference: yes (server picks strong ciphers first).
+- Post-quantum hybrid key exchange: `X25519MLKEM768`, `X25519Kyber768Draft00` (genuinely cutting-edge, ahead of most production deploys).
+- Elliptic curves: `prime256v1`, `secp384r1`, `secp521r1`, `X25519`.
+- Signature algorithms: ECDSA with SHA-256/384/512 (no MD5, no SHA-1).
+- No Heartbleed, no POODLE-direct, no CRIME, no FREAK, no LOGJAM.
+
+The picture testssl draws is "the modern half of the configuration is excellent (post-quantum-ready, in fact); the legacy halves are simply still left on as fallback." The Cloudflare TLS 1.2 minimum fix will turn off the legacy halves without affecting any of the modern setup. Once that lands, the overall grade should jump from B to A and most of the LOW-severity cipher findings disappear with it.
+
+This is exactly the depth Nuclei alone cannot produce. Nuclei reported "TLS 1.0/1.1 enabled" and that was it. testssl reports the specific cipher IDs, the related attacks (BEAST, Lucky13), the certificate expiration window, the missing security headers at the edge, and the post-quantum readiness of the modern half. Running both tools together is what produces a defensible picture.
+
+The certificate expiration finding (41 days) is itself a useful catch that none of the other tools surfaced. Worth confirming with Mas Esa that Cloudflare's auto-renewal is configured.
 
 ## Tool 3 of 4: gitleaks (Real Finding, Same-Day Fix)
 
