@@ -23,6 +23,8 @@ The fix is dual: mark the bucket private (in the migration), and switch to `crea
 
 The watch-out for future reviewers: any MR that introduces a new Storage bucket should explicitly answer the question "what is the access control model?" in the migration. If the answer is "public", the migration should say so on a comment line. If it is "private with signed URLs", the service that mints the URLs should be visible in the same MR. A bucket without an answered access-control question is a P0.
 
+![Review thread on MR !218 showing the public-PDF NPWP/PII finding and the swallowed upload-error P0](/images/ppl/s3w2-b6-mr218-pii-review.png)
+
 ### Class 2: Authorization theater via RLS that does not apply (!203)
 
 MR !203 (Payment Proof Storage Setup) defined RLS policies on the storage bucket and table:

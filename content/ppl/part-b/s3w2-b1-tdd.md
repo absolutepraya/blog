@@ -30,6 +30,10 @@ bfb74c13 green(api): add digest priority settings
 
 Three full red-green pairs covering three distinct layers: settings parsing, query layer, and the rendering surface. Each pair represents one contract that was named in tests before the implementation existed.
 
+![MR !243 commits view showing the alternating red(api)/green(api) pairs with their commit hashes](/images/ppl/s3w2-b1-mr243-red-green-commits.png)
+
+The screenshot above is the GitLab commits view of MR !243 before squash. Reading top to bottom you can see the discipline as a visual rhythm: every green commit has a red commit immediately below it. The hashes match the ones I quoted from `git log` directly.
+
 The same shape repeats in MR !238 (delivery logs):
 
 ```
