@@ -58,6 +58,18 @@ pnpm install --frozen-lockfile --prefer-offline > /dev/null
 
 The lockfile check has been the most-fired since I added it. Roughly one push out of three has had a lockfile drift, and the hook catches it before CI.
 
+## Conventions in CLAUDE.md as a Steering Mechanism for AI
+
+A subtler but important AI-literacy choice this week was treating `apps/web/CLAUDE.md` as a primary surface for steering AI behavior, not just a human-facing doc. Across MR !228 (UIUX polish) I added 47 lines of conventions covering loading states, skeleton fidelity, table primitives, fonts, animations, and risk badge styling. Five separate commits, each documenting one decision so the next person (or agent) does not re-litigate it.
+
+The AI angle is concrete: `apps/web/AGENTS.md` is symlinked to `apps/web/CLAUDE.md`. So a Claude Code session and an OpenCode session both read the same file when they open the repo. A new convention I write down on Monday becomes part of every AI-generated UI commit on Tuesday, without me needing to repeat it in every prompt. Once you internalize this, it changes what you do when you finish a feature: the polish itself ships, but the *convention behind the polish* gets written down so the next AI-generated diff inherits the standard.
+
+The skeleton-fidelity rule (`2149df68`) is a clean example. Without the rule in CLAUDE.md, an AI asked to "add a skeleton for this new page" would generate a generic template with placeholder columns. With the rule:
+
+> Read the real page's JSX first. Match column count, header buttons, filter rows, and breakpoints exactly — generic templates produce visibly wrong skeletons.
+
+The AI now reads the actual page first and matches exactly. The behavior shift is dramatic, and it costs me four lines of docs once. That is the kind of compounding leverage that distinguishes "AI-assisted development" from "AI-steered development".
+
 ## Parallel Agent Workflow on the Pre-Push Hook Itself
 
 The pre-push hook (MR !223) is itself an artifact of AI-assisted work. I was running two agents in parallel on Superset worktrees: one finishing the Telegram feature on `abhip/telegram`, one drafting the hook on a separate branch. Each agent had its own working tree, its own redis/supabase ports, and its own context. Neither blocked the other.
@@ -80,5 +92,7 @@ The cadence this week (8 MRs) is not the point. The point is that the cadence di
 
 - [MR !221 SIRA-161 Telegram Phase 1 & 2](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/221), [MR !238 delivery logs](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/238), [MR !243 digest priorities](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/243), [MR !234 test guard](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/234) — all AI-assisted, all under red/green TDD pairs
 - [MR !223 chore(hooks): harden pre-push](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/223) — squash `1decb91d`, calibrated specifically for AI-assisted workflow failure modes
+- [MR !228 SIRA-302 UIUX polish](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/228) — 47 lines added to `apps/web/CLAUDE.md` across 5 commits (`a5153c32`, `3af21df9`, `2149df68`, `62175a17`, `a78c6599`) steering future AI-generated UI work
+- `apps/web/AGENTS.md` symlinked to `apps/web/CLAUDE.md` so Claude Code and OpenCode read the same conventions
 - Pre-squash red/green commit pairs: `39e8f659`/`bfb74c13`, `0db6fc68`/`243c4193`, `946da839`/`b8be1b69`, `b2b06fdb`/`47941303`, `6bd1d046`/`86359687`, `85b9f2d3`/`0e71c85b`, `645dcd84`/`b8c1a0e2`
 - Source: `.husky/pre-push` (defensive layer), `scripts/superset-setup-env.sh` (parallel-agent isolation infra)

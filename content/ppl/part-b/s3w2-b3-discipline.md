@@ -114,16 +114,41 @@ The lockfile check is the one that has caught the most false positives so far. `
 
 The branch naming check was added because half the team had been creating branches like `fix-bug` instead of `daffa/fix/SIRA-123-bug`, and the Linear-notify CI job could not link those to tickets. Catching it pre-push means it never reaches the MR creation step.
 
+## Conventions Written Down, Not Just Shipped
+
+The UIUX polish work in MR !228 was a sweep across roughly thirty components: sidebar, settings, table action buttons, skeleton loading states, dashboard widgets, mobile blocker, empty states, error states, and risk badges. The visible artifact was the polished UI. The less visible artifact, and the one I think actually mattered more for the team, was 47 new lines of conventions written into `apps/web/CLAUDE.md` across five commits.
+
+| Commit | Lines added | What it documents |
+|--------|------:|---|
+| `a5153c32` | +8 | Loading states (page-level skeleton vs inline `RingSpinner` vs `Skeleton`) |
+| `3af21df9` | +21 | Tables, empty/error state primitives, fonts (`font-mono` vs `font-sans` rules), animations (`tailwindcss-animate`, `motion-reduce`), risk badge styling |
+| `2149df68` | +4 | Skeleton-fidelity rule + three new FE pitfalls (post-JSX-removal format, shared-component copy + tests, Knip pre-commit awareness) |
+| `62175a17` | +13 | DataTable toolbar redesign conventions |
+| `a78c6599` | +1 | Risk badge MEDIUM border requirement (border-2 + amber-400) |
+
+Each entry exists because a specific decision came up during the polish pass that would otherwise need to be re-litigated by the next person. The font-mono rule is one example: it is easy to overuse `font-mono` for "looks like data", which would creep monospace fonts into headings and summary numbers where they make the UI feel like a terminal. Writing it down as "mono is for codes/data inside tables, never for emphasis" prevents that drift.
+
+The skeleton-fidelity rule (`2149df68`) is a different shape of discipline. The original commit message captures the why:
+
+> Read the real page's JSX first. Match column count, header buttons, filter rows, and breakpoints exactly — generic templates produce visibly wrong skeletons.
+
+This came up because three of the page skeletons in the boneyard work had been built from a template that did not match the actual page they were standing in for. The skeletons rendered, but they showed five columns where the real table had three. Once the skeleton flashed and the data loaded, the layout shifted visibly. Writing the rule down ("read the JSX first, match exactly") puts the decision criterion in front of every future skeleton author before they touch the template.
+
+The convention file is not just for humans either. `apps/web/AGENTS.md` is symlinked to `CLAUDE.md`, so any AI agent (Claude Code, OpenCode, Codex) opening this repo picks up these conventions before generating code. That changes the failure mode for AI-generated UI work: instead of "AI invents a generic skeleton template", the AI reads the conventions, sees the fidelity rule, and follows it. The discipline propagates without me being in the loop.
+
 ## What I Learned
 
 Discipline on infrastructure work means **not stopping at the first plausible cause**. The integration-test flake had three candidate causes I considered before landing on the right one (network instability, Supabase CLI bug, runner disk pressure). Each of them would have led to a band-aid fix that did not address the actual race. The 30 minutes I spent reading containerd internals and crontabs was worth more than the 30 minutes a retry loop would have saved.
 
 The pre-push hook is the same shape: each check exists because a specific class of CI failure had bitten me at least once. Adding a check costs nothing once you have done the diagnosis. Skipping the diagnosis costs every developer who hits the same failure later.
 
+The CLAUDE.md updates are the third instance of the same pattern: write down the decision once so the team (and the team's AI agents) do not re-litigate it. A 21-line addition to a docs file is invisible in a 30-component UI sweep, but it is the thing that keeps the polish from regressing the next time someone touches a table or a skeleton.
+
 ## Evidence
 
 - [MR !232 SIRA-303 fix(ci): restore api:integration-test and fix containerd ingest race](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/232) — squash `895e06de`
 - [MR !223 chore(hooks): harden pre-push with lint, build, knip, lockfile, branch validation](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/223) — squash `1decb91d`
-- Source: `infra/sira-docker-housekeeping.sh`, `scripts/ci-supabase-slot.sh`
-- Source: `.husky/pre-push`
-- `CLAUDE.md` — added the SIRA-303 troubleshooting row to the CI debugging table
+- [MR !228 SIRA-302 UIUX polish](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/228) — squash `4cc43d58`, includes the 5 CLAUDE.md docs commits below
+- CLAUDE.md docs commits: `a5153c32` (+8), `3af21df9` (+21), `2149df68` (+4), `62175a17` (+13), `a78c6599` (+1) — total 47 lines added to `apps/web/CLAUDE.md`
+- Source: `infra/sira-docker-housekeeping.sh`, `scripts/ci-supabase-slot.sh`, `.husky/pre-push`, `apps/web/CLAUDE.md`
+- Root-level `CLAUDE.md` — added the SIRA-303 troubleshooting row to the CI debugging table
