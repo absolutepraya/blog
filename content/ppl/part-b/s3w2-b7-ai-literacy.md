@@ -58,14 +58,6 @@ pnpm install --frozen-lockfile --prefer-offline > /dev/null
 
 The lockfile check has been the most-fired since I added it. Roughly one push out of three has had a lockfile drift, and the hook catches it before CI.
 
-## "Co-Authored-By: Claude" as an Honesty Marker
-
-MR !228 (UIUX polish across sidebar, settings, tables, mobile blocker) merged this week with `Co-Authored-By: Claude <noreply@anthropic.com>` in the squashed commit message. That marker is a deliberate norm. It says, in the git history, "this was AI-collaborated." It does not absolve me of responsibility for the diff (I still wrote the tests, ran the build, validated in browser, and pushed it through review), but it makes the AI involvement transparent in the artifact.
-
-The team norm I am building around this: any MR where AI did substantial generation gets the co-author trailer. MRs where AI was only used for autocomplete or one-line refactors do not. The line is fuzzy, but the principle is "honest about the level of involvement, especially when other developers will read the commit later".
-
-This matters because AI-assisted code looks identical to hand-written code in the diff. There is no telltale variable name or comment style that gives it away. The trailer is the only persistent record. Without it, a teammate reading the commit six months from now cannot tell whether to ask me about a design decision (something I made deliberately) or treat the code as a generated draft (something to review with fresh eyes).
-
 ## Parallel Agent Workflow on the Pre-Push Hook Itself
 
 The pre-push hook (MR !223) is itself an artifact of AI-assisted work. I was running two agents in parallel on Superset worktrees: one finishing the Telegram feature on `abhip/telegram`, one drafting the hook on a separate branch. Each agent had its own working tree, its own redis/supabase ports, and its own context. Neither blocked the other.
@@ -76,20 +68,17 @@ This week was the first sustained week running this pattern, and the 8-MR cadenc
 
 ## What I Learned
 
-Three things that I think generalize.
+Two things that I think generalize.
 
 **TDD is not optional in AI-assisted workflows.** It is the cheapest mechanism for keeping the AI's generation aligned with the actual contract. The red commit is the contract; the green commit is the implementation. Both are visible in git. If a teammate later questions why something works the way it does, the test answers the question.
 
 **Build a hook calibrated for the failures your specific workflow produces.** Generic linting is not enough. AI-assisted work fails in specific ways (lockfile drift, dead code, build errors that pass typecheck), so the hook should explicitly catch those.
-
-**Be honest about the level of AI involvement.** The `Co-Authored-By:` trailer is small but persistent. It signals to future readers what the artifact actually is.
 
 The cadence this week (8 MRs) is not the point. The point is that the cadence did not break the discipline. Every MR has tests, every MR went through review, every red commit precedes a green commit. AI accelerates the implementation, but the discipline is what keeps the work merge-able.
 
 ## Evidence
 
 - [MR !221 SIRA-161 Telegram Phase 1 & 2](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/221), [MR !238 delivery logs](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/238), [MR !243 digest priorities](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/243), [MR !234 test guard](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/234) — all AI-assisted, all under red/green TDD pairs
-- [MR !228 SIRA-302 UIUX polish](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/228) — squashed with `Co-Authored-By: Claude` trailer, squash hash `4cc43d58`
 - [MR !223 chore(hooks): harden pre-push](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/223) — squash `1decb91d`, calibrated specifically for AI-assisted workflow failure modes
 - Pre-squash red/green commit pairs: `39e8f659`/`bfb74c13`, `0db6fc68`/`243c4193`, `946da839`/`b8be1b69`, `b2b06fdb`/`47941303`, `6bd1d046`/`86359687`, `85b9f2d3`/`0e71c85b`, `645dcd84`/`b8c1a0e2`
 - Source: `.husky/pre-push` (defensive layer), `scripts/superset-setup-env.sh` (parallel-agent isolation infra)
