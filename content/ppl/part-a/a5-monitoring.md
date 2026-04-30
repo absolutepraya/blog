@@ -11,7 +11,7 @@ Error monitoring is one of those things that feels optional until the first prod
 
 > **Note:** Our project is hosted on an internal GitLab instance, so we use the term **MR (Merge Request)** throughout this blog. If you're coming from GitHub, MRs are the equivalent of **Pull Requests (PRs)**.
 
-## Nilai Manfaat: What This Monitoring Actually Caught
+## Real-World Value: What This Monitoring Actually Caught
 
 Before diving into architecture, here is the concrete value we have gotten from running this. A snapshot of our production GlitchTip instance right now shows 14 issues captured across the two projects (`sira-api` and `sira-web`):
 
@@ -65,7 +65,7 @@ First, **PostgREST's own error message tells us the fix**: `hint="Perhaps you me
 
 Second, **the stack trace ends in our code**, not in a vendored library: `app/db/queries/invoices.py` in `get_all_invoices` at line 92 → `app/services/invoice_service.py` in `list_all` at line 50 → `app/routers/invoices.py` in `list_invoices` at line 50. From the alert email, to clicking "View on GlitchTip," to reading this stack trace, a developer gets from "something is wrong" to "I know the exact line and the exact fix" in well under a minute.
 
-That is the nilai manfaat. Not just "errors are captured" but "errors are turned into actionable, self-documenting artifacts that cut the mean time to resolution from hours to minutes."
+That is the real-world value. Not just "errors are captured" but "errors are turned into actionable, self-documenting artifacts that cut the mean time to resolution from hours to minutes."
 
 ## Why Self-Hosted Monitoring
 
@@ -320,7 +320,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 }
 ```
 
-The `componentStack` in the `extra` field is critical. A JavaScript error like "Cannot read property 'name' of undefined" could come from anywhere. The component stack trace shows the exact React component tree: `App > Dashboard > InvoiceTable > InvoiceRow`, which pinpoints the failing component without requiring reproduction. This is exactly how we caught the two `useAuth must be used within an AuthProvider` issues listed in the Nilai Manfaat section.
+The `componentStack` in the `extra` field is critical. A JavaScript error like "Cannot read property 'name' of undefined" could come from anywhere. The component stack trace shows the exact React component tree: `App > Dashboard > InvoiceTable > InvoiceRow`, which pinpoints the failing component without requiring reproduction. This is exactly how we caught the two `useAuth must be used within an AuthProvider` issues listed in the Real-World Value section.
 
 ## Structured JSON Logging
 
@@ -390,4 +390,4 @@ The 1-event-in-1-minute threshold means the alert fires on the first occurrence,
 
 The key insight is that monitoring is not a single tool or dashboard. It is layers: error capture for crashes, performance spans for latency, context tagging for debugging, structured logging for everything in between, and alerts for immediacy. Each layer answers a different question, and together they provide visibility into a system where three services (API, workers, frontend) run across two processes and one browser.
 
-The 14 issues captured in the Nilai Manfaat section are the proof: every one of them is a bug that this layered setup caught before it reached a user. The most expensive bug is the one that runs silently for weeks; the cheapest bug is the one that emails you within seconds of its first occurrence.
+The 14 issues captured in the Real-World Value section are the proof: every one of them is a bug that this layered setup caught before it reached a user. The most expensive bug is the one that runs silently for weeks; the cheapest bug is the one that emails you within seconds of its first occurrence.
