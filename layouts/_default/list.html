@@ -14,6 +14,9 @@
         {{ if eq (.Params.sort_by | default "date") "title" }}
             {{ $pages = .Pages.ByTitle }}
         {{ end }}
+        {{ if eq (.Params.sort_order | default "asc") "desc" }}
+            {{ $pages = $pages.Reverse }}
+        {{ end }}
         {{ range $pages }}
         <li>
             <div class="post-title-container">
