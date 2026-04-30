@@ -37,6 +37,8 @@ The week's headline: **Telegram shipped**, ending several weeks of in-developmen
 !243  SIRA-299 feat(api): add daily digest "Prioritas Hari Ini" section
 ```
 
+![GitLab merge request list filtered to my authored MRs deployed between 2026-04-23 and 2026-04-30, showing all 8 MRs merged in the S3W2 window](/images/ppl/s3w2-c3-mr-list.png)
+
 Three of them (`!221`, `!238`, `!243`, `!234`) are the Telegram feature shipping in stages, with red/green commit pairs visible in the pre-squash history. Two (`!232`, `!223`) are CI/dev-infrastructure work that the team uses on every subsequent pipeline run. One (`!228`) is a 30-component UI polish pass that also wrote 47 lines of conventions into `apps/web/CLAUDE.md`. One (`!225`) is the production rollout work for Telegram env vars.
 
 Each MR was mergeable on its own. None required a follow-up to fix a regression it introduced.
