@@ -4,28 +4,17 @@
     {{ partial "nav.html" . }}
 </section>
 
-{{/* Sort logic: .Pages defaults to date-desc, .ByTitle defaults to title-asc.
-     Per-field default for sort_order: desc for date (newest first), asc for title (A-Z). */}}
-{{ $sortBy := .Params.sort_by | default "date" }}
-{{ $defaultOrder := "desc" }}
-{{ if eq $sortBy "title" }}{{ $defaultOrder = "asc" }}{{ end }}
-{{ $sortOrder := .Params.sort_order | default $defaultOrder }}
-
 <section class="site-intro">
-    <p>{{ .Title }}{{ if or .Params.sort_by .Params.sort_order }} <span class="sort-info">⋅ Sorted by {{ $sortBy }}, {{ if eq $sortOrder "desc" }}decreasing{{ else }}increasing{{ end }}</span>{{ end }}</p>
+    <p>{{ .Title }}</p>
 </section>
 
 <section class="home">
     <ul class="post-list">
         {{ $pages := .Pages }}
-        {{ if eq $sortBy "title" }}
+        {{ if eq (.Params.sort_by | default "date") "title" }}
             {{ $pages = .Pages.ByTitle }}
         {{ end }}
-        {{/* Reverse only when user wants opposite of the natural default for the field */}}
-        {{ if and (eq $sortBy "date") (eq $sortOrder "asc") }}
-            {{ $pages = $pages.Reverse }}
-        {{ end }}
-        {{ if and (eq $sortBy "title") (eq $sortOrder "desc") }}
+        {{ if eq (.Params.sort_order | default "asc") "desc" }}
             {{ $pages = $pages.Reverse }}
         {{ end }}
         {{ range $pages }}
