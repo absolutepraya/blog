@@ -40,10 +40,10 @@ The `archive/` directory sits outside `content/`, so Hugo ignores it entirely. A
 | Field | Default | Description |
 |-------|---------|-------------|
 | `sort_by` | `"date"` | Field to sort by: `"date"` or `"title"` |
-| `sort_order` | `"desc"` for date, `"asc"` for title | Direction: `"asc"` (oldest-first / A-Z) or `"desc"` (newest-first / Z-A). Per-field default matches the natural reading order for that field. |
+| `sort_order` | `"asc"` | Set `"desc"` to reverse the result. With `sort_by: "date"` the underlying `.Pages` is already date-descending, so `desc` here gives oldest-first. With `sort_by: "title"`, `desc` gives Z-A. |
 | `show_date` | `true` | Show date next to each post in the list |
 
-The list page title automatically displays a small `⋅ Sorted by <field>, <increasing\|decreasing>` label whenever `sort_by` or `sort_order` is set in `_index.md`. Logic and label rendering live in `layouts/_default/list.html`.
+Sort logic lives in `layouts/_default/list.html`.
 
 ## Creating a Blog Post
 
