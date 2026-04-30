@@ -1,5 +1,5 @@
 ---
-title: "PPL: Layered Security — Two CI Scanners Plus Four Manual Audits"
+title: "PPL: Layered Security with Two CI Scanners Plus Four Manual Audits"
 date: 2026-04-27
 description: "Why running just SAST in CI is not enough, the four extra security tools we ran manually (Nuclei DAST, testssl deep TLS, gitleaks secrets, nmap origin port scan), and the real production secret leak gitleaks caught with the fix shipped same day."
 tags: ["ppl", "security", "dast", "nuclei", "testssl", "gitleaks", "nmap", "owasp"]

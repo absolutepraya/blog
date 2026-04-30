@@ -1,5 +1,5 @@
 ---
-title: "PPL: Beyond Unit Tests — Load, BDD, SAST, and Schema Fuzzing"
+title: "PPL: Beyond Unit Tests with Load, BDD, SAST, and Schema Fuzzing"
 date: 2026-04-24
 description: "Why every production codebase needs at least four kinds of test that the unit-vs-integration debate ignores: load tests with k6 to catch performance regressions, BDD with pytest-bdd for executable specs, SAST with Bandit and pnpm audit for supply-chain risk, and API schema fuzzing with Schemathesis for spec-driven robustness."
 tags: ["ppl", "testing", "load-testing", "bdd", "security", "api-fuzzing"]
