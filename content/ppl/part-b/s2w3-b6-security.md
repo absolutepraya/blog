@@ -1,5 +1,5 @@
 ---
-title: "PPL: Security, From App Code to Supply Chain [Sprint 2, Week 3]"
+title: "[S2, W3] PPL: Security, From App Code to Supply Chain"
 date: 2026-04-15
 description: "Two weeks of security work at two layers: in-app fixes for OWASP A01 gaps (missing auth on GET endpoints, auth bypass via raw fetch caught in review, Sentry for Celery observability), then a supply-chain patch for the axios SSRF advisory (GHSA-3p68-rc4w-qgx5) surfaced automatically by pnpm audit in CI."
 tags: ["ppl", "security", "owasp", "supply-chain"]

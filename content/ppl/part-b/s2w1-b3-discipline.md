@@ -1,5 +1,5 @@
 ---
-title: "PPL: Sprint Planning at Scale [Sprint 2, Week 1]"
+title: "[S2, W1] PPL: Sprint Planning at Scale"
 date: 2026-03-23
 description: "How I planned Sprint 2 by creating 20 PBIs and 64 subtasks with detailed acceptance criteria, cross-PBI blocking relations, and sprint rebalancing."
 tags: ["ppl", "discipline", "sprint-planning", "linear", "project-management"]

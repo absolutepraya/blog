@@ -1,5 +1,5 @@
 ---
-title: "PPL: Communication and Knowledge Sharing [Sprint 2, Week 1]"
+title: "[S2, W1] PPL: Communication and Knowledge Sharing"
 date: 2026-03-30
 description: "Two in-depth threaded MR reviews with severity-graded issues and ready-to-apply code fixes, plus merge coordination and direct code contributions to teammates' branches."
 tags: ["ppl", "communication", "code-review", "knowledge-sharing", "teamwork"]

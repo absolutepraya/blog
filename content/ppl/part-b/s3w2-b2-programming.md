@@ -1,5 +1,5 @@
 ---
-title: "PPL: Dispatcher, Templates, and Toggle Architecture [Sprint 3, Week 2]"
+title: "[S3, W2] PPL: Dispatcher, Templates, and Toggle Architecture"
 date: 2026-04-29
 description: "How the Telegram notification feature was structured around a dispatcher pattern with explicit toggle short-circuits, a typed delivery-result dataclass, and defensive parsing for runtime config that comes from a database."
 tags: ["ppl", "programming"]

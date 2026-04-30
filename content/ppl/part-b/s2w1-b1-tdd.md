@@ -1,5 +1,5 @@
 ---
-title: "PPL: Beyond Unit Tests [Sprint 2, Week 1]"
+title: "[S2, W1] PPL: Beyond Unit Tests"
 date: 2026-03-23
 description: "Property-based testing with Hypothesis, BDD with Gherkin scenarios, mutation testing that exposed 91% coverage as meaningless, and how pytest-randomly found a hidden bug on its first run."
 tags: ["ppl", "tdd", "testing", "hypothesis", "mutation-testing"]

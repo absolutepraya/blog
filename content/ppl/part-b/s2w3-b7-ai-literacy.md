@@ -1,5 +1,5 @@
 ---
-title: "PPL: AI at Different Cognitive Distances [Sprint 2, Week 3]"
+title: "[S2, W3] PPL: AI at Different Cognitive Distances"
 date: 2026-04-15
 description: "Two weeks of AI-heavy work across six distinct patterns: iterative CI debugging, infrastructure design, bulk test generation, tricky bash composition, cross-agent documentation research, and context engineering via CLAUDE.md. The common thread is that the AI's usefulness depends on the cognitive distance to the task."
 tags: ["ppl", "ai-literacy", "claude-code", "mutation-testing"]

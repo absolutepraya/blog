@@ -1,5 +1,5 @@
 ---
-title: "PPL: Sharing Tools and Responding to Feedback [Sprint 3, Week 1]"
+title: "[S3, W1] PPL: Sharing Tools and Responding to Feedback"
 date: 2026-04-22
 description: "Sharing the Superset workspace tool with the team via a Discord demo, responding to CI feedback with iterative commits, and writing durable docs for the team handbook."
 tags: ["ppl", "communication"]

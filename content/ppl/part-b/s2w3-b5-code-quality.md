@@ -1,5 +1,5 @@
 ---
-title: "PPL: Quality as a Feedback Loop [Sprint 2, Week 3]"
+title: "[S2, W3] PPL: Quality as a Feedback Loop"
 date: 2026-04-15
 description: "Two weeks closing the quality feedback loop: integration coverage feeding SonarQube, mutation testing joining CI, then moving it from main-only to every MR with per-MR comment reports. The API mutation score moved from ~66% to 80.3%. A slow quality gate is worse than a manual one — documented in an explicit walk-back."
 tags: ["ppl", "code-quality", "mutation-testing", "sonarqube", "ci"]

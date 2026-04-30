@@ -1,5 +1,5 @@
 ---
-title: "PPL: Telegram Feature Lands Under TDD [Sprint 3, Week 2]"
+title: "[S3, W2] PPL: Telegram Feature Lands Under TDD"
 date: 2026-04-29
 description: "The Telegram notification feature I built on a worktree last week shipped this week, plus two follow-up MRs (delivery logs, digest priorities) that kept the same red-green-refactor discipline all the way through."
 tags: ["ppl", "tdd"]

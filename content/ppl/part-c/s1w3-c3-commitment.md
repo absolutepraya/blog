@@ -1,5 +1,5 @@
 ---
-title: "PPL: Work Ethic and Commitment [Sprint 1, Week 3]"
+title: "[S1, W3] PPL: Work Ethic and Commitment"
 date: 2026-03-10
 description: "Quantitative and qualitative breakdown of Sprint 1 Week 3 contributions: 13 MRs authored, 15 MRs reviewed, ~25 MRs merged as maintainer, spanning CI/CD, infrastructure, backend, frontend, and database."
 tags: ["ppl", "commitment", "work-ethic", "productivity"]

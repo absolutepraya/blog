@@ -1,5 +1,5 @@
 ---
-title: "PPL: Applying Infrastructure Knowledge [Sprint 3, Week 1]"
+title: "[S3, W1] PPL: Applying Infrastructure Knowledge"
 date: 2026-04-22
 description: "Debugging CI slot races, Bandit false positives, and Docker IPv6 fallbacks by tracing failures to their roots, and using Superset workspaces to develop Telegram in parallel without blocking the rest of the team."
 tags: ["ppl", "aptitude"]

@@ -1,5 +1,5 @@
 ---
-title: "PPL: Separation of Concerns, Feature Code to Infra [Sprint 2, Week 3]"
+title: "[S2, W3] PPL: Separation of Concerns, Feature Code to Infra"
 date: 2026-04-15
 description: "Two weeks showing the same principle at different scales: pure-function + DI separation in application features (invoice number generation, auth on GET endpoints) AND the same isolation discipline in a 110-line bash script that claims one of three Supabase slots per CI job. SRP is not only for business logic."
 tags: ["ppl", "programming", "solid", "bash", "ci"]

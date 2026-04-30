@@ -1,5 +1,5 @@
 ---
-title: "PPL: Fixing a JWT Vulnerability [Sprint 2, Week 1]"
+title: "[S2, W1] PPL: Fixing a JWT Vulnerability"
 date: 2026-03-23
 description: "SonarQube flagged a CRITICAL JWT vulnerability, we refactored the auth flow to eliminate unverified header reading, and enforced security scanning as a blocking CI gate."
 tags: ["ppl", "security", "jwt", "sonarqube", "bandit"]

@@ -1,5 +1,5 @@
 ---
-title: "PPL: Mutation Testing, From Setup to Score [Sprint 2, Week 3]"
+title: "[S2, W3] PPL: Mutation Testing, From Setup to Score"
 date: 2026-04-15
 description: "Two weeks on mutation testing: wiring mutmut and Stryker into CI, discovering that our 91% coverage hid a near-zero mutation score, then writing 400+ targeted tests across two rounds to drive the score from ~66% to 80.3%. The arc shows why coverage alone is a lagging indicator."
 tags: ["ppl", "tdd", "mutation-testing", "testing"]

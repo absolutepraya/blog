@@ -1,5 +1,5 @@
 ---
-title: "PPL: Discipline in CI Hardening [Sprint 3, Week 1]"
+title: "[S3, W1] PPL: Discipline in CI Hardening"
 date: 2026-04-22
 description: "Incremental fixes to CI scripts, SAST policy, and Docker networking that required careful tracing of failure modes rather than quick patches."
 tags: ["ppl", "discipline"]

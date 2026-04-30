@@ -1,5 +1,5 @@
 ---
-title: "PPL: Third-Party Integration Knowledge [Sprint 3, Week 2]"
+title: "[S3, W2] PPL: Third-Party Integration Knowledge"
 date: 2026-04-29
 description: "Four substantive new things learned this week to integrate Telegram as a notification channel: the Bot API surface (parse_mode, inline keyboards, message threads), Tenacity for retry-with-backoff, Celery Beat for scheduled jobs, and Markdown V2 escaping rules."
 tags: ["ppl", "aptitude", "learning", "telegram", "integration"]

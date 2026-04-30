@@ -1,5 +1,5 @@
 ---
-title: "PPL: Ticket Quality as Code Review [Sprint 2, Week 1]"
+title: "[S2, W1] PPL: Ticket Quality as Code Review"
 date: 2026-03-23
 description: "Auditing 150+ Linear tickets for contradictions, stale references, and missing descriptions, plus SonarQube quality gate enforcement as automated code review."
 tags: ["ppl", "code-review", "quality-gate", "sonarqube", "linear"]

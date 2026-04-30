@@ -1,5 +1,5 @@
 ---
-title: "PPL: From 31 Violations to Zero [Sprint 2, Week 1]"
+title: "[S2, W1] PPL: From 31 Violations to Zero"
 date: 2026-03-23
 description: "Enforcing SonarQube quality gates with zero tolerance, pushing coverage from 74.7% to 87.5%, and why mutation testing proved 91% coverage is meaningless."
 tags: ["ppl", "code-quality", "sonarqube", "coverage", "mutation-testing"]

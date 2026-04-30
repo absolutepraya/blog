@@ -1,5 +1,5 @@
 ---
-title: "PPL: Quality Gates That Actually Catch Things [Sprint 3, Week 2]"
+title: "[S3, W2] PPL: Quality Gates That Actually Catch Things"
 date: 2026-04-29
 description: "Three quality interventions this week: source-controlling a runaway housekeeping cron, hardening pre-push to prevent CI lockfile drift, and fixing 11 issues during review of a teammate's MR by contributing 12 commits onto their branch."
 tags: ["ppl", "code-quality"]

@@ -1,5 +1,5 @@
 ---
-title: "PPL: Quality Gates and Test Coverage [Sprint 3, Week 1]"
+title: "[S3, W1] PPL: Quality Gates and Test Coverage"
 date: 2026-04-22
 description: "Using SonarQube coverage thresholds and SAST gates as forcing functions to maintain test quality on a large monorepo."
 tags: ["ppl", "code-quality"]

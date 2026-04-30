@@ -1,5 +1,5 @@
 ---
-title: "PPL: Sustained Delivery Across Domains [Sprint 3, Week 1]"
+title: "[S3, W1] PPL: Sustained Delivery Across Domains"
 date: 2026-04-22
 description: "Maintaining consistent output across frontend features, backend services, CI infrastructure, and team documentation, while developing the Telegram notification feature on a dedicated worktree under strict TDD discipline."
 tags: ["ppl", "commitment"]

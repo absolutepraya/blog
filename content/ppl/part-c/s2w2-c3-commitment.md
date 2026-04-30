@@ -1,5 +1,5 @@
 ---
-title: "PPL: Work Ethic and Commitment [Sprint 2, Week 2]"
+title: "[S2, W2] PPL: Work Ethic and Commitment"
 date: 2026-04-09
 description: "Quantitative and qualitative breakdown of Sprint 2 Week 2 contributions: 19 MRs authored, 3 MRs reviewed with 44 points, 13+ teammate MRs merged, all within a week dominated by a mutation testing sprint."
 tags: ["ppl", "commitment", "work-ethic", "productivity"]

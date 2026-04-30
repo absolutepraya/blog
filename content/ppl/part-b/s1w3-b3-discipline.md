@@ -1,5 +1,5 @@
 ---
-title: "PPL: Development Discipline [Sprint 1, Week 3]"
+title: "[S1, W3] PPL: Development Discipline"
 date: 2026-03-13
 description: "14 merge requests in one week: full-stack features, CI/CD hardening, production hotfixes, and data integrity fixes, each with descriptive commits and conventional naming."
 tags: ["ppl", "discipline", "git", "ci-cd"]

@@ -1,5 +1,5 @@
 ---
-title: "PPL: SOLID and Layered Architecture [Sprint 1, Week 3]"
+title: "[S1, W3] PPL: SOLID and Layered Architecture"
 date: 2026-03-13
 description: "How the Router-Service-DB pattern prevented HTTP leaking into business logic, why domain exceptions matter for maintainability, and dependency injection as the backbone of testability."
 tags: ["ppl", "solid", "architecture", "python", "fastapi"]

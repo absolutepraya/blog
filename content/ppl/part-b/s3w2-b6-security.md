@@ -1,5 +1,5 @@
 ---
-title: "PPL: Security Reviews and a Test-Mode Guard [Sprint 3, Week 2]"
+title: "[S3, W2] PPL: Security Reviews and a Test-Mode Guard"
 date: 2026-04-29
 description: "Caught three security issues in teammates' MRs (PII leak via public PDFs, RLS-bypassing service-role uploads, PII leak via Sentry default capture), and added an environment-aware guard preventing the Telegram bot from sending live messages from CI."
 tags: ["ppl", "security"]

@@ -1,5 +1,5 @@
 ---
-title: "PPL: Security [Sprint 2, Week 2]"
+title: "[S2, W2] PPL: Security"
 date: 2026-03-30
 description: "Authentication hardening with OWASP A07 fixes (inactive account blocking, session invalidation) and SAST surfaced in CI comments this sprint."
 tags: ["ppl", "security", "owasp", "authentication"]

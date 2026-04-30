@@ -1,5 +1,5 @@
 ---
-title: "PPL: Service Layer Instrumentation [Sprint 2, Week 1]"
+title: "[S2, W1] PPL: Service Layer Instrumentation"
 date: 2026-03-23
 description: "Applying clean architecture principles when adding observability: why Sentry spans belong in the service layer, not routers, and how the existing pattern made it trivial."
 tags: ["ppl", "programming", "solid", "clean-architecture", "sentry"]

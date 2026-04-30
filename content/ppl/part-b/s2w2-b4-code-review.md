@@ -1,5 +1,5 @@
 ---
-title: "PPL: Team Dev Management [Sprint 2, Week 2]"
+title: "[S2, W2] PPL: Team Dev Management"
 date: 2026-03-30
 description: "Code reviews on three major MRs this sprint — cancel invoice, blue/green deployment, and invoice grouping — with 29 review points including race conditions, SQL injection risks, and API guard gaps."
 tags: ["ppl", "code-review", "team-management"]

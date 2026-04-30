@@ -1,5 +1,5 @@
 ---
-title: "PPL: Code Review [Sprint 1, Week 3]"
+title: "[S1, W3] PPL: Code Review"
 date: 2026-03-13
 description: "Detailed code reviews across 10 teammates' MRs: finding stale data bugs in TanStack Query, identifying duplicated form logic, catching auth/DB desync risks, and pushing fix commits directly."
 tags: ["ppl", "code-review", "collaboration"]

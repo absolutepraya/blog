@@ -1,5 +1,5 @@
 ---
-title: "PPL: AI-Assisted Sprint Planning [Sprint 2, Week 1]"
+title: "[S2, W1] PPL: AI-Assisted Sprint Planning"
 date: 2026-03-23
 description: "Using Claude Code to plan an entire sprint: feature brainstorming, 64 ticket creation with acceptance criteria, codebase exploration, code implementation, and CI debugging."
 tags: ["ppl", "ai-literacy", "claude-code", "sprint-planning", "linear"]

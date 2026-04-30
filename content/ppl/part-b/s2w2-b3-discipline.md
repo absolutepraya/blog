@@ -1,5 +1,5 @@
 ---
-title: "PPL: Development Discipline [Sprint 2, Week 2]"
+title: "[S2, W2] PPL: Development Discipline"
 date: 2026-03-30
 description: "19 MRs merged in one week across CI/CD, features, and infra — documenting the breadth of work and commit quality discipline in Sprint 2 Week 2."
 tags: ["ppl", "discipline", "git-flow"]

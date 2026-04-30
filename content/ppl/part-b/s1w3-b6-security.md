@@ -1,5 +1,5 @@
 ---
-title: "PPL: Security [Sprint 1, Week 3]"
+title: "[S1, W3] PPL: Security"
 date: 2026-03-13
 description: "Hardening JWT algorithm validation against alg:none attacks, fixing ENCRYPTION_KEY leaks in CI, client PII encryption, and automated SAST scanning with Bandit and pnpm audit."
 tags: ["ppl", "security", "owasp", "jwt", "encryption"]

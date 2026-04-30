@@ -1,5 +1,5 @@
 ---
-title: "PPL: AI Tooling Strategy [Sprint 3, Week 1]"
+title: "[S3, W1] PPL: AI Tooling Strategy"
 date: 2026-04-22
 description: "Switching from Claude Pro to OpenCode Go for cheaper access to frontier Chinese models, then migrating my Claude-only skills, slash commands, and MCP servers into a single source of truth that both runtimes can consume."
 tags: ["ppl", "ai-literacy"]

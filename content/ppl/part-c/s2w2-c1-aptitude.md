@@ -1,5 +1,5 @@
 ---
-title: "PPL: New Learnings Applied to SIRA [Sprint 2, Week 2]"
+title: "[S2, W2] PPL: New Learnings Applied to SIRA"
 date: 2026-04-09
 description: "Five new technologies and concepts learned outside coursework and applied to SIRA: mutation testing (mutmut + Stryker), integration test isolation with psycopg, Celery observability via Sentry, and AI context engineering through CLAUDE.md."
 tags: ["ppl", "aptitude", "learning", "mutation-testing", "integration-testing", "sentry"]

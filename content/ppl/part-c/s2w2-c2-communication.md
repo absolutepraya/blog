@@ -1,5 +1,5 @@
 ---
-title: "PPL: Communication and Knowledge Sharing [Sprint 2, Week 2]"
+title: "[S2, W2] PPL: Communication and Knowledge Sharing"
 date: 2026-04-09
 description: "Three in-depth MR reviews with 44 total review points catching critical bugs (broken SQL joins, auth bypasses), plus merge coordination for 13 teammate MRs."
 tags: ["ppl", "communication", "code-review", "knowledge-sharing", "teamwork"]

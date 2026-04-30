@@ -1,5 +1,5 @@
 ---
-title: "PPL: Component Architecture [Sprint 3, Week 1]"
+title: "[S3, W1] PPL: Component Architecture"
 date: 2026-04-22
 description: "Separating a Tiptap rich editor into layered components and wiring Telegram notifications through existing services without creating a God object."
 tags: ["ppl", "programming"]

@@ -1,5 +1,5 @@
 ---
-title: "PPL: Programming [Sprint 2, Week 2]"
+title: "[S2, W2] PPL: Programming"
 date: 2026-03-30
 description: "Applying SRP and the layered Router-Service-DB architecture in the email integration and session management features this sprint."
 tags: ["ppl", "programming", "solid", "architecture"]

@@ -1,5 +1,5 @@
 ---
-title: "PPL: Code Quality [Sprint 1, Week 3]"
+title: "[S1, W3] PPL: Code Quality"
 date: 2026-03-13
 description: "Adding migration dry-run validation to the CI pipeline, enforcing zero SonarQube issues on main, and how the pre-commit hook stack prevented 3 lint failures from reaching remote."
 tags: ["ppl", "code-quality", "sonarqube", "ci"]

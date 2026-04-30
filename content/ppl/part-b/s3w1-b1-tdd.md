@@ -1,5 +1,5 @@
 ---
-title: "PPL: TDD on Two Surfaces and a Full Feature [Sprint 3, Week 1]"
+title: "[S3, W1] PPL: TDD on Two Surfaces and a Full Feature"
 date: 2026-04-22
 description: "Red-green-refactor cycles on a Tiptap rich-editor test suite that unblocked SonarQube, plus the full Telegram notification feature developed entirely under paired red/green commits on a dedicated worktree."
 tags: ["ppl", "tdd"]

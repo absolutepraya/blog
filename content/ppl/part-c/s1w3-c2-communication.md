@@ -1,5 +1,5 @@
 ---
-title: "PPL: Communication and Knowledge Sharing [Sprint 1, Week 3]"
+title: "[S1, W3] PPL: Communication and Knowledge Sharing"
 date: 2026-03-10
 description: "15 MR reviews with actionable fixes, 69/98 Linear tickets created, direct code contributions to teammates' branches, and proactive communication in Discord."
 tags: ["ppl", "communication", "teamwork", "code-review", "knowledge-sharing"]

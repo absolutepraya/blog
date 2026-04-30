@@ -1,5 +1,5 @@
 ---
-title: "PPL: Telegram Shipped, Plus Sustained Quality Across 8 MRs [Sprint 3, Week 2]"
+title: "[S3, W2] PPL: Telegram Shipped, Plus Sustained Quality Across 8 MRs"
 date: 2026-04-29
 description: "Eight authored MRs in seven days, six substantive reviews with 83 findings, three direct main commits, and the Telegram feature merged after weeks of TDD discipline on a worktree. Cadence held without breaking the quality bar."
 tags: ["ppl", "commitment", "work-ethic"]

@@ -1,5 +1,5 @@
 ---
-title: "PPL: AI Velocity Held Under TDD and a Hardened Hook [Sprint 3, Week 2]"
+title: "[S3, W2] PPL: AI Velocity Held Under TDD and a Hardened Hook"
 date: 2026-04-29
 description: "Eight MRs shipped in seven days with AI assistance, but the red-green discipline stayed intact and a hardened pre-push hook caught the failure modes that AI-generated diffs are most likely to introduce."
 tags: ["ppl", "ai-literacy"]

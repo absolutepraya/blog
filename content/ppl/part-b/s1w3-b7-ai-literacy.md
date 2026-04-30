@@ -1,5 +1,5 @@
 ---
-title: "PPL: AI Literacy [Sprint 1, Week 3]"
+title: "[S1, W3] PPL: AI Literacy"
 date: 2026-03-13
 description: "Using AI strategically across 14 MRs: how CLAUDE.md evolved as a living document, MCP servers provided live project context, and AI-assisted code review caught real bugs."
 tags: ["ppl", "ai", "claude-code", "developer-tools"]

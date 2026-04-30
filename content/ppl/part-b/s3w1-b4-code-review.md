@@ -1,5 +1,5 @@
 ---
-title: "PPL: Responding to Review Feedback [Sprint 3, Week 1]"
+title: "[S3, W1] PPL: Responding to Review Feedback"
 date: 2026-04-22
 description: "Addressing automated quality gate failures and post-merge review feedback on export modals through iterative commits."
 tags: ["ppl", "code-review"]

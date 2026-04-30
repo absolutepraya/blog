@@ -1,5 +1,5 @@
 ---
-title: "PPL: Four Reviews, Four Real Bugs Caught [Sprint 3, Week 2]"
+title: "[S3, W2] PPL: Four Reviews, Four Real Bugs Caught"
 date: 2026-04-29
 description: "Four substantial code reviews this week, each one surfacing at least one P0 the author had not seen. The most useful one was driven by Playwright on local Supabase, decoding a JWT to prove a signed-URL bug."
 tags: ["ppl", "code-review"]

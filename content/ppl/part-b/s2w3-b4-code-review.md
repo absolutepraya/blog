@@ -1,5 +1,5 @@
 ---
-title: "PPL: Code Review at Two Altitudes [Sprint 2, Week 3]"
+title: "[S2, W3] PPL: Code Review at Two Altitudes"
 date: 2026-04-15
 description: "Five teammate MRs reviewed across two weeks, 50 total review points including 9 P0s. Architectural bugs (broken SQL join leaking payments, silent auth bypass, no key whitelist) caught through code reading; UI regressions (double /api prefix 404, React key in fragment) caught through manual testing. Both altitudes matter."
 tags: ["ppl", "code-review", "team-management"]

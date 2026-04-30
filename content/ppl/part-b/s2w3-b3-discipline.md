@@ -1,5 +1,5 @@
 ---
-title: "PPL: Two Weeks of CI/Testing Discipline [Sprint 2, Week 3]"
+title: "[S2, W3] PPL: Two Weeks of CI/Testing Discipline"
 date: 2026-04-15
 description: "Two weeks, 25 merged MRs and ~40 commits, all centered on the same arc: wire mutation testing into CI, then scale it so three jobs run in parallel. This blog documents the commit discipline, the iterative MR cadence, and the walk-back pattern that kept every decision reviewable."
 tags: ["ppl", "discipline", "git-flow", "ci"]

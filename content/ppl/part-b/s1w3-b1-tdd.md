@@ -1,5 +1,5 @@
 ---
-title: "PPL: Test-Driven Development [Sprint 1, Week 3]"
+title: "[S1, W3] PPL: Test-Driven Development"
 date: 2026-03-13
 description: "Red-green-refactor across three full-stack features, advanced mock patterns with FastAPI dependency overrides, and how test isolation caught a real auth bug."
 tags: ["ppl", "tdd", "testing", "python", "fastapi"]

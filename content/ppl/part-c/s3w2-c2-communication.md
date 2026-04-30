@@ -1,5 +1,5 @@
 ---
-title: "PPL: Reviews, In-Branch Fixes, and Convention Documentation [Sprint 3, Week 2]"
+title: "[S3, W2] PPL: Reviews, In-Branch Fixes, and Convention Documentation"
 date: 2026-04-29
 description: "Six substantive reviews with 83 total findings posted as threaded discussions, 12 commits pushed onto a teammate's branch to land their MR, and 47 lines of CLAUDE.md conventions written down so the next AI-assisted UI commit follows them automatically."
 tags: ["ppl", "communication", "code-review"]

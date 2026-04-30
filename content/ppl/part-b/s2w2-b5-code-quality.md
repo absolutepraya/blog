@@ -1,5 +1,5 @@
 ---
-title: "PPL: Code Quality [Sprint 2, Week 2]"
+title: "[S2, W2] PPL: Code Quality"
 date: 2026-03-30
 description: "How Sprint 2 Week 2 raised the quality bar from manual SonarQube checks to automated gates that block bad MRs before they reach main."
 tags: ["ppl", "code-quality", "sonarqube", "ci"]

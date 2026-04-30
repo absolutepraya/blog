@@ -1,5 +1,5 @@
 ---
-title: "PPL: AI Literacy [Sprint 2, Week 2]"
+title: "[S2, W2] PPL: AI Literacy"
 date: 2026-03-30
 description: "Using Claude Code strategically for complex bash scripting, service design, and meta-level tooling in Sprint 2 Week 2."
 tags: ["ppl", "ai-literacy", "claude-code"]

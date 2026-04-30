@@ -1,5 +1,5 @@
 ---
-title: "PPL: New Learnings Applied to SIRA [Sprint 2, Week 1]"
+title: "[S2, W1] PPL: New Learnings Applied to SIRA"
 date: 2026-03-30
 description: "Six new technologies and concepts learned outside standard coursework and applied directly to SIRA during Sprint 2 Week 1: session management, user-agent parsing, Jinja2 email templating, CodeMirror, workspace isolation, and API schema hardening."
 tags: ["ppl", "aptitude", "learning", "session-management", "email", "devops"]

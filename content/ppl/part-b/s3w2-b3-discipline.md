@@ -1,5 +1,5 @@
 ---
-title: "PPL: Root-Cause Discipline on a CI Flake [Sprint 3, Week 2]"
+title: "[S3, W2] PPL: Root-Cause Discipline on a CI Flake"
 date: 2026-04-29
 description: "How a 25-minute integration-test flake got traced back to two competing Docker cleanup crons fighting an active pull, plus a pre-push hook hardening pass that catches lockfile drift before it reaches CI."
 tags: ["ppl", "discipline"]

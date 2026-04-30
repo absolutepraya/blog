@@ -1,5 +1,5 @@
 ---
-title: "PPL: Secure Defaults in Rich Text and Notifications [Sprint 3, Week 1]"
+title: "[S3, W1] PPL: Secure Defaults in Rich Text and Notifications"
 date: 2026-04-22
 description: "Sanitizing HTML input with Bleach, masking secrets in logs, and enforcing HTTPS for external API calls."
 tags: ["ppl", "security"]
