@@ -1,5 +1,5 @@
 ---
-title: "How My AI Dev Workflow Actually Works"
+title: "The Agentic System I Built"
 date: 2026-03-13
 description: "A walkthrough of the AI development setup I actually use across Claude Code, OpenCode, shared skills, MCP tools, Superset workspaces, and remote workflows on my VPS and phone."
 tags: ["ai", "developer-tools", "workflow", "claude-code", "opencode"]
