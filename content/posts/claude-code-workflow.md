@@ -201,6 +201,15 @@ I think of skills as a separate layer from the clients themselves. The tool matt
 - [/grill-me](https://skills.sh/mattpocock/skills/grill-me) when I want the AI to interrogate my vague idea until it becomes a precise spec.
 - [/ui-ux-pro-max](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) when I want a stronger UI system than I'd get from default prompting.
 
+For document work, I keep Anthropic's official document skills installed. They let the agent create or edit office files end-to-end, which is great when I'd rather review the output than open the app and type:
+
+- [/pptx](https://skills.sh/anthropics/skills/pptx) for PowerPoint decks
+- [/docx](https://skills.sh/anthropics/skills/docx) for Word documents
+- [/xlsx](https://skills.sh/anthropics/skills/xlsx) for Excel spreadsheets
+- [/pdf](https://skills.sh/anthropics/skills/pdf) for PDFs
+
+These pair really well with templates: hand the agent a template plus the source data, and the final document comes back ready to review. No typing in the app, no formatting fights.
+
 If you're hunting for new skills, [skills.sh](https://skills.sh/) is the place to browse. It indexes a huge number of community-published skills, and most of what I rely on day-to-day either comes from there or from official Anthropic plugin repos.
 
 ### Usage Monitoring
