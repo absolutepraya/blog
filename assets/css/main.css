@@ -362,6 +362,15 @@ a:hover {
   text-decoration: underline;
 }
 
+a code,
+a:visited code,
+a:hover code,
+a:focus-visible code {
+  color: var(--color-blue);
+  text-decoration: underline;
+  text-underline-offset: 0.08em;
+}
+
 b, strong {
   font-weight: bolder;
 }

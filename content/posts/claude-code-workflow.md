@@ -180,7 +180,7 @@ Superset is where the parallel-agent side of my workflow becomes comfortable ins
 
 It also matches the way I actually work now. I still use normal terminals, but I no longer think of WezTerm or Ghostty as the primary story. Superset is the workspace layer that makes the whole system feel operational.
 
-{{< figure src="/images/ppl/s3w1-superset-parallel-agents.png" alt="Superset workspace showing parallel agent sessions" caption="Superset is the workspace layer I use when I want isolated workspaces without losing continuity between sessions." >}}
+{{< figure src="/images/claude-code-workflow/superset.png" alt="Superset workspace showing parallel agent sessions" caption="Superset is the workspace layer I use when I want isolated workspaces without losing continuity between sessions." >}}
 
 ## Remote And Mobile
 
