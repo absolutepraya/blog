@@ -140,7 +140,6 @@ Examples from my setup include:
 - `/update-branch` for syncing a working branch safely
 - `/address-pr-reviews` for turning review comments into an execution loop
 - `/create-pr` for packaging finished work into a pull request flow
-- `feature-dev` and `pr-review-toolkit` for more structured development and review workflows
 
 The important part is not the specific command names. It is that the workflow stops depending on perfect prompting memory.
 
