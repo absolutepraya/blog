@@ -1,294 +1,244 @@
 ---
-title: "How I Actually Use Claude Code"
+title: "How My AI Dev Workflow Actually Works"
 date: 2026-03-13
-description: "A walkthrough of how I use Claude Code as my primary development tool - from brainstorming to shipping, with custom skills, MCP integrations, token optimization with RTK, and Remote Control from my phone."
-tags: ["claude-code", "ai", "developer-tools", "workflow"]
+description: "A walkthrough of the AI development setup I actually use across Claude Code, OpenCode, shared skills, MCP tools, Superset workspaces, and remote workflows on my VPS and phone."
+tags: ["ai", "developer-tools", "workflow", "claude-code", "opencode"]
 toc: true
 ---
 
-People keep asking me how I work with Claude Code. Friends, classmates, engineers I meet - the question always comes up: "Can you walk me through your dev workflow with it?"
+People keep asking me how my AI development setup actually works. Friends, classmates, and engineers I meet do not usually want a model leaderboard. They want the practical version: which tools I use, how they fit together, what runs locally, what runs on my VPS, and how I keep the whole thing coherent.
 
-I use Claude Code for pretty much everything: personal projects, internship work at a startup, managing my VPS, even continuing sessions from my phone with Remote Control. If you're already using something like GitHub Copilot or Cursor and wondering what a CLI-first AI workflow looks like when you go deeper, this is for you.
+The short answer is that I do not rely on one AI coding tool for everything. I use a shared workflow, shared instructions, shared skills, and shared commands across multiple clients. The two main ones are [Claude Code](https://www.anthropic.com/product/claude-code) and [OpenCode](https://opencode.ai/). Around them, I use a bunch of supporting pieces: specialist skills, MCP tools, a remote VPS setup, and a workspace layer that keeps sessions isolated without making the environment feel fragmented.
 
-## Why Claude Code
+If you are already using things like [GitHub Copilot](https://github.com/features/copilot), [Cursor](https://cursor.com/), or [Codex](https://openai.com/codex/) and wondering what a CLI-first, agent-heavy workflow looks like when it matures into a full system, this is the setup I actually use.
 
-Three reasons: the model, the economics, and the workflow.
+## Why I Use Multiple Agents
 
-### The Model
+I do not think one AI tool wins every category.
 
-Claude Code runs on Opus 4.6 - currently the best coding model available. 79.2% on SWE-bench Verified (thinking), leads Terminal-Bench 2.0, outperforms GPT-5.2 by 144 Elo on real-world work tasks. 1M token context window in beta.
+Some tools are better for deep terminal-native sessions. Some are better when I want provider flexibility. Some are better on the phone. Some are better as supporting tools than daily drivers. What matters more than the client is whether the workflow stays consistent when I switch between them.
 
-### The Economics
+That is the real leverage in my setup. I keep the process stable and let the tools specialize. Shared instructions, shared skills, shared commands, and shared infrastructure mean I can move between agents without starting from zero every time.
 
-Claude Max 20x costs $200/month. One developer tracked 8 months of usage and estimated ~$15,000 in API token costs, covered by ~$800 in Max fees. 93% savings.
-
-Cursor Ultra is also $200/month but splits across multiple models. Max gives you 20x Pro usage on Opus 4.6 specifically, no per-token billing. You don't stop a refactor because you're watching your token count.
-
-### The Workflow
-
-Most AI coding tools live inside your editor. Copilot gives you autocomplete. Cursor gives you inline edits and chat. They work, but they're constrained to your IDE.
-
-Claude Code runs in your terminal. It reads your entire codebase, runs shell commands, manages git, creates files, and talks to external services through MCP. Less "AI autocomplete", more a junior engineer that lives in your terminal and follows your project's conventions.
-
-IDE tools help you write code faster. Claude Code helps you *develop* faster - planning, debugging, testing, reviewing, and shipping included.
-
-On one project I work on, the setup includes an 800-line CLAUDE.md, 9 custom slash commands, post-edit hooks, session-end hooks that extract learnings, and 14 per-package instruction files across the monorepo. Not "AI writes code" - a structured engineering environment where the AI understands the project.
+Claude Code and OpenCode are the center of the story. Codex and Cursor are supporting tools for me, useful in specific contexts, but not the main operating system of the workflow.
 
 ## The Workflow: Idea to Shipped Code
 
-Before I walk through the workflow, I need to mention [superpowers](https://github.com/obra/superpowers). It's a Claude Code plugin that provides 14 skills covering the entire development lifecycle - from brainstorming to debugging to code review. Each skill enforces a specific discipline: brainstorming won't let you skip to code without a design, TDD won't let you write production code without a failing test, debugging won't let you guess at fixes without investigating root cause.
+Before I talk about the tools, I need to talk about process. The workflow layer matters more than the client.
 
-I use it on every project. Without superpowers, Claude is a capable assistant that does what you ask. With it, Claude follows a structured engineering process whether you remember to ask or not. The skills activate automatically based on context - start describing a feature, brainstorming kicks in. Hit a bug, systematic-debugging takes over. It's the difference between having a smart tool and having a disciplined workflow.
+The biggest upgrade I made was adopting [superpowers](https://github.com/obra/superpowers). It gives me a set of skills that enforce a disciplined engineering process: brainstorming, planning, execution, debugging, verification, and branch finishing. Without that layer, AI coding tends to drift into ad hoc prompting. With it, I get something much closer to a repeatable engineering workflow.
 
-Here's what a real feature dev session looks like.
+Here is what a real feature session looks like.
 
 ### Brainstorming (`/superpowers:brainstorming`)
 
-Everything starts with a conversation. I describe what I want to build - sometimes a vague idea, sometimes a specific feature. Something like:
+Everything starts with conversation. I describe what I want to build, usually in a rough, incomplete way. The AI does not jump straight to code. It explores the project context first, checks existing patterns, and asks focused questions one by one until the problem is actually shaped.
 
-> i want my whatsapp cs agent to not only work as a cs and just fetching knowledge base and creating ticket for eng team if there's a bug, a feat req, or knowledge gap in knowledge base. i want it to also be able to pass eng ticket for bug and knowledge gap types of ticket to our coding agent, so it can automatically propose a fix and open a pr in repo
+That sounds simple, but it changes the quality of the work a lot. A good brainstorming loop catches scope mistakes early, forces tradeoff conversations, and keeps "simple" ideas from turning into messy implementation detours.
 
-That's it. No formal spec, no structured prompt. Claude doesn't just start writing code. The brainstorming skill kicks in and asks me questions, one at a time.
+When I feel like I know what I want but I cannot express it precisely yet, I also use [`grill-me`](https://skills.sh/mattpocock/skills/grill-me). It is useful when I do not want the AI to politely guess what I mean. I want it to interrogate the plan, walk the decision tree, and force us into actual shared understanding before anyone starts implementing.
 
-"Who's the target audience for this?"
-"Should it support X or is that out of scope?"
-"I see two approaches here - option A has this trade-off, option B has that one. Which direction?"
-
-It explores the project context first (reads files, checks recent commits, looks at existing patterns), then narrows down through focused questions. After a few rounds, it proposes 2-3 approaches with trade-offs and its recommendation.
-
-Once we align on an approach, it writes a design document and walks me through it section by section - architecture, components, data flow, error handling. I approve or revise each section. There's a hard gate here: no implementation begins until the design is approved. Even for things that seem simple. Especially for things that seem simple - that's where unexamined assumptions waste the most time.
+For UI-heavy work, I sometimes want the opposite kind of help. I do not want to manually art-direct every spacing choice, color decision, or interaction pattern. I want to freestyle the product direction and let the AI push toward a stronger result. That is where [`ui-ux-pro-max`](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) fits. I use it when I want the AI to produce a better visual system than I would get from vague default UI prompts.
 
 ### Planning (`/superpowers:writing-plans`)
 
-With an approved design, the writing-plans skill generates a detailed implementation plan. Each task is broken down to be completable in 2-5 minutes - one atomic action per task. These aren't vague bullets like "implement the auth system." Each task specifies:
+Once the design is clear enough, the planning skill turns it into something executable. The useful part is not that it creates a checklist. The useful part is that it creates a checklist with enough structure that another agent, another session, or future-me can pick it up without guessing.
 
-- The exact files to create or modify
-- Complete code snippets (not pseudocode)
-- Verification steps and expected output
-- How it connects to the previous and next task
+Good plans in this workflow are explicit:
 
-The plan is written so that someone with zero context on the project could pick it up and execute it. That matters because the executor might be a subagent, a different Claude session, or future-me who forgot the context.
+- exact files to touch
+- exact verification steps
+- enough detail that a task can be executed without re-deriving the whole design
 
-The plan gets saved as a markdown doc in `docs/plans/`. From here, I choose how to execute.
+That matters because I regularly move between sessions and between tools. A workflow that depends on one long-lived chat context is fragile.
 
 ### Execution (`/superpowers:executing-plans`)
 
-My default is executing-plans in a separate session. I open a new Claude Code session, point it at the plan doc, and it works through the tasks in batches (usually 3 at a time). After each batch, it reports what was done with verification output, waits for my feedback, and continues. This keeps me in the loop without micromanaging every step.
+Execution is where the process starts compounding. My default pattern is to execute from a separate session with the plan as the source of truth. The agent works through tasks in order, verifies each one, and reports back with evidence instead of vague confidence.
 
-Each task follows TDD - write a failing test first, implement the minimal code to pass it, verify. The skill enforces this, no skipping. After implementation, two review stages happen automatically. A spec compliance reviewer checks: did this match what the plan asked for? Then a code quality reviewer checks: is it good code? If either finds issues, the implementer fixes and the reviewer re-checks.
+When tasks are independent, I use subagent-driven execution so separate tasks can move in parallel. That could mean schema work, API work, and UI work happening at the same time, then merging once they pass review.
 
-The two-stage review is intentional. Spec compliance first prevents building the wrong thing. Code quality second prevents building the right thing badly.
-
-For tasks that are independent of each other, I use subagent-driven development (`/superpowers:subagent-driven-development`) instead. This dispatches multiple agents in parallel, each working on a separate task. Say the plan has 4 unrelated tasks - set up the database schema, build the API endpoint, write the frontend component, and add the notification handler. Instead of doing them one by one, Claude spins up 4 subagents that work simultaneously:
-
-```mermaid
-graph TD
-    A["Main Agent<br>reads plan, dispatches tasks"] --> B["Subagent 1<br>Database schema"]
-    A --> C["Subagent 2<br>API endpoint"]
-    A --> D["Subagent 3<br>Frontend component"]
-    A --> E["Subagent 4<br>Notification handler"]
-    B --> F["Review + Merge"]
-    C --> F
-    D --> F
-    E --> F
-```
-
-Each subagent gets the full task context, does TDD, and goes through both review stages independently. The main agent coordinates everything and merges the results. This is significantly faster for plans where tasks don't depend on each other.
-
-Both modes can work in isolated git worktrees - separate copies of the repo where changes don't interfere with your main branch until you're ready to merge.
+I also still use [feature-dev](https://github.com/anthropics/claude-plugins-official) for larger pieces of work when I want extra structured exploration and review. It is useful for feature-sized tasks where I want strong up-front analysis and multiple review passes without manually orchestrating each step.
 
 ### Debugging (`/superpowers:systematic-debugging`)
 
-When something breaks - and things always break - the systematic-debugging skill takes over. This one has saved me more times than I can count.
+When something breaks, I try hard not to let the AI improvise fixes. That is how you get three plausible changes in a row and still no root cause.
 
-The process follows four phases, and the order is strict:
-
-**Phase 1: Root cause investigation.** Read error messages carefully. Reproduce consistently. Check recent changes. Trace the data flow to find where the bad value originates. No guessing, no "let me just try changing X."
-
-**Phase 2: Pattern analysis.** Find similar code that works. Compare it against the broken code line by line. List every difference, no matter how small.
-
-**Phase 3: Hypothesis and testing.** Form a single, specific hypothesis: "I think X causes this because Y." Test it by changing one variable. Verify before moving on.
-
-**Phase 4: Implementation.** Write a failing test that captures the bug. Fix it. Verify.
-
-The real power is in the discipline it enforces. If three attempted fixes fail, the skill tells you to stop and reconsider - maybe it's an architectural problem, not an implementation bug. I had a case with a Vite build error that produced no useful error message at all. Without this systematic approach, I would have been randomly changing configs for hours. Instead, the investigation traced through the build pipeline step by step and found the actual root cause.
+The debugging skill is useful because it forces a sequence: reproduce, trace, compare against working patterns, form one hypothesis, test it, then fix it. The discipline matters more than the branding. It prevents the common failure mode where an AI reacts to the error message instead of actually understanding where the bad state came from.
 
 ### Finishing (`/superpowers:verification-before-completion`)
 
-Before anything gets marked as done, the verification-before-completion skill requires actual proof. Not "should work now." Not "probably passes." You run the command, read the full output, check the exit code, and only then claim success.
+The last stage is verification. No "should work now," no "looks good," no soft claims. Run the command, read the output, confirm the exit code, and only then say it is done.
 
-Once verified, finishing-a-development-branch presents clean options: merge back to main, push and create a PR, keep the branch as-is, or discard. Worktrees get cleaned up, branches get tidied.
+That sounds obvious, but it is one of the easiest places for agent workflows to get sloppy. A lot of the reliability in this setup comes from refusing to skip that last proof step.
 
 The whole flow looks like this:
 
 ```mermaid
 graph TD
-    A["Describe what<br>you want to build"] --> B["Brainstorming<br>Questions, approaches,<br>design doc"]
-    B --> C["Planning<br>Bite-sized tasks<br>with exact steps"]
-    C --> D["Execution<br>Subagent per task<br>TDD + two-stage review"]
-    D --> E{"Bug?"}
-    E -->|Yes| F["Systematic Debugging<br>4-phase investigation"]
+    A[Describe the problem] --> B[Brainstorming]
+    B --> C[Planning]
+    C --> D[Execution]
+    D --> E{Bug or gap?}
+    E -->|Yes| F[Systematic debugging]
     F --> D
-    E -->|No| G["Verification<br>Run commands,<br>show evidence"]
-    G --> H["Finish<br>Merge, PR,<br>or keep"]
+    E -->|No| G[Verification]
+    G --> H[Finish or handoff]
 ```
 
 ## The Infrastructure
 
-The workflow above doesn't happen by magic. Here's what powers it.
+The workflow above does not happen by magic. The real trick is that the environment is shared.
 
-### CLAUDE.md - Your Project's Brain
+At the project level I still care a lot about instruction files like `AGENTS.md` and `CLAUDE.md`. But at user scope, I now keep the shared source of truth in `.agents`, then expose it into different clients through thin wrappers. That means the behavior does not reset every time I switch from Claude Code to OpenCode, or from my MacBook to my VPS.
 
-CLAUDE.md is the single most important file in any Claude Code project. It's a markdown file at your project root that tells Claude everything about how to work in your codebase - conventions, patterns, common pitfalls, preferred tools, architecture decisions.
+### Shared Skills And Commands
 
-But a good CLAUDE.md goes beyond rules. On one of my projects, it includes:
+The shared pieces are what make the system feel durable:
 
-- **Development philosophy** - "Leave it better than you found it," YAGNI, complexity estimates over time estimates
-- **Critical practices** - never use `any` in TypeScript, prefer integration tests, always use typed translations for UI text
-- **Git operations policy** - never auto-commit, never push without explicit request, never create PRs automatically
-- **Common pitfalls** - a numbered list of 27 specific mistakes to avoid, each learned from real bugs
-- **Slash command documentation** - what each command does and when to use it
-- **Subagent descriptions** - how to use the progress-validator and docs-librarian agents
+- shared instructions
+- shared skill definitions
+- shared command docs
+- tool-specific wrappers for each runtime
 
-The layered approach is powerful for monorepos. The root CLAUDE.md covers project-wide conventions. Each package gets its own CLAUDE.md with specific patterns for that part of the codebase. When Claude works on a file, it reads the relevant CLAUDE.md files and follows them. This scales - one monorepo I work on has 14+ package-level CLAUDE.md files.
+So the same ideas can show up in different places. I can keep one conceptual command or skill, then surface it in Claude Code, OpenCode, Codex, or Cursor in the way that fits that tool. The wrapper changes, but the intent stays stable.
 
-These files aren't static. They evolve with the project. You add a pitfall when you discover it, update conventions when they change, document decisions when you make them. On one project, CLAUDE.md accumulated 19 commits over a few months, each one capturing something that went wrong or a pattern that worked well.
+This is also why the setup survives migration better than a bunch of one-off editor prompts. The workflow is stored in files and conventions, not just in habit.
 
-### Slash Commands - One-Word Workflows
+### Commands
 
-Custom commands live in `.claude/commands/` and get invoked with `/command-name`. A few that I use constantly:
+I rely on commands a lot because they compress recurring workflows into something named and repeatable.
 
-- **/execute** - Takes a PRD or requirements doc and produces a full execution plan with scope definition, parallel work tracks, complexity estimates, risk mitigation, and progress tracking. Think of it as project scoping compressed into a single command.
-- **/work** - Reads a TODO.md backlog, auto-selects the highest priority unassigned task, claims it, and starts working. Supports parallel agents working on different tasks simultaneously.
-- **/create-pr** - Triggers a GitHub Actions workflow that creates a PR using a shared bot PAT. No manual GitHub UI needed.
-- **/analyze-pr-feedback** - Takes a PR number, reads all review comments, categorizes them by priority, and creates actionable tasks.
+Some are project-specific. Some are user-wide. The exact list changes over time, but the pattern does not. If I notice I keep asking for the same kind of work, I want a command for it.
 
-Each command is a markdown file with structured instructions. Writing your own is straightforward - describe what the command should do, what tools it can use, and what output it should produce.
+Examples from my setup include:
 
-I also have personal commands at user scope (in `~/.claude/commands/`) that work across all projects:
+- `work-log` for generating internship logs from git history
+- `crontab-create` and `crontab-manage` for safer cron management
+- `tidy-stocks` for a niche but recurring personal file-organizing task
+- `feature-dev` and `pr-review-toolkit` for more structured development and review workflows
 
-- **/work-log** - Generates an Excel work log from git commits across all branches for a date range. It fetches every commit, groups by date, summarizes them into 2-4 tasks per day in a casual style, calculates time-in/time-out, and saves a formatted `.xlsx` file. I use this for my internship timesheets - what used to take 30 minutes of scrolling through git log now takes one command.
-- **/crontab-create** and **/crontab-manage** - Guided cron job management. Create validates the schedule, shows the next 5 run times, and asks for confirmation before adding. Manage lists jobs with human-readable translations and lets you delete them safely.
-- **/tidy-stocks** - Organizes stock research PDFs from my Downloads folder into a structured directory by ticker symbol. Niche, but it's a recurring chore I never want to think about again.
+The important part is not the specific command names. It is that the workflow stops depending on perfect prompting memory.
 
-### MCP Servers - Connecting to Everything
+### MCP And Web Tools
 
-MCP (Model Context Protocol) is how Claude Code talks to external services. Instead of copy-pasting context from other tools, Claude just... uses them directly. My setup includes:
+Model Context Protocol is how the agents stop guessing and start using the rest of my stack directly.
 
-- **Linear** - Creates issues, updates statuses, reads project boards. When Claude finds a bug during development, it can file a Linear ticket without me switching windows.
-- **Context7** - Looks up library and framework documentation on the fly. Claude resolves the package, queries the docs, and gets current API references. No more "as of my training cutoff" guessing.
-- **Exa** - Web search for when Claude needs to research something.
-- **Firecrawl** - Scrapes web pages when Claude needs to read documentation or reference material that isn't in Context7.
-- **Todoist** - Task management with custom formatting and priority rules.
-- **Google Calendar** - Checks schedule, finds free time, creates events.
+Some of the MCP-backed tools I rely on most:
 
-The key thing about MCPs is that Claude uses them autonomously when relevant. If it's working on a feature and needs to check the current API docs for a library, it just does it. If it finds something that should be tracked, it creates a Linear issue. The integrations compound - each one makes the others more useful.
+- [Context7](https://context7.com/) for docs lookup, which is the easiest way to avoid stale library guesses
+- [Exa](https://exa.ai/) for web search
+- [Firecrawl](https://www.firecrawl.dev/) for scraping and extracting live web content
+- [Linear](https://linear.app/) for issues and project tracking
+- [Todoist](https://todoist.com/) for task capture
+- [Google Calendar](https://workspace.google.com/products/calendar/) for schedule-aware tasks
 
-### Plugins
+I still mention Exa and Firecrawl here because they have both been part of my setup in real use. If I were optimizing for the longest-lasting default today, I would bias toward [Brave Search](https://search.brave.com/) for discovery and native `webfetch` for pulling the actual page content.
 
-I have 13 plugins installed at this point. Here are the ones that actually changed how I work.
+That is a better long-term split for me: search with one tool, fetch with a simpler native primitive, and only bring in heavier scraping when I actually need it.
 
-**[Superpowers](https://github.com/obra/superpowers)** is the workflow engine described in the previous section. It provides 14 skills covering the entire development lifecycle and the hooks that chain them together. It's the single biggest upgrade to how Claude Code works. Without it, Claude is a capable assistant. With it, Claude follows a disciplined engineering process.
+### Plugins And Specialist Layers
 
-**[Claude HUD](https://github.com/jarrodwatts/claude-hud)** shows what's happening in real time. It adds a statusline below your input that displays the current model, context window usage (with a color-coded bar that goes green to yellow to red), git branch status, active tool calls, running subagents, and todo progress. When context gets above 85%, it shows a token breakdown so you know what's eating your window. Small thing, but knowing your context health at a glance prevents nasty surprises.
+Some tools shape how I work enough that they are worth calling out directly.
 
-**[notification-go](https://github.com/777genius/claude-notifications-go)** solves a practical problem: Claude Code sessions can run for a while. Maybe it's executing a plan, running through test suites, or doing a multi-file refactor. You switch to another window, check your phone, whatever. This plugin sends desktop notifications with sound when Claude stops and needs your input - whether it's asking a question, waiting for plan approval, reporting an error, or telling you it's done. I also have it configured to send a webhook to [Moshi](https://getmoshi.app) so I get push notifications on my phone too - useful when I step away from my desk entirely.
+- [Superpowers](https://github.com/obra/superpowers) is still the workflow engine.
+- [pr-review-toolkit](https://github.com/anthropics/claude-plugins-official) gives me specialist review passes when I want extra scrutiny on tests, comments, failure handling, and general code quality.
+- [Claude HUD](https://github.com/jarrodwatts/claude-hud) is a small but useful status layer because context health, active tools, and running work stay visible.
+- [notification-go](https://github.com/777genius/claude-notifications-go) helps when long-running sessions need my attention again, and I also route some notifications to [Moshi](https://getmoshi.app/) so I notice them away from the desk.
 
-**[feature-dev](https://github.com/anthropics/claude-plugins-official)** is my go-to for anything bigger than a quick fix. Running `/feature-dev` kicks off a structured 7-phase workflow: it clarifies requirements, launches `code-explorer` agents to analyze similar features and architecture patterns in your codebase, asks clarifying questions, then spawns multiple `code-architect` agents that each propose a different approach (minimal changes vs. clean architecture vs. pragmatic balance). After implementation, it launches 3 `code-reviewer` agents in parallel - one focused on simplicity, one on bugs, one on convention compliance. Each reviewer scores issues by confidence and only surfaces findings above 80%. It's like having a small engineering team that explores, builds, and reviews in one command.
+### Usage Monitoring
 
-**[pr-review-toolkit](https://github.com/anthropics/claude-plugins-official)** gives me six specialist review agents that trigger based on context:
+One small tool that made the whole stack easier to live with is [OpenUsage](https://www.openusage.ai/). I use it to monitor usage limits across the AI products I pay for instead of checking each product separately. Once you are regularly moving between Claude, Codex, Cursor, and OpenCode Go, that becomes much more useful than it sounds.
 
-- **silent-failure-hunter** - catches error handling gaps and inadequate catch blocks
-- **type-design-analyzer** - rates type encapsulation and invariant expression on a 1-10 scale
-- **pr-test-analyzer** - evaluates test coverage quality, not just line coverage
-- **comment-analyzer** - checks if comments actually match the code they describe
-- **code-reviewer** - general quality and CLAUDE.md compliance
-- **code-simplifier** - identifies unnecessary complexity and redundancy
+{{< figure src="/images/claude-code-workflow/openusage.png" alt="OpenUsage showing usage across multiple AI coding tools" caption="OpenUsage gives me one place to see how hard I am pushing the different AI tools I use." >}}
 
-These activate automatically when relevant. Finish error handling code, silent-failure-hunter kicks in. Add tests, pr-test-analyzer reviews them. The agents run after you write code, not just when you ask.
+## Where Each Tool Fits
 
-**[commit-commands](https://github.com/anthropics/claude-plugins-official)** streamlines the daily git workflow. `/commit` auto-generates a commit message by analyzing your staged changes and matching your repo's commit style. `/commit-push-pr` does the full cycle - creates a branch if you're on main, commits, pushes, and opens a PR with a summary and test plan. `/clean_gone` removes local branches that no longer exist on the remote. Small automations, but they add up when you're committing 10+ times a day.
+### Claude Code
 
-### Hooks - Automated Quality Checks
+[Claude Code](https://www.anthropic.com/product/claude-code) is still one of my favorite places for deep terminal-native work. It is especially good when I want long sessions that mix planning, editing, shell usage, and git operations without a lot of ceremony.
 
-Hooks run automatically at specific points in the Claude Code lifecycle:
+It is also the place where a lot of the plugin and workflow ecosystem first clicked for me. If I want strong orchestration in a terminal-first environment, Claude Code is still a big part of the picture.
 
-- **Post-edit validation** - After every file edit, checks IDE diagnostics (TypeScript errors, linter issues). Catches problems immediately instead of at build time.
-- **Session-end** - When a session ends, a hook extracts learnings from the transcript and posts them to an internal API. This is the "compound engineering" idea - every session makes the system smarter.
-- **Session-start** - Initializes the superpowers workflow context so skills activate properly from the start.
-- **RTK rewrite** - A `PreToolUse` hook intercepts every Bash command and rewrites it through RTK for token-optimized output. More on this below.
+### OpenCode
 
-### RTK - Token Optimization
+[OpenCode](https://opencode.ai/) is the most flexible part of the stack. I can use it with [GitHub Copilot](https://github.com/features/copilot), [OpenAI](https://openai.com/), and [OpenCode Go](https://opencode.ai/go), and it still fits into the same shared environment. That makes it a very good daily driver when I want the workflow benefits without tying the whole experience to one provider.
 
-This one is invisible but dramatic. [RTK](https://github.com/rtk-ai/rtk) (Rust Token Killer) is a CLI proxy that sits between Claude Code and your shell commands, filtering and compressing output before it reaches the context window.
+I also like that it is open source and comfortable across terminal, desktop, and web surfaces. That matters once the workflow leaves the laptop and starts involving remote access and the phone.
 
-The problem it solves: when Claude runs `git status` or `ls` or `cargo test`, the raw terminal output goes straight into the context window. Most of that output is noise - whitespace, formatting, redundant info. RTK strips it down to what actually matters.
+### Codex And Cursor
 
-It works through a PreToolUse hook. Every time Claude runs a Bash command, the hook intercepts it and rewrites the command to go through RTK. Claude never sees the rewrite - it just gets compressed output. `git status` becomes `rtk git status`. `ls` becomes `rtk ls`. The hook is a thin shell script that delegates all rewrite logic to the Rust binary.
+[Codex](https://openai.com/codex/) and [Cursor](https://cursor.com/) are supporting tools for me rather than the center of gravity. I want them to fit into the shared workflow, not define the workflow.
 
-The savings are real. Here's what my RTK dashboard looks like after about a month of use:
+That is the pattern through the whole setup. The agent should be swappable more often than the process.
 
-{{< figure src="/images/claude-code-workflow/rtk-gain.png" alt="RTK token savings dashboard showing 87.5% efficiency" caption="9.2M tokens saved across 1,152 commands. The biggest wins are git operations and file reads." >}}
+## Superset As The Workspace Layer
 
-87.5% overall savings. That means for every 10M tokens of raw CLI output, only 1.3M actually enter the context window. The biggest wins come from `gh pr diff` (75% savings), `git push` (88%), and `find` (76%). Even simple `ls` commands save 67% on average.
+These days, the center of gravity for my local workflow is not just a terminal emulator. It is [Superset](https://superset.sh/).
 
-This matters because context is finite. Every token of noisy `git diff` output is a token that could be holding your project's architecture or the plan it's executing. RTK keeps the signal-to-noise ratio high so Claude stays effective deeper into long sessions.
+Superset is where the parallel-agent side of my workflow becomes comfortable instead of chaotic. It gives me isolated workspaces, persistent sessions, quick context switching, and a cleaner way to run multiple tasks without turning my machine into a pile of half-related branches and tabs.
 
-Setup is one command: `rtk init --global`. It generates the hook file and registers it in your Claude Code settings. After restarting Claude Code, every shell command gets optimized transparently.
+It also matches the way I actually work now. I still use normal terminals, but I no longer think of WezTerm or Ghostty as the primary story. Superset is the workspace layer that makes the whole system feel operational.
 
-## Remote Control: Claude Code from My Phone
+{{< figure src="/images/ppl/s3w1-superset-parallel-agents.png" alt="Superset workspace showing parallel agent sessions" caption="Superset is the workspace layer I use when I want isolated workspaces without losing continuity between sessions." >}}
 
-*Update: I originally wrote about running Claude Code from my phone over SSH - Tailscale VPN to a Debian VPS, mosh for persistent sessions, Termius as the terminal app. That setup still works and I still use it for VPS tasks. But for controlling Claude Code on my MacBook, Remote Control replaces all of that.*
+## Remote And Mobile
 
-[Remote Control](https://code.claude.com/docs/en/remote-control) shipped in February 2026 and it's exactly what the name suggests: you start a Claude Code session on your machine, and continue it from your phone, tablet, or any browser. The session runs locally the entire time - your filesystem, MCP servers, tools, and project config all stay available. The phone is just a window into the local session.
+I keep a small VPS at [Jetorbit](https://www.jetorbit.com/) with 4 vCPU and 8 GB of RAM, and I use it as a real remote agent box, not just a place to SSH in for emergencies. Both Claude Code and OpenCode run there.
 
-### How It Works
+Because my Mac and VPS share the same `.agents` architecture, remote work feels like the same system in a different place, not a separate environment I have to mentally translate.
 
-If you're already in a Claude Code session and want to pick it up from your phone, type `/remote-control` (or `/rc`). The terminal shows a session URL and a QR code. Scan the QR code with your phone, and the session opens in the Claude mobile app or at `claude.ai/code`.
+### Claude Code On The VPS
 
-{{< figure src="/images/claude-code-workflow/remote-control-terminal.png" alt="Terminal showing Remote Control QR code and session URL" caption="Running /remote-control inside a session. Scan the QR code or open the URL on any device." >}}
+For Claude Code, I usually connect through [Termius](https://termius.com/) and then use [Mosh](https://mosh.org/) instead of plain SSH. Mosh is a roaming shell that handles intermittent connectivity, sleeping laptops, and network changes much better than a normal SSH session. That matters a lot once you are working from shaky Wi-Fi or switching between networks.
 
-You can also start a fresh Remote Control session from the command line:
+Most of the time, this is still how I prefer to use Claude Code remotely. The interface is more complete and better than trying to force everything through a phone-native flow.
 
-```bash
-claude remote-control --name "Blog Project"
-```
+### OpenCode On The VPS
 
-This starts Claude Code in remote-control mode, ready for connections without an existing conversation.
+For OpenCode, I use a different path. I wrap `opencode --web` in a shell helper called `ocw`, so one command starts the OpenCode web server and `cloudflared`. That gives me a stable URL on my own domain that I can open from anywhere.
 
-### Why This is Better Than SSH
+That setup is especially good for phone access because OpenCode already has a strong browser-friendly surface.
 
-With the SSH setup, I was running Claude Code on the VPS - different environment, different files, different config. I had to push code, SSH in, pull, run Claude there, push changes back. It worked, but it was a workaround.
+### iPhone Access
 
-Remote Control runs on my actual MacBook. Same project, same CLAUDE.md, same MCP servers, same everything. I start working at my desk, grab my phone, and keep going on the couch. The conversation stays in sync across all connected devices - I can send messages from the terminal, browser, and phone interchangeably.
+On my iPhone, I use [WhisperCode](https://apps.apple.com/id/app/whispercode/id6759430954), which is basically OpenCode on iOS with speech-to-text. It connects to the OpenCode web server and feels a lot closer to a native mobile client than opening a random terminal on a small screen.
 
-{{< figure src="/images/claude-code-workflow/remote-control-phone.png" alt="Claude Code session running on phone via Remote Control" caption="The same session, continued from the Claude app on my phone." >}}
+If I need to, I can also just open the web endpoint directly in the browser.
 
-If my laptop sleeps or the network drops, the session reconnects automatically when the machine comes back online. No mosh keepalive hacks, no tmux resurrection.
+### Session Persistence
 
-### When I Still Use SSH
+All my shell sessions on the VPS are managed by my homemade [`tmux-menu`](https://github.com/absolutepraya/dotfiles/blob/config/vps/scripts/tmux-menu), which is powered by [fzf](https://github.com/junegunn/fzf). That means reconnecting usually starts with resuming the latest session state instead of rebuilding context from scratch.
 
-Remote Control needs the laptop running and connected. For tasks on my VPS (server maintenance, deployments, checking logs), I still SSH in with mosh via Termius. Different tool for a different job. But for actual development on my projects, Remote Control is the way.
+This part is easy to underestimate. A remote workflow gets much better once disconnecting stops meaning "start over."
 
-## Quality of Life
+### Where Claude Remote Control Still Fits
 
-A few smaller things that don't fit neatly into the sections above but make the daily experience better.
+[Claude Remote Control](https://code.claude.com/docs/en/remote-control) still has a place. If I specifically want to use the Claude app on my iPhone, it is the cleanest way to do that.
 
-**Star Wars spinner verbs.** Claude Code shows a loading message while it thinks. By default it says things like "Thinking..." or "Working...". I replaced all 46 verbs with Star Wars lines: "Making the Kessel Run", "Consulting the Jedi Archives", "Avoiding the Dark Side", "Executing Order 66". It's purely cosmetic and purely fun. You configure these in `~/.claude/settings.json` under `spinnerVerbs`.
+But most of the time, I still prefer the SSH path on the VPS for Claude Code because the interface is more complete. Remote Control is useful. It just is not my default remote setup anymore.
 
-**Custom keybindings.** I use vim-style navigation everywhere in Claude Code - `j`/`k` to scroll through settings, `/` to search, `Ctrl+T` to toggle the todo panel, `Meta+P` to open the model picker, `Meta+T` to toggle thinking. These live in `~/.claude/keybindings.json` and cover 17 different contexts (chat, settings, transcript, history search, etc.). Once you set them up, you never touch the mouse.
+## Quality Of Life
 
-**Effort level set to high.** In `settings.json`, `effortLevel: "high"` tells Claude to use maximum reasoning depth on every response. It uses more tokens but catches more edge cases and produces better plans. I'd rather have thorough answers than fast ones.
+A few smaller things do not define the workflow, but they make the daily experience better.
+
+- Claude HUD keeps context usage, active tools, and status visible.
+- notification-go means long sessions can interrupt me when they actually need input.
+- I use custom keybindings heavily, because once the interface becomes muscle memory, agent work feels much less awkward.
+- I keep the effort level high when I want the agent to think harder, even if it costs more.
+
+None of these is the reason the setup works. But once the foundation is good, small ergonomic wins add up.
 
 ## Getting Started
 
-This setup didn't happen overnight. It evolved over months of actual use, adding pieces when I needed them and removing things that didn't work.
+This setup did not appear all at once. It grew because each piece solved a problem I had more than once.
 
-If you're coming from Copilot or Cursor and want to try the CLI workflow, start small:
+If you want to build something like this, do not copy the whole stack immediately.
 
-1. Install Claude Code and create a CLAUDE.md for your project. Even a few lines about your tech stack and conventions makes a difference.
-2. Add one or two MCP servers for tools you already use (Linear, Todoist, whatever your stack is).
-3. Install the superpowers plugin. The brainstorming and systematic-debugging skills alone are worth it.
-4. Build from there. Add commands when you find yourself repeating workflows. Add hooks when you want automated checks. The setup grows with your needs.
+1. Start with one tool you actually like using.
+2. Give it real project instructions.
+3. Add one or two integrations that remove obvious context switching.
+4. Add workflow discipline before you add more models.
+5. Add remote access, monitoring, and specialist skills only when they solve a real recurring problem.
 
-The compound effect is real - each piece makes the others more powerful. A good CLAUDE.md means better brainstorming output. MCPs mean Claude has real context instead of guessing. Skills mean consistent process instead of ad-hoc prompting. It all stacks.
+The biggest change was not switching from one model to another. It was treating the workflow as the product. Once the process, instructions, and context became portable, the individual agents mattered less. That is what made the setup feel durable.
