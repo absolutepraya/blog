@@ -1,77 +1,77 @@
 ---
 title: "The Agentic System I Built"
 date: 2026-03-13
-description: "A walkthrough of the AI development setup I actually use across Claude Code, OpenCode, shared skills, MCP tools, Superset workspaces, and remote workflows on my VPS and phone."
+description: "A walkthrough of the AI dev setup I actually use across Claude Code, OpenCode, shared skills, MCP tools, Superset workspaces, Tailscale, and remote workflows on my VPS and phone."
 tags: ["ai", "developer-tools", "workflow", "claude-code", "opencode"]
 toc: true
 numbered_headings: true
 ---
 
-People keep asking me how my AI development setup actually works. Friends, classmates, and engineers I meet do not usually want a model leaderboard. They want the practical version: which tools I use, how they fit together, what runs locally, what runs on my VPS, and how I keep the whole thing coherent.
+People keep asking how my AI dev setup actually works. Friends, classmates, engineers I bump into - most of them don't really want a model leaderboard. They want the practical version: which tools I use, how they fit together, what runs locally, what runs on my VPS, and how I keep the whole thing from drifting into chaos.
 
-The short answer is that I do not rely on one AI coding tool for everything. I use a shared workflow, shared instructions, shared skills, and shared commands across multiple clients. The two main ones are [Claude Code](https://www.anthropic.com/product/claude-code) and [OpenCode](https://opencode.ai/). Around them, I use a bunch of supporting pieces: specialist skills, MCP tools, a remote VPS setup, and a workspace layer that keeps sessions isolated without making the environment feel fragmented.
+Short answer: I don't lean on one AI coding tool for everything. I run a shared workflow, shared instructions, shared skills, and shared commands across multiple clients. The two main ones are [Claude Code](https://www.anthropic.com/product/claude-code) and [OpenCode](https://opencode.ai/). Around them sit the supporting pieces: specialist skills, MCP tools, a remote VPS, and a workspace layer that keeps sessions isolated without making the environment feel fragmented.
 
-If you are already using things like [GitHub Copilot](https://github.com/features/copilot), [Cursor](https://cursor.com/), or [Codex](https://openai.com/codex/) and wondering what a CLI-first, agent-heavy workflow looks like when it matures into a full system, this is the setup I actually use.
+If you're already on [GitHub Copilot](https://github.com/features/copilot), [Cursor](https://cursor.com/), or [Codex](https://openai.com/codex/) and curious what a CLI-first, agent-heavy workflow looks like once it grows up, this is mine.
 
 ## Why I Use Multiple Agents
 
-I do not think one AI tool wins every category.
+I don't think one AI tool wins every category.
 
-Some tools are better for deep terminal-native sessions. Some are better when I want provider flexibility. Some are better on the phone. Some are better as supporting tools than daily drivers. What matters more than the client is whether the workflow stays consistent when I switch between them.
+Some are great for deep terminal-native sessions. Some let me swap providers freely. Some are nicer on the phone. Some are best as supporting tools, not daily drivers. The thing I actually care about isn't which client I'm in - it's whether the workflow stays the same when I switch.
 
-That is the real leverage in my setup. I keep the process stable and let the tools specialize. Shared instructions, shared skills, shared commands, and shared infrastructure mean I can move between agents without starting from zero every time.
+That's the leverage. I keep the process stable and let the tools specialize. Shared instructions, shared skills, shared commands, shared infrastructure - that means I can move between agents without restarting from zero.
 
-Claude Code and OpenCode are the center of the story. Codex and Cursor are supporting tools for me, useful in specific contexts, but not the main operating system of the workflow.
+Claude Code and OpenCode are the center of the story. Codex and Cursor are supporting tools, useful in specific spots, but not the main operating system of my workflow.
 
 ## The Workflow: Idea to Shipped Code
 
-Before I talk about the tools, I need to talk about process. The workflow layer matters more than the client.
+Before I get into tools, the workflow layer matters more than the client.
 
-The biggest upgrade I made was adopting [superpowers](https://github.com/obra/superpowers). It gives me a set of skills that enforce a disciplined engineering process: brainstorming, planning, execution, debugging, verification, and branch finishing. Without that layer, AI coding tends to drift into ad hoc prompting. With it, I get something much closer to a repeatable engineering workflow.
+The biggest upgrade I made was adopting [superpowers](https://github.com/obra/superpowers). It gives me a set of skills that enforce a disciplined engineering process: brainstorming, planning, execution, debugging, verification, and branch finishing. Without that layer, AI coding drifts into ad hoc prompting fast. With it, I get something much closer to a repeatable engineering workflow.
 
-Here is what a real feature session looks like.
+Here's what a real feature session looks like.
 
-### Brainstorming (`/superpowers:brainstorming`)
+### Brainstorming via /superpowers:brainstorming
 
-Everything starts with conversation. I describe what I want to build, usually in a rough, incomplete way. The AI does not jump straight to code. It explores the project context first, checks existing patterns, and asks focused questions one by one until the problem is actually shaped.
+Everything starts with a conversation. I describe what I want, usually messy and incomplete. The AI doesn't jump straight to code - it explores the project first, checks existing patterns, and asks focused questions one at a time until the problem is actually shaped.
 
-That sounds simple, but it changes the quality of the work a lot. A good brainstorming loop catches scope mistakes early, forces tradeoff conversations, and keeps "simple" ideas from turning into messy implementation detours.
+Sounds simple, but it changes the quality of the work a lot. A good brainstorming loop catches scope mistakes early, forces tradeoff conversations, and stops "simple" ideas from sneaking into messy implementations.
 
-When I feel like I know what I want but I cannot express it precisely yet, I also use [`grill-me`](https://skills.sh/mattpocock/skills/grill-me). It is useful when I do not want the AI to politely guess what I mean. I want it to interrogate the plan, walk the decision tree, and force us into actual shared understanding before anyone starts implementing.
+When I know what I want but can't quite articulate it, I also use [/grill-me](https://skills.sh/mattpocock/skills/grill-me). Useful when I don't want the AI to politely guess what I mean. I want it to interrogate the plan, walk every branch of the decision tree, and force us into actual shared understanding before anyone touches code.
 
-For UI-heavy work, I sometimes want the opposite kind of help. I do not want to manually art-direct every spacing choice, color decision, or interaction pattern. I want to freestyle the product direction and let the AI push toward a stronger result. That is where [`ui-ux-pro-max`](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) fits. I use it when I want the AI to produce a better visual system than I would get from vague default UI prompts.
+For UI-heavy work, I want the opposite kind of help. I don't want to manually art-direct every spacing choice or color decision. I want to freestyle the product direction and let the AI push toward something stronger. That's what [/ui-ux-pro-max](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) is for.
 
-### Planning (`/superpowers:writing-plans`)
+### Planning via /superpowers:writing-plans
 
-Once the design is clear enough, the planning skill turns it into something executable. The useful part is not that it creates a checklist. The useful part is that it creates a checklist with enough structure that another agent, another session, or future-me can pick it up without guessing.
+Once the design is clear enough, the planning skill turns it into something executable. The useful part isn't the checklist - it's that the checklist has enough structure that another agent, another session, or future-me can pick it up without guessing.
 
-Good plans in this workflow are explicit:
+Good plans are explicit:
 
 - exact files to touch
 - exact verification steps
-- enough detail that a task can be executed without re-deriving the whole design
+- enough detail that a task can run without re-deriving the whole design
 
-That matters because I regularly move between sessions and between tools. A workflow that depends on one long-lived chat context is fragile.
+That matters because I move between sessions and tools constantly. A workflow that depends on one long-lived chat context is fragile.
 
-### Execution (`/superpowers:executing-plans`)
+### Execution via /superpowers:executing-plans
 
-Execution is where the process starts compounding. My default pattern is to execute from a separate session with the plan as the source of truth. The agent works through tasks in order, verifies each one, and reports back with evidence instead of vague confidence.
+Execution is where the process compounds. My default is to execute from a separate session with the plan as the source of truth. The agent works through tasks in order, verifies each one, and reports back with evidence instead of vague confidence.
 
-When tasks are independent, I use subagent-driven execution so separate tasks can move in parallel. That could mean schema work, API work, and UI work happening at the same time, then merging once they pass review.
+For independent tasks, I use subagent-driven execution so things run in parallel. Schema work, API work, UI work - happening at the same time, then merging once they pass review.
 
-I also still use [feature-dev](https://github.com/anthropics/claude-plugins-official) for larger pieces of work when I want extra structured exploration and review. It is useful for feature-sized tasks where I want strong up-front analysis and multiple review passes without manually orchestrating each step.
+I also use [/feature-dev](https://github.com/anthropics/claude-plugins-official) for smaller pieces of work when I want a structured exploration and review pass without manually orchestrating every step.
 
-### Debugging (`/superpowers:systematic-debugging`)
+### Debugging via /superpowers:systematic-debugging
 
-When something breaks, I try hard not to let the AI improvise fixes. That is how you get three plausible changes in a row and still no root cause.
+When something breaks, I try hard not to let the AI improvise. That's how you get three plausible-looking changes in a row and still no root cause.
 
-The debugging skill is useful because it forces a sequence: reproduce, trace, compare against working patterns, form one hypothesis, test it, then fix it. The discipline matters more than the branding. It prevents the common failure mode where an AI reacts to the error message instead of actually understanding where the bad state came from.
+The debugging skill works because it forces a sequence: reproduce, trace, compare against working patterns, form one hypothesis, test it, then fix. The discipline matters more than the branding. It stops the common failure mode where an AI reacts to the error message instead of figuring out where the bad state actually came from.
 
-### Finishing (`/superpowers:verification-before-completion`)
+### Finishing via /superpowers:verification-before-completion
 
-The last stage is verification. No "should work now," no "looks good," no soft claims. Run the command, read the output, confirm the exit code, and only then say it is done.
+The last stage is verification. No "should work now," no "looks good," no soft claims. Run the command, read the output, confirm the exit code, and then say it's done.
 
-That sounds obvious, but it is one of the easiest places for agent workflows to get sloppy. A lot of the reliability in this setup comes from refusing to skip that last proof step.
+Sounds obvious. It's also one of the easiest things to skip. A lot of the reliability in this setup comes from refusing to skip that last proof step.
 
 The whole flow looks like this:
 
@@ -89,9 +89,9 @@ graph TD
 
 ## The Infrastructure
 
-The workflow above does not happen by magic. The real trick is that the environment is shared.
+The workflow above doesn't happen by magic. The trick is that the environment is shared.
 
-At the project level I still care a lot about instruction files like `AGENTS.md` and `CLAUDE.md`. But at user scope, I now keep the shared source of truth in `.agents`, then expose it into different clients through thin wrappers. That means the behavior does not reset every time I switch from Claude Code to OpenCode, or from my MacBook to my VPS.
+At the project level I still care a lot about instruction files like `AGENTS.md` and `CLAUDE.md`. But at user scope, I keep the shared source of truth in `.agents`, then expose it into different clients through thin wrappers. Behavior doesn't reset when I jump from Claude Code to OpenCode, or from my MacBook to my VPS.
 
 ### Shared Skills And Commands
 
@@ -100,70 +100,95 @@ The shared pieces are what make the system feel durable:
 - shared instructions
 - shared skill definitions
 - shared command docs
-- tool-specific wrappers for each runtime
+- thin tool-specific wrappers per runtime
 
-So the same ideas can show up in different places. I can keep one conceptual command or skill, then surface it in Claude Code, OpenCode, Codex, or Cursor in the way that fits that tool. The wrapper changes, but the intent stays stable.
+The same idea shows up in different places: I keep one conceptual command or skill, and surface it in Claude Code, OpenCode, Codex, or Cursor in the way each tool expects. The wrapper changes, the intent stays stable.
 
-This is also why the setup survives migration better than a bunch of one-off editor prompts. The workflow is stored in files and conventions, not just in habit.
+That's also why the setup survives migration. The workflow lives in files and conventions, not in habit.
 
-On this MacBook, the shared layout looks like this:
+On this MacBook, the layout looks like this:
 
 ```mermaid
 graph TD
-    A[~/.agents<br/>source of truth] --> B[AGENTS.md]
-    A --> C[skills/]
-    A --> D[commands/]
+    A["~/.agents<br/>source of truth"]
+    A --> AGENTS["AGENTS.md<br/>shared instructions"]
+    A --> SKILLS["skills/<br/>shared skills"]
+    A --> COMMANDS["commands/<br/>shared command docs"]
 
-    B --> E[~/.claude/CLAUDE.md<br/>symlink]
-    B --> F[~/.config/opencode/AGENTS.md<br/>symlink]
+    AGENTS -->|symlink| CC
+    AGENTS -->|symlink| OC
 
-    C --> G[~/.claude/skills/*<br/>symlink farm]
-    C --> H[~/.config/opencode/skills/*<br/>symlink farm]
-    C --> I[~/.codex/skills/*<br/>symlink farm]
-    C --> J[Cursor reads ~/.agents/skills directly]
+    SKILLS -->|symlink farm| CC
+    SKILLS -->|symlink farm| OC
+    SKILLS -->|symlink farm| CX
+    SKILLS -->|symlink farm| CR
 
-    D --> K[~/.claude/commands/*<br/>thin wrappers]
-    D --> L[~/.config/opencode/commands/*<br/>thin wrappers]
-    D --> M[~/.codex/prompts/*<br/>thin wrappers]
-    D --> N[~/.cursor/commands/*<br/>thin wrappers]
+    COMMANDS -->|thin wrapper| CC
+    COMMANDS -->|thin wrapper| OC
+    COMMANDS -->|thin wrapper| CX
+    COMMANDS -->|thin wrapper| CR
+
+    CC[Claude Code]
+    OC[OpenCode]
+    CX[Codex]
+    CR[Cursor]
+
+    style CC fill:#DE7356,color:#fff,stroke:#a35140,stroke-width:2px
+    style OC fill:#ffffff,color:#000,stroke:#888,stroke-width:2px
+    style CX fill:#74AA9C,color:#fff,stroke:#4f7d72,stroke-width:2px
+    style CR fill:#ffffff,color:#000,stroke:#888,stroke-width:2px
 ```
 
-That is the part I care about most. The clients can change. The models can change. But if the shared instructions, skills, and command docs stay stable, I do not have to rebuild the workflow from scratch every time I move to a different surface.
+Clients can change. Models can change. As long as the shared instructions, skills, and command docs stay stable, I don't have to rebuild the workflow from scratch every time I move to a different surface.
 
 ### Commands
 
-I rely on commands a lot because they compress recurring workflows into something named and repeatable.
+Commands compress recurring workflows into something named and repeatable.
 
-I mostly care about work-oriented commands here. The exact list changes over time, but the pattern does not. If I notice I keep asking for the same kind of engineering task, I want a command for it.
+I mostly care about work-oriented commands. The list shifts over time, but the pattern doesn't: if I notice I keep asking for the same kind of engineering task, I want a command for it.
 
-Examples from my setup include:
+A few I lean on:
 
-- `/update-branch` for syncing a working branch safely
-- `/address-pr-reviews` for turning review comments into an execution loop
-- `/create-pr` for packaging finished work into a pull request flow
+- /update-branch for syncing a working branch safely
+- /address-pr-reviews for turning review comments into an execution loop
+- /create-pr for packaging finished work into a pull request flow
 
-The important part is not the specific command names. It is that the workflow stops depending on perfect prompting memory.
+The specific names don't matter much. The point is the workflow stops depending on perfect prompting memory.
 
 ### MCP And Web Tools
 
-Model Context Protocol is how the agents stop guessing and start using the rest of my stack directly.
+[Model Context Protocol](https://modelcontextprotocol.io/) is how the agents stop guessing and start using the rest of my stack directly.
 
-Some of the MCP-backed tools I rely on most:
+The MCP-backed tools I rely on most:
 
-- [Context7](https://context7.com/) for docs lookup, which is the easiest way to avoid stale library guesses
-- [Exa](https://exa.ai/) for web search
-- [Firecrawl](https://www.firecrawl.dev/) for scraping and extracting live web content
-- [Linear](https://linear.app/) for issues and project tracking
-- [Todoist](https://todoist.com/) for task capture
-- [Google Calendar](https://workspace.google.com/products/calendar/) for schedule-aware tasks
+- [Context7](https://context7.com/) for docs lookup. Easiest way to dodge stale library guesses.
+- [Exa MCP](https://github.com/exa-labs/exa-mcp-server) for web search.
+- [Firecrawl MCP](https://github.com/firecrawl/firecrawl-mcp-server) for scraping live web pages when I need the actual content.
+- [Linear MCP](https://linear.app/docs/mcp) for issues and project tracking.
+- [Todoist MCP](https://github.com/Doist/todoist-ai) for task capture.
 
-I still mention Exa and Firecrawl here because they have both been part of my setup in real use. If I were optimizing for the longest-lasting default today, I would bias toward [Brave Search](https://search.brave.com/) for discovery and native `webfetch` for pulling the actual page content.
+Honest caveat: I keep mentioning Exa and Firecrawl because they've genuinely been part of my setup. If I were optimizing for the longest-lasting default today, I'd lean toward [Brave Search MCP](https://github.com/brave/brave-search-mcp-server) for discovery and the native `webfetch` for pulling page content. Search with one tool, fetch with a simpler primitive, and only bring in heavier scraping when I actually need it.
 
-That is a better long-term split for me: search with one tool, fetch with a simpler native primitive, and only bring in heavier scraping when I actually need it.
+### When I Prefer CLI Over MCP
+
+There's one part of the stack where I deliberately don't use MCP: Google Workspace.
+
+Google ships [an official CLI for Workspace](https://github.com/googleworkspace/cli) that wraps the Discovery API for all consumer Google products. It also ships a set of agent skills. I install all of them, and they cover basically everything I'd want to do across Google's product line:
+
+- **Sheets** - read and write cell values, append rows, run formulas, insert charts, format ranges.
+- **Docs** - read and append content, manage shared docs.
+- **Drive** - search, upload, download, manage files and folders, set permissions.
+- **Gmail** - read, send, search, label, manage drafts.
+- **Calendar** - list events, create events, find free slots, RSVP.
+- **Slides** - read and write decks.
+
+{{< figure src="/images/claude-code-workflow/gws-skills.png" alt="Google Workspace CLI skills installed locally, covering sheets, docs, drive, gmail, calendar, and slides" caption="The full set of Google Workspace skills I keep installed locally." >}}
+
+The reason I prefer CLI over MCP here: the CLI is faster to invoke, faster to debug, doesn't require an always-on MCP process, and the skills wrap each command with the right context the agent needs. For a tool surface this big, that ergonomic win matters.
 
 ### Status Line
 
-The status line at the bottom of the terminal is small, but it is the part of the interface I look at most often during a long session. I use [ccstatusline](https://github.com/sirmalloc/ccstatusline) for this. It shows context usage, the current model, git branch, active tool calls, and todo progress in one strip, and it is fully configurable. Once you can see context health at a glance, long sessions stop turning into nasty surprises.
+The status line at the bottom of the terminal is small, but it's the part of the interface I look at most during a long session. I use [ccstatusline](https://github.com/sirmalloc/ccstatusline). It shows context usage, the current model, git branch, active tool calls, and todo progress in one strip, fully configurable. Once context health is visible at a glance, long sessions stop turning into nasty surprises.
 
 {{< figure src="/images/claude-code-workflow/ccstatusline.png" alt="ccstatusline showing model, context usage, git branch, and tool activity" caption="ccstatusline is the small bar I rely on most. It keeps the things I care about visible without me having to ask." >}}
 
@@ -171,105 +196,148 @@ The status line at the bottom of the terminal is small, but it is the part of th
 
 I think of skills as a separate layer from the clients themselves. The tool matters, but the reusable behaviors matter more.
 
-- [superpowers](https://github.com/obra/superpowers) gives me the core workflow discipline.
-- [pr-review-toolkit](https://github.com/anthropics/claude-plugins-official) is what I use when I want extra review pressure on tests, error handling, and quality.
-- [`grill-me`](https://skills.sh/mattpocock/skills/grill-me) is for the moments when I want the AI to interrogate my vague idea until it becomes a precise spec.
-- [`ui-ux-pro-max`](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) is for the moments when I want to freestyle the product direction but still get a stronger UI system than I would get from default prompting.
+- [/superpowers](https://github.com/obra/superpowers) gives me the core workflow discipline.
+- [/pr-review-toolkit](https://github.com/anthropics/claude-plugins-official) is what I reach for when I want extra review pressure on tests, error handling, and quality.
+- [/grill-me](https://skills.sh/mattpocock/skills/grill-me) when I want the AI to interrogate my vague idea until it becomes a precise spec.
+- [/ui-ux-pro-max](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) when I want a stronger UI system than I'd get from default prompting.
+
+If you're hunting for new skills, [skills.sh](https://skills.sh/) is the place to browse. It indexes a huge number of community-published skills, and most of what I rely on day-to-day either comes from there or from official Anthropic plugin repos.
 
 ### Usage Monitoring
 
-One small tool that made the whole stack easier to live with is [OpenUsage](https://www.openusage.ai/). I use it to monitor usage limits across the AI products I pay for instead of checking each product separately. Once you are regularly moving between Claude, Codex, Cursor, and OpenCode Go, that becomes much more useful than it sounds.
+[OpenUsage](https://www.openusage.ai/) made the whole stack easier to live with. I use it to monitor usage limits across the AI products I pay for instead of checking each one separately. Once you're regularly moving between Claude, Codex, Cursor, and OpenCode Go, having one dashboard is more useful than it sounds.
 
-{{< figure src="/images/claude-code-workflow/openusage.png" alt="OpenUsage showing usage across multiple AI coding tools" caption="OpenUsage gives me one place to see how hard I am pushing the different AI tools I use." >}}
+{{< figure src="/images/claude-code-workflow/openusage.png" alt="OpenUsage showing usage across multiple AI coding tools" caption="OpenUsage gives me one place to see how hard I'm pushing the different AI tools I use." >}}
 
 ## Where Each Tool Fits
 
 ### Claude Code
 
-[Claude Code](https://www.anthropic.com/product/claude-code) is still one of my favorite places for deep terminal-native work. It is especially good when I want long sessions that mix planning, editing, shell usage, and git operations without a lot of ceremony.
+[Claude Code](https://www.anthropic.com/product/claude-code) is still my favorite place for deep terminal-native work. Especially good when I want long sessions that mix planning, editing, shell, and git without ceremony.
 
-It is also the place where a lot of the plugin and workflow ecosystem first clicked for me. If I want strong orchestration in a terminal-first environment, Claude Code is still a big part of the picture.
+It's also where the plugin and workflow ecosystem first clicked for me. For strong orchestration in a terminal-first environment, Claude Code is still a big part of the picture.
 
 ### OpenCode
 
-[OpenCode](https://opencode.ai/) is the most flexible part of the stack. I can use connectors to tap into my provider plans across [GitHub Copilot](https://github.com/features/copilot), [OpenAI](https://openai.com/), and [OpenCode Go](https://opencode.ai/go). The one notable exception is Claude Code itself, because that can no longer be connected into OpenCode the way I used to want. Even with that limitation, OpenCode still fits into the same shared environment and makes a very good daily driver when I want the workflow benefits without tying the whole experience to one provider.
+[OpenCode](https://opencode.ai/) is the most flexible part of the stack. Connectors let me tap into my provider plans across [GitHub Copilot](https://github.com/features/copilot), [OpenAI](https://openai.com/), and [OpenCode Go](https://opencode.ai/go). The one notable exception is Claude Code itself - that can no longer be connected into OpenCode the way I used to want. Even with that limitation, OpenCode still fits the same shared environment and makes a great daily driver when I want workflow benefits without tying everything to one provider.
 
-I also like that it is open source and comfortable across terminal, desktop, and web surfaces. That matters once the workflow leaves the laptop and starts involving remote access and the phone.
+It's also open source and comfortable across terminal, desktop, and web. That matters once the workflow leaves the laptop and starts involving remote access and the phone.
 
 ### Codex And Cursor
 
-[Codex](https://openai.com/codex/) and [Cursor](https://cursor.com/) are supporting tools for me rather than the center of gravity. I want them to fit into the shared workflow, not define the workflow.
+[Codex](https://openai.com/codex/) and [Cursor](https://cursor.com/) are supporting tools, not the center of gravity. I want them to fit the shared workflow, not define it.
 
-That is the pattern through the whole setup. The agent should be swappable more often than the process.
+That's the pattern across the whole setup. The agent should be swappable more often than the process.
 
 ## Superset As The Workspace Layer
 
-These days, the center of gravity for my local workflow is not just a terminal emulator. It is [Superset](https://superset.sh/).
+These days the center of gravity for my local workflow isn't really a terminal emulator - it's [Superset](https://superset.sh/).
 
-Superset is where the parallel-agent side of my workflow becomes comfortable instead of chaotic. It gives me isolated workspaces, persistent sessions, quick context switching, and a cleaner way to run multiple tasks without turning my machine into a pile of half-related branches and tabs.
+Superset is where the parallel-agent side of my workflow becomes comfortable instead of chaotic. Isolated workspaces, persistent sessions, fast context switching, and a cleaner way to run multiple tasks without my machine becoming a pile of half-related branches and tabs.
 
-It also matches the way I actually work now. I still use normal terminals, but I no longer think of WezTerm or Ghostty as the primary story. Superset is the workspace layer that makes the whole system feel operational.
+It also matches how I actually work now. I still use normal terminals, but I no longer think of WezTerm or Ghostty as the primary story. Superset is the workspace layer that makes the system feel operational.
 
-What makes it especially good is that I can wire workspace setup into Superset itself. When I create a new git worktree, I can have Superset automatically copy env files, automatically shift ports so they do not collide with the main workspace or other worktrees, automatically install packages, and automatically start or seed supporting infrastructure. In practice that means the boring setup work mostly disappears. A lot of the time, after Superset creates the workspace, all I need to do is run the dev server, or just click the run button.
+The other reason I love it: I can wire workspace setup into Superset itself. When I create a new git worktree, Superset can automatically copy env files, shift ports so they don't collide with the main workspace or other worktrees, install packages, and start or seed supporting infra. All the boring setup work disappears. Most of the time, after Superset spins up the workspace, I just hit run.
 
-{{< figure src="/images/claude-code-workflow/superset.png" alt="Superset workspace showing parallel agent sessions" caption="Superset is the workspace layer I use when I want isolated workspaces without losing continuity between sessions." >}}
+{{< figure src="/images/claude-code-workflow/superset.png" alt="Superset workspace showing parallel agent sessions" caption="Superset is the workspace layer I use when I want isolation without losing continuity." >}}
 
 ## Remote And Mobile
 
-I keep a small VPS at [Jetorbit](https://www.jetorbit.com/) with 4 vCPU and 8 GB of RAM, and I use it as a real remote agent box, not just a place to SSH in for emergencies. Both Claude Code and OpenCode run there.
+I keep a small VPS at [Jetorbit](https://www.jetorbit.com/) - 4 vCPU, 8 GB RAM - and I use it as a real remote agent box, not just a place to SSH into for emergencies. Both Claude Code and OpenCode run there.
 
 Because my Mac and VPS share the same `.agents` architecture, remote work feels like the same system in a different place, not a separate environment I have to mentally translate.
 
+### Tailscale: The Most Important Piece
+
+Honestly, this might be the most important part of the whole setup, and I almost forgot to write about it.
+
+I have **zero public ingress ports open on my VPS**. No port 22 for SSH. Nothing. The only way anything reaches the box is through [Tailscale](https://tailscale.com/), which puts my MacBook, VPS, iPhone, and work laptop on the same private overlay network.
+
+That basically takes the external attack surface of my VPS down to zero. There's nothing to scan, nothing to brute-force, nothing for a stray bot to find. Every service I run - SSH, Mosh, the OpenCode web tunnel, anything - is only reachable from devices already on my tailnet.
+
+{{< figure src="/images/claude-code-workflow/tailscale.png" alt="Tailscale overlay network connecting personal devices privately" caption="Source: tailscale.com" >}}
+
+Compared to the usual "open port 22 with key auth, hope nobody finds the box" approach, this is dramatically better. And the ergonomics are nicer too - no firewall whitelisting, no jump hosts, no juggling per-service ACLs.
+
 ### Claude Code On The VPS
 
-For Claude Code, I usually connect through [Termius](https://termius.com/) and then use [Mosh](https://mosh.org/) instead of plain SSH. Mosh is a roaming shell that handles intermittent connectivity, sleeping laptops, and network changes much better than a normal SSH session. That matters a lot once you are working from shaky Wi-Fi or switching between networks.
+For Claude Code, I usually connect through [Termius](https://termius.com/) and use [Mosh](https://mosh.org/) instead of plain SSH.
 
-Most of the time, this is still how I prefer to use Claude Code remotely. The interface is more complete and better than trying to force everything through a phone-native flow.
+The big difference: Mosh runs over UDP rather than TCP, and it doesn't tie the session to a single TCP connection. SSH dies the moment the underlying connection breaks; Mosh just keeps the session alive and resyncs when the network comes back.
 
-For notifications, [notification-go](https://github.com/777genius/claude-notifications-go) is mainly relevant when I am using Claude Code directly in a terminal. If I am already inside Superset, Superset handles notifications for me by default, so I do not need to stack another notification layer on top.
+What that means in practice:
+
+- I can switch from mobile data to Wi-Fi mid-command and the session doesn't drop.
+- I can step into an elevator, lose signal entirely, and pick up where I was when I come out.
+- Putting my laptop to sleep and reopening it 30 minutes later doesn't kill the session.
+
+For long-running agent work over flaky networks, this is the difference between "remote workflow that actually works" and "rage-quitting back to the laptop."
+
+For notifications, [notification-go](https://github.com/777genius/claude-notifications-go) is mainly relevant when I'm using Claude Code directly in a terminal. If I'm already inside Superset, Superset handles notifications by default, so I don't stack another layer on top.
 
 ### OpenCode On The VPS
 
-For OpenCode, I use a different path. I wrap `opencode --web` in a shell helper called `ocw`, so one command starts the OpenCode web server and `cloudflared`. That gives me a stable URL on my own domain that I can open from anywhere.
+For OpenCode I take a different path. I wrap `opencode --web` in a shell helper called `ocw` that fires up the OpenCode web server and `cloudflared` together. One command, stable URL on my own domain, accessible from anywhere on my tailnet (and through Cloudflare for the public-facing path).
+
+```mermaid
+graph LR
+    A[ocw command] --> B[opencode --web<br/>localhost:port]
+    A --> C[cloudflared tunnel]
+    C --> D[oc-vps.abhipraya.dev]
+    B -.serves via tunnel.-> D
+```
 
 That setup is especially good for phone access because OpenCode already has a strong browser-friendly surface.
 
-The notification story is similar here. If I am using OpenCode inside Superset, Superset already gives me the notification layer. If I am not using Superset, then [WhisperCode](https://apps.apple.com/id/app/whispercode/id6759430954) becomes the thing that gives me a usable mobile notification and interaction surface for OpenCode.
+The notification story is similar here. If I'm using OpenCode inside Superset, Superset handles notifications. If I'm not, [WhisperCode](https://apps.apple.com/id/app/whispercode/id6759430954) gives me the mobile notification and interaction layer.
 
 ### iPhone Access
 
-On my iPhone, I use [WhisperCode](https://apps.apple.com/id/app/whispercode/id6759430954), which is basically OpenCode on iOS with speech-to-text. It connects to the OpenCode web server and feels a lot closer to a native mobile client than opening a random terminal on a small screen.
+On my iPhone I use [WhisperCode](https://apps.apple.com/id/app/whispercode/id6759430954) - basically OpenCode on iOS with speech-to-text. It connects to the OpenCode web server and feels much closer to a native mobile client than wrestling with a terminal on a small screen.
 
-If I need to, I can also just open the web endpoint directly in the browser.
+If I really want to, I can also just open the web endpoint in a browser.
 
 ### Session Persistence
 
-All my shell sessions on the VPS are managed by my homemade [`tmux-menu`](https://github.com/absolutepraya/dotfiles/blob/config/vps/scripts/tmux-menu), which is powered by [fzf](https://github.com/junegunn/fzf). That means reconnecting usually starts with resuming the latest session state instead of rebuilding context from scratch.
+All my shell sessions on the VPS are managed by my homemade [tmux-menu](https://github.com/absolutepraya/dotfiles/blob/config/vps/scripts/tmux-menu), powered by [fzf](https://github.com/junegunn/fzf). Reconnecting usually means resuming the latest session state instead of rebuilding context from scratch.
 
-This part is easy to underestimate. A remote workflow gets much better once disconnecting stops meaning "start over."
+{{< figure src="/images/claude-code-workflow/tmux-menu.png" alt="tmux-menu showing fzf-powered session picker on VPS" caption="tmux-menu is the first thing I see when I log into the VPS. Pick a session, jump back into it." >}}
+
+The flow looks like this:
+
+```mermaid
+graph LR
+    A[ssh / mosh<br/>into VPS] --> B[tmux-menu launches]
+    B --> C[fzf picker:<br/>list of sessions]
+    C --> D{pick}
+    D -->|existing| E[attach -<br/>resume state]
+    D -->|new| F[create new<br/>session]
+```
+
+This part is easy to underestimate. A remote workflow gets dramatically better the moment "disconnecting" stops meaning "start over."
 
 ### Where Claude Remote Control Still Fits
 
-[Claude Remote Control](https://code.claude.com/docs/en/remote-control) still has a place. If I specifically want to use the Claude app on my iPhone, it is the cleanest way to do that.
+[Claude Remote Control](https://code.claude.com/docs/en/remote-control) still has a place. If I specifically want the Claude app on my iPhone, it's the cleanest path.
 
-But most of the time, I still prefer the SSH path on the VPS for Claude Code because the interface is more complete. Remote Control is useful. It just is not my default remote setup anymore.
+But most of the time I prefer the SSH route on the VPS for Claude Code - the interface is more complete. Remote Control is useful, just not my default.
 
 ## Quality Of Life
 
-A few smaller things do not define the workflow, but they make the daily experience better.
+Smaller things that don't define the workflow but make the daily experience better:
 
-- ccstatusline keeps context usage, active tools, and status visible in the terminal status line.
-- notification-go is useful for terminal-first Claude Code sessions when Superset is not already handling notifications.
-- I use custom keybindings heavily, because once the interface becomes muscle memory, agent work feels much less awkward.
-- I keep the effort level high when I want the agent to think harder, even if it costs more.
+- ccstatusline keeps context usage, active tools, and status visible in the status line.
+- notification-go for terminal-first Claude Code sessions when Superset isn't already handling notifications.
+- Custom keybindings everywhere - once the interface becomes muscle memory, agent work feels much less awkward.
+- Effort level cranked high when I want the agent to think harder, even at extra cost.
 
 None of these is the reason the setup works. But once the foundation is good, small ergonomic wins add up.
 
 ## Getting Started
 
-This setup did not appear all at once. It grew because each piece solved a problem I had more than once.
+This setup didn't appear all at once. It grew because each piece solved a problem I had more than once.
 
-If you want to build something like this, do not copy the whole stack immediately.
+If you want to build something like it, don't copy the whole stack on day one:
 
 1. Start with one tool you actually like using.
 2. Give it real project instructions.
@@ -277,4 +345,4 @@ If you want to build something like this, do not copy the whole stack immediatel
 4. Add workflow discipline before you add more models.
 5. Add remote access, monitoring, and specialist skills only when they solve a real recurring problem.
 
-The biggest change was not switching from one model to another. It was treating the workflow as the product. Once the process, instructions, and context became portable, the individual agents mattered less. That is what made the setup feel durable.
+The biggest change wasn't switching from one model to another. It was treating the workflow as the product. Once the process, instructions, and context became portable, the individual agents mattered less. That's what made the setup feel durable.
