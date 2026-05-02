@@ -105,17 +105,41 @@ So the same ideas can show up in different places. I can keep one conceptual com
 
 This is also why the setup survives migration better than a bunch of one-off editor prompts. The workflow is stored in files and conventions, not just in habit.
 
+On this MacBook, the shared layout looks like this:
+
+```mermaid
+graph TD
+    A[~/.agents<br/>source of truth] --> B[AGENTS.md]
+    A --> C[skills/]
+    A --> D[commands/]
+
+    B --> E[~/.claude/CLAUDE.md<br/>symlink]
+    B --> F[~/.config/opencode/AGENTS.md<br/>symlink]
+
+    C --> G[~/.claude/skills/*<br/>symlink farm]
+    C --> H[~/.config/opencode/skills/*<br/>symlink farm]
+    C --> I[~/.codex/skills/*<br/>symlink farm]
+    C --> J[Cursor reads ~/.agents/skills directly]
+
+    D --> K[~/.claude/commands/*<br/>thin wrappers]
+    D --> L[~/.config/opencode/commands/*<br/>thin wrappers]
+    D --> M[~/.codex/prompts/*<br/>thin wrappers]
+    D --> N[~/.cursor/commands/*<br/>thin wrappers]
+```
+
+That is the part I care about most. The clients can change. The models can change. But if the shared instructions, skills, and command docs stay stable, I do not have to rebuild the workflow from scratch every time I move to a different surface.
+
 ### Commands
 
 I rely on commands a lot because they compress recurring workflows into something named and repeatable.
 
-Some are project-specific. Some are user-wide. The exact list changes over time, but the pattern does not. If I notice I keep asking for the same kind of work, I want a command for it.
+I mostly care about work-oriented commands here. The exact list changes over time, but the pattern does not. If I notice I keep asking for the same kind of engineering task, I want a command for it.
 
 Examples from my setup include:
 
-- `work-log` for generating internship logs from git history
-- `crontab-create` and `crontab-manage` for safer cron management
-- `tidy-stocks` for a niche but recurring personal file-organizing task
+- `/update-branch` for syncing a working branch safely
+- `/address-pr-reviews` for turning review comments into an execution loop
+- `/create-pr` for packaging finished work into a pull request flow
 - `feature-dev` and `pr-review-toolkit` for more structured development and review workflows
 
 The important part is not the specific command names. It is that the workflow stops depending on perfect prompting memory.
@@ -144,7 +168,15 @@ Some tools shape how I work enough that they are worth calling out directly.
 - [Superpowers](https://github.com/obra/superpowers) is still the workflow engine.
 - [pr-review-toolkit](https://github.com/anthropics/claude-plugins-official) gives me specialist review passes when I want extra scrutiny on tests, comments, failure handling, and general code quality.
 - [Claude HUD](https://github.com/jarrodwatts/claude-hud) is a small but useful status layer because context health, active tools, and running work stay visible.
-- [notification-go](https://github.com/777genius/claude-notifications-go) helps when long-running sessions need my attention again, and I also route some notifications to [Moshi](https://getmoshi.app/) so I notice them away from the desk.
+
+## Skills I Reach For
+
+I think of skills as a separate layer from the clients themselves. The tool matters, but the reusable behaviors matter more.
+
+- [superpowers](https://github.com/obra/superpowers) gives me the core workflow discipline.
+- [pr-review-toolkit](https://github.com/anthropics/claude-plugins-official) is what I use when I want extra review pressure on tests, error handling, and quality.
+- [`grill-me`](https://skills.sh/mattpocock/skills/grill-me) is for the moments when I want the AI to interrogate my vague idea until it becomes a precise spec.
+- [`ui-ux-pro-max`](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) is for the moments when I want to freestyle the product direction but still get a stronger UI system than I would get from default prompting.
 
 ### Usage Monitoring
 
@@ -162,7 +194,7 @@ It is also the place where a lot of the plugin and workflow ecosystem first clic
 
 ### OpenCode
 
-[OpenCode](https://opencode.ai/) is the most flexible part of the stack. I can use it with [GitHub Copilot](https://github.com/features/copilot), [OpenAI](https://openai.com/), and [OpenCode Go](https://opencode.ai/go), and it still fits into the same shared environment. That makes it a very good daily driver when I want the workflow benefits without tying the whole experience to one provider.
+[OpenCode](https://opencode.ai/) is the most flexible part of the stack. I can use connectors to tap into my provider plans across [GitHub Copilot](https://github.com/features/copilot), [OpenAI](https://openai.com/), and [OpenCode Go](https://opencode.ai/go). The one notable exception is Claude Code itself, because that can no longer be connected into OpenCode the way I used to want. Even with that limitation, OpenCode still fits into the same shared environment and makes a very good daily driver when I want the workflow benefits without tying the whole experience to one provider.
 
 I also like that it is open source and comfortable across terminal, desktop, and web surfaces. That matters once the workflow leaves the laptop and starts involving remote access and the phone.
 
@@ -180,6 +212,8 @@ Superset is where the parallel-agent side of my workflow becomes comfortable ins
 
 It also matches the way I actually work now. I still use normal terminals, but I no longer think of WezTerm or Ghostty as the primary story. Superset is the workspace layer that makes the whole system feel operational.
 
+What makes it especially good is that I can wire workspace setup into Superset itself. When I create a new git worktree, I can have Superset automatically copy env files, automatically shift ports so they do not collide with the main workspace or other worktrees, automatically install packages, and automatically start or seed supporting infrastructure. In practice that means the boring setup work mostly disappears. A lot of the time, after Superset creates the workspace, all I need to do is run the dev server, or just click the run button.
+
 {{< figure src="/images/claude-code-workflow/superset.png" alt="Superset workspace showing parallel agent sessions" caption="Superset is the workspace layer I use when I want isolated workspaces without losing continuity between sessions." >}}
 
 ## Remote And Mobile
@@ -194,11 +228,15 @@ For Claude Code, I usually connect through [Termius](https://termius.com/) and t
 
 Most of the time, this is still how I prefer to use Claude Code remotely. The interface is more complete and better than trying to force everything through a phone-native flow.
 
+For notifications, [notification-go](https://github.com/777genius/claude-notifications-go) is mainly relevant when I am using Claude Code directly in a terminal. If I am already inside Superset, Superset handles notifications for me by default, so I do not need to stack another notification layer on top.
+
 ### OpenCode On The VPS
 
 For OpenCode, I use a different path. I wrap `opencode --web` in a shell helper called `ocw`, so one command starts the OpenCode web server and `cloudflared`. That gives me a stable URL on my own domain that I can open from anywhere.
 
 That setup is especially good for phone access because OpenCode already has a strong browser-friendly surface.
+
+The notification story is similar here. If I am using OpenCode inside Superset, Superset already gives me the notification layer. If I am not using Superset, then [WhisperCode](https://apps.apple.com/id/app/whispercode/id6759430954) becomes the thing that gives me a usable mobile notification and interaction surface for OpenCode.
 
 ### iPhone Access
 
@@ -223,7 +261,7 @@ But most of the time, I still prefer the SSH path on the VPS for Claude Code bec
 A few smaller things do not define the workflow, but they make the daily experience better.
 
 - Claude HUD keeps context usage, active tools, and status visible.
-- notification-go means long sessions can interrupt me when they actually need input.
+- notification-go is useful for terminal-first Claude Code sessions when Superset is not already handling notifications.
 - I use custom keybindings heavily, because once the interface becomes muscle memory, agent work feels much less awkward.
 - I keep the effort level high when I want the agent to think harder, even if it costs more.
 
