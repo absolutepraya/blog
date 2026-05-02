@@ -160,13 +160,11 @@ I still mention Exa and Firecrawl here because they have both been part of my se
 
 That is a better long-term split for me: search with one tool, fetch with a simpler native primitive, and only bring in heavier scraping when I actually need it.
 
-### Plugins And Specialist Layers
+### Status Line
 
-Some tools shape how I work enough that they are worth calling out directly.
+The status line at the bottom of the terminal is small, but it is the part of the interface I look at most often during a long session. I use [ccstatusline](https://github.com/sirmalloc/ccstatusline) for this. It shows context usage, the current model, git branch, active tool calls, and todo progress in one strip, and it is fully configurable. Once you can see context health at a glance, long sessions stop turning into nasty surprises.
 
-- [Superpowers](https://github.com/obra/superpowers) is still the workflow engine.
-- [pr-review-toolkit](https://github.com/anthropics/claude-plugins-official) gives me specialist review passes when I want extra scrutiny on tests, comments, failure handling, and general code quality.
-- [Claude HUD](https://github.com/jarrodwatts/claude-hud) is a small but useful status layer because context health, active tools, and running work stay visible.
+{{< figure src="/images/claude-code-workflow/ccstatusline.png" alt="ccstatusline showing model, context usage, git branch, and tool activity" caption="ccstatusline is the small bar I rely on most. It keeps the things I care about visible without me having to ask." >}}
 
 ## Skills I Reach For
 
@@ -259,7 +257,7 @@ But most of the time, I still prefer the SSH path on the VPS for Claude Code bec
 
 A few smaller things do not define the workflow, but they make the daily experience better.
 
-- Claude HUD keeps context usage, active tools, and status visible.
+- ccstatusline keeps context usage, active tools, and status visible in the terminal status line.
 - notification-go is useful for terminal-first Claude Code sessions when Superset is not already handling notifications.
 - I use custom keybindings heavily, because once the interface becomes muscle memory, agent work feels much less awkward.
 - I keep the effort level high when I want the agent to think harder, even if it costs more.
