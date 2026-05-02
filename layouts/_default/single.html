@@ -46,7 +46,7 @@
             </span>{{ end }}
         </p>
     </header>
-    <div class="post-content">
+    <div class="post-content{{ if .Params.numbered_headings }} numbered-headings{{ end }}">
         {{ .Content }}
     </div>
 

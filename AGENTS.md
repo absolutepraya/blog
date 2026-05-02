@@ -70,6 +70,7 @@ Post content here in standard Markdown.
 | `description` | Yes | Short summary for meta tags and previews |
 | `tags` | No | Array of tag strings |
 | `toc` | No | Side outline (default: `true`). Set `false` to hide the left-side TOC on desktop |
+| `numbered_headings` | No | Set `true` to auto-number `h2`/`h3` headings (`1.`, `1.1.`, ...) in body and side outline |
 | `math` | No | Set `true` to enable LaTeX math rendering via KaTeX |
 | `draft` | No | Set `true` to hide from production builds |
 | `password_hash` | No | SHA-256 hex digest of post password. Shows a client-side password prompt; cached in localStorage per post slug |

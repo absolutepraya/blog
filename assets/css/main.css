@@ -1367,3 +1367,43 @@ pre.mermaid {
   overflow-y: hidden;
   padding: 0.5rem 0;
 }
+
+/* --- Numbered Headings (opt-in via front matter `numbered_headings: true`) --- */
+.post-content.numbered-headings {
+  counter-reset: heading-h2;
+}
+.post-content.numbered-headings h2 {
+  counter-reset: heading-h3;
+  counter-increment: heading-h2;
+}
+.post-content.numbered-headings h2::before {
+  content: counter(heading-h2) ". ";
+  color: var(--text-muted);
+}
+.post-content.numbered-headings h3 {
+  counter-increment: heading-h3;
+}
+.post-content.numbered-headings h3::before {
+  content: counter(heading-h2) "." counter(heading-h3) ". ";
+  color: var(--text-muted);
+}
+
+/* Mirror numbering in the side outline when the post body uses it */
+.side-outline-inner.numbered {
+  counter-reset: outline-h2;
+}
+.side-outline-inner.numbered .side-outline-item[data-level="2"] {
+  counter-reset: outline-h3;
+  counter-increment: outline-h2;
+}
+.side-outline-inner.numbered .side-outline-item[data-level="2"]::before {
+  content: counter(outline-h2) ". ";
+  color: var(--text-muted);
+}
+.side-outline-inner.numbered .side-outline-item[data-level="3"] {
+  counter-increment: outline-h3;
+}
+.side-outline-inner.numbered .side-outline-item[data-level="3"]::before {
+  content: counter(outline-h2) "." counter(outline-h3) ". ";
+  color: var(--text-muted);
+}

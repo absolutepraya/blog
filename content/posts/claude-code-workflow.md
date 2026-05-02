@@ -4,6 +4,7 @@ date: 2026-03-13
 description: "A walkthrough of the AI development setup I actually use across Claude Code, OpenCode, shared skills, MCP tools, Superset workspaces, and remote workflows on my VPS and phone."
 tags: ["ai", "developer-tools", "workflow", "claude-code", "opencode"]
 toc: true
+numbered_headings: true
 ---
 
 People keep asking me how my AI development setup actually works. Friends, classmates, and engineers I meet do not usually want a model leaderboard. They want the practical version: which tools I use, how they fit together, what runs locally, what runs on my VPS, and how I keep the whole thing coherent.

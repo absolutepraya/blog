@@ -562,6 +562,9 @@
             // Inner scrollable wrapper
             var inner = document.createElement('div');
             inner.className = 'side-outline-inner';
+            if (document.querySelector('.post-content.numbered-headings')) {
+                inner.classList.add('numbered');
+            }
             outline.appendChild(inner);
 
             // Build track line
