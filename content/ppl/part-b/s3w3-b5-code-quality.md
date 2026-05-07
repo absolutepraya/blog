@@ -64,8 +64,12 @@ Bulk client delete used to be a one-step Dialog: select clients, click Delete, d
 MR !257 (SIRA-315) brings bulk delete to parity:
 
 - Step 1 lists selected clients with an invoice-count badge per client and a destructive warning
-- Step 2 (only shown when at least one client has invoices) requires the user to type `hapus N klien` literally before the destructive button enables
+- Step 2 (only shown when at least one client has invoices) requires the user to type a phrase including the count (e.g. `hapus 2 klien`) literally before the destructive button enables
 - When no selected client has invoices, step 1's destructive button deletes immediately (matches single-delete fast path)
+
+![Step 1 of the bulk-delete Sheet on the Klien page: header reads "Hapus 2 Klien", the two selected clients are listed (PT Cinta Pertama with a "3 invoice" badge, PT Muhammad Abdurrochim with no badge), and a warning explains that 1 of 2 clients has invoices and all related invoices, payments, and history will be deleted permanently](/images/ppl/s3w3-b5-bulk-delete-step1.png)
+
+The step-1 screenshot above shows the per-client invoice count badge and the cascade warning. The destructive button label is `Ya, Lanjutkan` because at least one client has invoices, so the flow goes to step 2 instead of deleting immediately. If no selected client had invoices, the button would say `Hapus Permanen` and would delete on click (matching the single-delete fast path).
 
 The quality angle: **the more dangerous the operation, the higher the friction should be**. Single-delete already had this friction; bulk-delete (which can wipe many clients in one click) had less. The parity fix closes the asymmetry without inventing a new pattern, it reuses the existing `DeleteClientSheet` flow that the team already knew.
 

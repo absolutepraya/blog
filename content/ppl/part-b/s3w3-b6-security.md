@@ -43,18 +43,20 @@ The principle: **whitelist what's needed, never widen the default**. Every CSP e
 
 This sits in the security/safety borderlands. Bulk client delete in the AR Staff dashboard could wipe many clients in one click. Pre-MR, the only friction was a Confirm/Cancel dialog. A misclick on the wrong row plus a habituated "Confirm" reflex equals a row of customer records gone.
 
-MR !257 (SIRA-315) brings bulk delete to parity with single delete: a 2-step Sheet where step 2 requires typing `hapus N klien` literally before the destructive button enables.
+MR !257 (SIRA-315) brings bulk delete to parity with single delete: a 2-step Sheet where step 2 requires typing a phrase that includes the count of clients being deleted (e.g. `hapus 2 klien`) before the destructive button enables.
 
 ```typescript
 const expectedPhrase = `hapus ${selectedCount} klien`
 const isPhraseTyped = typedConfirmation === expectedPhrase
 // Destructive button:
 <Button variant="destructive" disabled={!isPhraseTyped} onClick={handleBulkDelete}>
-    Hapus {selectedCount} Klien
+    Hapus Permanen
 </Button>
 ```
 
-The friction is intentional. Typing `hapus 5 klien` exactly takes a few seconds, but those seconds are exactly when the user re-reads the count and the affected names. Misclicks become impossible because the typed phrase has to match the count being deleted.
+![Step 2 of the bulk-delete Sheet: header "Hapus 2 Klien", a red warning that the action is irreversible, instruction to type the confirmation phrase, the input field with placeholder "hapus 2 klien", and the "Hapus Permanen" button rendered disabled because the phrase has not yet been typed](/images/ppl/s3w3-b6-bulk-delete-step2.png)
+
+The friction is intentional. Typing `hapus 2 klien` exactly takes a few seconds, but those seconds are exactly when the user re-reads the count and the affected client names from step 1. The screenshot shows the destructive button rendered disabled (faded styling) because the input is empty. Only when the typed phrase matches the expected one does the button enable. Misclicks become structurally impossible because the typed phrase has to match the count being deleted.
 
 The backend simplification is the corresponding move: removing the defensive "skip clients with invoices" branch from `client_service.bulk_action`. That defensive shim existed because, before SIRA-280's `ON DELETE CASCADE`, deleting a client with invoices would leave dangling rows. With cascade in place, the skip is dead code AND it was masking the real protection (the UI gate). Removing it makes the security model legible: the gate is in the UI; the backend trusts the gate.
 
