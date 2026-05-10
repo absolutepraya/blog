@@ -7,6 +7,8 @@ toc: true
 numbered_headings: true
 ---
 
+{{< figure src="/images/i-built-a-friend-who-lives-on-my-vps/hermes-landing.png" alt="Hermes Agent landing page from Nous Research, with the headline 'The agent that grows with you'" caption="The framework underneath everything in this post: Hermes Agent by Nous Research." >}}
+
 For about a year my VPS was a pet I had to drive in to feed. I would mosh into it at 11pm to bump a DNS record, restart a container, or check whether a cron actually fired. The work itself was thirty seconds. The friction was the laptop, the terminal, the shell prompt, the context-switch.
 
 What I wanted was something simpler. I wanted to text my server.
@@ -36,6 +38,12 @@ The architecture I cared about:
 - skills auto-discovered from `~/.agents/skills/` (the same canonical directory I already use for Claude Code, OpenCode, Codex, Cursor)
 - per-platform configuration, including muting tool-call previews and disabling auto-thread creation
 - streaming responses, including progressive message editing
+
+Setup is two short wizard prompts. The first picks the model provider from a long menu of options (anything from Nous Portal and Anthropic to GitHub Copilot or a local Ollama). The second picks which messaging platforms to wire. Both are arrow-key TUIs, which feels right for a self-hosted thing.
+
+{{< figure src="/images/i-built-a-friend-who-lives-on-my-vps/hermes-provider-menu.png" alt="Hermes Agent provider selection TUI menu listing Nous Portal, OpenRouter, LM Studio, Anthropic, OpenAI Codex, GitHub Copilot, and many other providers" caption="Provider menu in `hermes setup`. Pick where the model runs. I went with GitHub Copilot routing Claude Sonnet 4.6, but switching is one command away." >}}
+
+{{< figure src="/images/i-built-a-friend-who-lives-on-my-vps/hermes-platform-menu.png" alt="Hermes Agent gateway platform selection TUI listing Telegram, Discord, Slack, Mattermost, WhatsApp, Signal, Email, and others" caption="Platform menu in `hermes gateway setup`. Pick which transports the agent answers on. Telegram, Discord, and WhatsApp are the three I run." >}}
 
 Visually, the whole pipeline looks like this:
 
@@ -75,6 +83,33 @@ I locked the persona into three layers, all loaded into every conversation:
 3. `MEMORY.md` covers guests. Right now that is one peer (my partner). When messages come from her UID, default-cautious applies. Read-only stuff is fine. Anything that touches my data, my projects, or my accounts triggers a permission flow: Yanto DMs me on the same chat thread, asks "she wants X, oke gua bantu?", waits for my reply.
 
 Three flat markdown files. No vector store, no embeddings, no semantic search. The whole identity is text.
+
+The way these layers compose into a single agent context every turn looks like this:
+
+```mermaid
+graph TD
+    Msg["Incoming message<br>(text + sender UID + platform)"]
+
+    subgraph Stack["Persona stack, assembled into the system prompt"]
+        direction TB
+        L1["1. ABSOLUTE OUTPUT RULES<br>hard constraints, override everything below<br>(no em dash, no trailing emoji, self-check)"]
+        L2["2. SOUL.md<br>universal voice, persona, refusal patterns"]
+        L3["3. USER.md<br>about the owner: identity, projects,<br>capabilities, Todoist defaults"]
+        L4["4. MEMORY.md<br>about guests: who they are,<br>permission flow rules"]
+    end
+
+    Msg --> Stack
+    Stack --> Match{"Sender UID matches?"}
+
+    Match -- "Owner UID" --> Aggressive["Default-aggressive autopilot<br>just-do reversible work,<br>confirm before destructive"]
+    Match -- "Guest UID" --> Cautious["Default-cautious<br>reads OK, sensitive asks<br>route through owner first"]
+    Match -- "Unknown UID" --> Block["Blocked at allowlist gate<br>(never reaches the agent)"]
+
+    Aggressive --> Reply["Agent reply<br>obeying all 4 layers"]
+    Cautious --> Reply
+```
+
+The hard rules win on top. The persona shapes voice. The owner and guest files together decide who is talking and how cautious to be. Identity-aware behavior comes for free, because the same UID-to-defaults mapping is in plain text right next to the persona.
 
 ### The Hard Rules
 
@@ -116,6 +151,16 @@ On top of skills, Yanto has MCP servers wired into Hermes:
 The Google Maps wiring deserves its own paragraph. I told Yanto that for any "find me a place" question, he should use both Google Maps and Brave together: Maps for the structured data (rating, hours, distance from a known anchor like my home in Pancoran or my partner's place in Tangerang), Brave for the vibe context (Lemon8, PergiKuliner, blog reviews in Indonesian about whether a place is actually homey or just trendy). Combined, the recommendation feels grounded instead of a Yelp-style summary.
 
 There is also an [RSSHub](https://docs.rsshub.app/) instance running on the same VPS at `localhost:1200`, exposed publicly at `rss.abhipraya.dev` behind basic auth. RSSHub turns almost any source on the web into an RSS feed, which means Yanto has a uniform way to read CNBC top news, Bloomberg markets, Bloomberg technology, Bloomberg opinion, and selected X user timelines without me writing a custom scraper for each. When I ask "to apa kabar pasar US" or "Bloomberg ada apa yang lagi heat", Yanto curls the relevant RSSHub route from inside the VPS, parses the XML with a quick Python one-liner, picks the top five items, and summarizes in his own voice with a citation. For named X accounts the route `/twitter/user/<handle>` works fine using a single auth token I keep in the RSSHub container env. Search-by-keyword on X is gated upstream, so for "what is X saying about $XAUUSD" type questions Yanto falls back to Brave with a `site:x.com` filter. The pattern in his memory file is explicit about which path to use for which kind of question, and to be honest with me when a route is broken instead of fabricating a summary.
+
+### Yanto Has Reach Into All My Self-Hosted Stack
+
+The RSSHub story is one example of a broader pattern: Yanto can manage every self-hosted service on the VPS, because the VPS is his home. The Docker stack on this box includes RSSHub, Nextcloud (with Collabora for live document editing), Karakeep for bookmarks, Cap.so for video clips with its own MinIO and MediaServer, Glances for monitoring, qBittorrent, and a small zoo of supporting Redis and database containers. Every one of those exposes either a CLI, a REST API, or a writable directory on disk that Yanto can hit through normal shell calls.
+
+The most concrete example is Nextcloud. There is a `/nextcloud` skill in `~/.agents/skills/` that wraps the Nextcloud WebDAV and OCS APIs. When I tell Yanto something like "to share folder Project-X ke email gina, view-only, expire seminggu", he invokes the skill, creates a public share link with the correct permission flags and expiry, and DMs the link back to me. When I ask "to upload draft proposal yang barusan gua taro di Downloads ke Nextcloud folder Work, trus kasih link", he uploads the file, places it in the right folder, generates a link, and replies with the URL plus the file size. Same pattern works for moving files around, listing folder contents, checking quota, or generating short-lived links for clients.
+
+The friction this collapses is real. Sharing a Nextcloud folder used to mean: open a browser, navigate to the right folder, click Share, set permissions, set expiry, copy link, paste into wherever. Now it is one sentence in Telegram. The cost dropped from a minute to ten seconds, which means I actually do it instead of putting it off.
+
+The same logic applies across the rest of the stack. RSSHub for feeds. Glances for "is the box healthy right now". qBittorrent for legal Linux ISO downloads through its API. Karakeep for bookmark dumps when I want a clean reading list. The skills are thin wrappers, the agent is what makes them feel cohesive.
 
 ### Reading the Group Chat
 
