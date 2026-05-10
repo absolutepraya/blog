@@ -1,8 +1,8 @@
 ---
 title: "I Built a Friend Who Lives on My VPS"
 date: 2026-05-10
-description: "How I replaced 1 GB of always-on Claude Code with a Hermes Agent named Yanto. A persistent personal assistant that lives on my VPS, talks to me through Telegram and Discord, knows my projects and partner, and handles small ops from a phone keyboard."
-tags: ["ai", "hermes-agent", "personal-assistant", "vps", "self-hosted", "telegram", "discord"]
+description: "How I replaced 1 GB of always-on Claude Code with a Hermes Agent named Yanto. A persistent personal assistant that lives on my VPS, talks to me through Telegram, Discord, and WhatsApp, knows my projects and partner, and handles small ops from a phone keyboard."
+tags: ["ai", "hermes-agent", "personal-assistant", "vps", "self-hosted", "telegram", "discord", "whatsapp"]
 toc: true
 numbered_headings: true
 ---
@@ -11,7 +11,7 @@ For about a year my VPS was a pet I had to drive in to feed. I would mosh into i
 
 What I wanted was something simpler. I wanted to text my server.
 
-So I built that. The server now has a name, a personality, and two messaging accounts. Its name is Yanto. It runs on Hermes Agent. It talks to me on Telegram and Discord, knows my projects, knows my partner, knows when to ask permission, and handles roughly every "small thing" I would otherwise SSH for.
+So I built that. The server now has a name, a personality, and three messaging accounts. Its name is Yanto. It runs on Hermes Agent. It talks to me on Telegram, Discord, and WhatsApp, knows my projects, knows my partner, knows when to ask permission, and handles roughly every "small thing" I would otherwise SSH for.
 
 This post is about the setup, the tradeoffs, and why a personality layer made the whole thing feel less like a tool and more like a teammate.
 
@@ -42,7 +42,7 @@ Visually, the whole pipeline looks like this:
 ```mermaid
 graph TD
     User["You / Partner / Guest"]
-    User --> Platform["Telegram / Discord<br>(plus Slack, Signal, Email,<br>and more if wired)"]
+    User --> Platform["Telegram / Discord / WhatsApp<br>(plus Slack, Signal, Email,<br>and more if wired)"]
     Platform --> Gateway["Hermes Gateway<br>single Python process, ~100 MB"]
     Gateway --> Hooks["Plugin hooks<br>(e.g. discord-context buffer)"]
     Hooks --> Persona["Persona layer<br>SOUL.md + USER.md + MEMORY.md"]
@@ -114,6 +114,8 @@ On top of skills, Yanto has MCP servers wired into Hermes:
 - `todoist` MCP for task management
 
 The Google Maps wiring deserves its own paragraph. I told Yanto that for any "find me a place" question, he should use both Google Maps and Brave together: Maps for the structured data (rating, hours, distance from a known anchor like my home in Pancoran or my partner's place in Tangerang), Brave for the vibe context (Lemon8, PergiKuliner, blog reviews in Indonesian about whether a place is actually homey or just trendy). Combined, the recommendation feels grounded instead of a Yelp-style summary.
+
+There is also an [RSSHub](https://docs.rsshub.app/) instance running on the same VPS at `localhost:1200`, exposed publicly at `rss.abhipraya.dev` behind basic auth. RSSHub turns almost any source on the web into an RSS feed, which means Yanto has a uniform way to read CNBC top news, Bloomberg markets, Bloomberg technology, Bloomberg opinion, and selected X user timelines without me writing a custom scraper for each. When I ask "to apa kabar pasar US" or "Bloomberg ada apa yang lagi heat", Yanto curls the relevant RSSHub route from inside the VPS, parses the XML with a quick Python one-liner, picks the top five items, and summarizes in his own voice with a citation. For named X accounts the route `/twitter/user/<handle>` works fine using a single auth token I keep in the RSSHub container env. Search-by-keyword on X is gated upstream, so for "what is X saying about $XAUUSD" type questions Yanto falls back to Brave with a `site:x.com` filter. The pattern in his memory file is explicit about which path to use for which kind of question, and to be honest with me when a route is broken instead of fabricating a summary.
 
 ### Reading the Group Chat
 
