@@ -5,6 +5,8 @@ description: "How I replaced 1 GB of always-on Claude Code with a Hermes Agent n
 tags: ["ai", "hermes-agent", "personal-assistant", "vps", "self-hosted", "telegram", "discord", "whatsapp"]
 toc: true
 numbered_headings: true
+aliases:
+  - /posts/meet-my-friend-who-lives-on-my-vps/
 ---
 
 {{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-landing.png" alt="Hermes Agent landing page from Nous Research, with the headline 'The agent that grows with you'" caption="The framework underneath everything in this post: Hermes Agent by Nous Research." >}}
@@ -76,7 +78,7 @@ The agent is the boring half. The interesting half was deciding what kind of pre
 
 I did not want "Hermes the helpful assistant." I wanted something specific. A Jakartan friend who happens to have shell access. Casual, technically competent, drops slang naturally, makes light fun of me when I deserve it, refuses to act on serious things without confirming. The character ended up being Don Yanto El Guapo, "Yanto" or "to" in casual messages.
 
-I locked the persona into three layers, all loaded into every conversation:
+I locked the persona into three layers, all loaded into every conversation. One file for the universal voice, one for what he knows about me, one for what he knows about everyone else:
 
 1. `SOUL.md` defines the universal voice and hard rules. Lowercase by default, no em dash, no trailing emoji, no corporate hedge phrases, jaksel slang welcome, cringe level 3 acceptable. Self-check rules. Refusal patterns for catastrophic actions.
 2. `USER.md` is about me. My identity, my role at university, my internships, my projects, my Todoist defaults, my work on a course called PPL, my GitLab username on the internal sira instance, my home location. This is "owner" context. Default-aggressive autopilot applies whenever a message comes from me.

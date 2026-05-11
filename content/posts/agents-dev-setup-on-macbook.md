@@ -1,17 +1,20 @@
 ---
-title: "The Agentic System I Built"
+title: "Three Coding Agents, One Brain"
 date: 2026-03-13
-description: "A walkthrough of the AI dev setup I actually use across Claude Code, OpenCode, shared skills, MCP tools, Superset workspaces, Tailscale, and remote workflows on my VPS and phone."
-tags: ["ai", "developer-tools", "workflow", "claude-code", "opencode"]
+description: "A walkthrough of the AI dev setup I actually use on my MacBook: Claude Code, Codex, pi, shared skills, MCP tools, Herdr workspaces, WezTerm, voice dictation, and a dotfiles-backed agent architecture."
+tags: ["ai", "developer-tools", "workflow", "claude-code", "codex", "herdr"]
 toc: true
 numbered_headings: true
+aliases:
+  - /posts/claude-code-workflow/
+  - /posts/macbook-agent-dev-setup/
 ---
 
-People keep asking how my AI dev setup actually works. Friends, classmates, engineers I bump into - most of them don't really want a model leaderboard. They want the practical version: which tools I use, how they fit together, what runs locally, what runs on my VPS, and how I keep the whole thing from drifting into chaos.
+People keep asking how my AI dev setup actually works. Friends, classmates, engineers I bump into - most of them don't really want a model leaderboard. They want the practical version: which tools I use, how they fit together, what runs locally on my MacBook, and how I keep the whole thing from drifting into chaos.
 
-Short answer: I don't lean on one AI coding tool for everything. I run a shared workflow, shared instructions, shared skills, and shared commands across multiple clients. The two main ones are [Claude Code](https://www.anthropic.com/product/claude-code) and [OpenCode](https://opencode.ai/). Around them sit the supporting pieces: specialist skills, MCP tools, a remote VPS, and a workspace layer that keeps sessions isolated without making the environment feel fragmented.
+Short answer: I don't lean on one AI coding tool for everything. I run a shared workflow, shared instructions, shared skills, and shared commands across multiple clients. The three I reach for on the MacBook are [Claude Code](https://www.anthropic.com/product/claude-code), [Codex](https://openai.com/codex/), and [pi](https://github.com/withpi/codemode). Around them sit the supporting pieces: specialist skills, MCP tools, voice dictation, dotfiles sync, and a workspace layer that keeps sessions isolated without making the environment feel fragmented.
 
-If you're already on [GitHub Copilot](https://github.com/features/copilot), [Cursor](https://cursor.com/), or [Codex](https://openai.com/codex/) and curious what a CLI-first, agent-heavy workflow looks like once it grows up, this is mine.
+If you're already on [GitHub Copilot](https://github.com/features/copilot), [Cursor](https://cursor.com/), Claude Code, or Codex and curious what a CLI-first, agent-heavy workflow looks like once it grows up, this is mine.
 
 ## Why I Use Multiple Agents
 
@@ -21,7 +24,7 @@ Some are great for deep terminal-native sessions. Some let me swap providers fre
 
 That's the leverage. I keep the process stable and let the tools specialize. Shared instructions, shared skills, shared commands, shared infrastructure - that means I can move between agents without restarting from zero.
 
-Claude Code and OpenCode are the center of the story. Codex and Cursor are supporting tools, useful in specific spots, but not the main operating system of my workflow.
+Claude Code, Codex, and pi are the center of the story right now. OpenCode is deliberately deferred for me at the moment. I still like the idea of it, especially the provider flexibility, but my current local setup is built around the tools whose harnesses I actually want to live inside every day.
 
 ## The Workflow: Idea to Shipped Code
 
@@ -91,18 +94,18 @@ graph TD
 
 The workflow above doesn't happen by magic. The trick is that the environment is shared.
 
-At the project level I still care a lot about instruction files like `AGENTS.md` and `CLAUDE.md`. But at user scope, I keep the shared source of truth in `.agents`, then expose it into different clients through thin wrappers. Behavior doesn't reset when I jump from Claude Code to OpenCode, or from my MacBook to my VPS.
+At the project level I still care a lot about instruction files like `AGENTS.md` and `CLAUDE.md`. But at user scope, I keep the shared source of truth in `.agents`, then expose it into different clients through thin wrappers. Behavior doesn't reset when I jump from Claude Code to Codex, pi, or a remote shell.
 
 ### Shared Skills And Commands
 
-The shared pieces are what make the system feel durable:
+The idea is simple: instead of reconfiguring every tool, I keep one canonical folder of instructions, skills, and commands, and let each tool read from it. The shared pieces are what make the system feel durable:
 
 - shared instructions
 - shared skill definitions
 - shared command docs
 - thin tool-specific wrappers per runtime
 
-The same idea shows up in different places: I keep one conceptual command or skill, and surface it in Claude Code, OpenCode, Codex, or Cursor in the way each tool expects. The wrapper changes, the intent stays stable.
+The same idea shows up in different places: I keep one conceptual command or skill, and surface it in Claude Code, Codex, pi, Cursor, or OpenCode in the way each tool expects. The wrapper changes, the intent stays stable.
 
 That's also why the setup survives migration. The workflow lives in files and conventions, not in habit.
 
@@ -116,26 +119,26 @@ graph TD
     A --> COMMANDS["commands/<br/>shared command docs"]
 
     AGENTS -->|symlink| CC
-    AGENTS -->|symlink| OC
+    AGENTS -->|symlink| PI
 
     SKILLS -->|symlink farm| CC
-    SKILLS -->|symlink farm| OC
     SKILLS -->|symlink farm| CX
+    SKILLS -->|symlink farm| PI
     SKILLS -->|symlink farm| CR
 
     COMMANDS -->|thin wrapper| CC
-    COMMANDS -->|thin wrapper| OC
     COMMANDS -->|thin wrapper| CX
+    COMMANDS -->|thin wrapper| PI
     COMMANDS -->|thin wrapper| CR
 
     CC[Claude Code]
-    OC[OpenCode]
     CX[Codex]
+    PI[pi]
     CR[Cursor]
 
     style CC fill:#DE7356,color:#fff,stroke:#a35140,stroke-width:2px
-    style OC fill:#ffffff,color:#000,stroke:#888,stroke-width:2px
     style CX fill:#74AA9C,color:#fff,stroke:#4f7d72,stroke-width:2px
+    style PI fill:#111111,color:#fff,stroke:#888,stroke-width:2px
     style CR fill:#ffffff,color:#000,stroke:#888,stroke-width:2px
 ```
 
@@ -162,12 +165,13 @@ The specific names don't matter much. The point is the workflow stops depending 
 The MCP-backed tools I rely on most:
 
 - [Context7](https://context7.com/) for docs lookup. Easiest way to dodge stale library guesses.
-- [Exa MCP](https://github.com/exa-labs/exa-mcp-server) for web search.
-- [Firecrawl MCP](https://github.com/firecrawl/firecrawl-mcp-server) for scraping live web pages when I need the actual content.
+- [Brave Search MCP](https://github.com/brave/brave-search-mcp-server) for general discovery.
 - [Linear MCP](https://linear.app/docs/mcp) for issues and project tracking.
 - [Todoist MCP](https://github.com/Doist/todoist-ai) for task capture.
+- [Playwright MCP](https://github.com/microsoft/playwright-mcp) and Chrome DevTools MCP for browser-backed checks.
+- Telegram MCP for workflows that need to read or write Telegram state directly.
 
-Honest caveat: I keep mentioning Exa and Firecrawl because they've genuinely been part of my setup. If I were optimizing for the longest-lasting default today, I'd lean toward [Brave Search MCP](https://github.com/brave/brave-search-mcp-server) for discovery and the native `webfetch` for pulling page content. Search with one tool, fetch with a simpler primitive, and only bring in heavier scraping when I actually need it.
+The recent improvement is that Codex is no longer the only client with the full MCP surface. I mirrored the same MCP list into pi through a small bridge extension, so pi can call the same Todoist, Linear, browser, docs, Telegram, and search tools instead of becoming a second-class terminal client.
 
 ### When I Prefer CLI Over MCP
 
@@ -182,7 +186,7 @@ Google ships [an official CLI for Workspace](https://github.com/googleworkspace/
 - **Calendar** - list events, create events, find free slots, RSVP.
 - **Slides** - read and write decks.
 
-{{< figure src="/images/claude-code-workflow/gws-skills.png" alt="Google Workspace CLI skills installed locally, covering sheets, docs, drive, gmail, calendar, and slides" caption="The full set of Google Workspace skills I keep installed locally." >}}
+{{< figure src="/images/macbook-agent-dev-setup/gws-skills.png" alt="Google Workspace CLI skills installed locally, covering sheets, docs, drive, gmail, calendar, and slides" caption="The full set of Google Workspace skills I keep installed locally." >}}
 
 The reason I prefer CLI over MCP here: the CLI is faster to invoke, faster to debug, doesn't require an always-on MCP process, and the skills wrap each command with the right context the agent needs. For a tool surface this big, that ergonomic win matters.
 
@@ -190,7 +194,7 @@ The reason I prefer CLI over MCP here: the CLI is faster to invoke, faster to de
 
 The status line at the bottom of the terminal is small, but it's the part of the interface I look at most during a long session. I use [ccstatusline](https://github.com/sirmalloc/ccstatusline). It shows context usage, the current model, git branch, active tool calls, and todo progress in one strip, fully configurable. Once context health is visible at a glance, long sessions stop turning into nasty surprises.
 
-{{< figure src="/images/claude-code-workflow/ccstatusline.png" alt="ccstatusline showing model, context usage, git branch, and tool activity" caption="ccstatusline is the small bar I rely on most. It keeps the things I care about visible without me having to ask." >}}
+{{< figure src="/images/macbook-agent-dev-setup/ccstatusline.png" alt="ccstatusline showing model, context usage, git branch, and tool activity" caption="ccstatusline is the small bar I rely on most. It keeps the things I care about visible without me having to ask." >}}
 
 ## Skills I Reach For
 
@@ -214,9 +218,9 @@ If you're hunting for new skills, [skills.sh](https://skills.sh/) is the place t
 
 ### Usage Monitoring
 
-[OpenUsage](https://www.openusage.ai/) made the whole stack easier to live with. I use it to monitor usage limits across the AI products I pay for instead of checking each one separately. Once you're regularly moving between Claude, Codex, Cursor, and OpenCode Go, having one dashboard is more useful than it sounds.
+[OpenUsage](https://www.openusage.ai/) made the whole stack easier to live with. I use it to monitor usage limits across the AI products I pay for instead of checking each one separately. Once you're regularly moving between Claude, Codex, Cursor, and provider-backed tools, having one dashboard is more useful than it sounds.
 
-{{< figure src="/images/claude-code-workflow/openusage.png" alt="OpenUsage showing usage across multiple AI coding tools" caption="OpenUsage gives me one place to see how hard I'm pushing the different AI tools I use." >}}
+{{< figure src="/images/macbook-agent-dev-setup/openusage.png" alt="OpenUsage showing usage across multiple AI coding tools" caption="OpenUsage gives me one place to see how hard I'm pushing the different AI tools I use." >}}
 
 ## Where Each Tool Fits
 
@@ -226,33 +230,46 @@ If you're hunting for new skills, [skills.sh](https://skills.sh/) is the place t
 
 It's also where the plugin and workflow ecosystem first clicked for me. For strong orchestration in a terminal-first environment, Claude Code is still a big part of the picture.
 
-### OpenCode
+### Codex
 
-[OpenCode](https://opencode.ai/) is the most flexible part of the stack. Connectors let me tap into my provider plans across [GitHub Copilot](https://github.com/features/copilot), [OpenAI](https://openai.com/), and [OpenCode Go](https://opencode.ai/go). The one notable exception is Claude Code itself - that can no longer be connected into OpenCode the way I used to want. Even with that limitation, OpenCode still fits the same shared environment and makes a great daily driver when I want workflow benefits without tying everything to one provider.
+[Codex](https://openai.com/codex/) is where I go when I specifically want OpenAI's own models inside the harness designed for them. The CLI feels opinionated in a useful way: permissions, goals, tool calls, context, and verification all sit in the same loop.
 
-It's also open source and comfortable across terminal, desktop, and web. That matters once the workflow leaves the laptop and starts involving remote access and the phone.
+The feature I use more than I expected is `/goal`. It gives a long session a durable objective instead of relying on whatever happens to be visible in the latest prompt. For complicated work, that matters. It lets the agent keep the north star in view while still moving through concrete shell work and file edits.
 
-### Codex And Cursor
+### pi
 
-[Codex](https://openai.com/codex/) and [Cursor](https://cursor.com/) are supporting tools, not the center of gravity. I want them to fit the shared workflow, not define it.
+[pi](https://github.com/withpi/codemode) is my overflow and provider-flexibility lane. I use it when I want models or plans outside Claude Code and Codex, especially GitHub Copilot Enterprise and OpenCode Go.
+
+The important part is that pi is not a separate world. It loads the same user instructions and now has a bridge to the same MCP tools Codex uses. That makes it useful as an extra execution surface instead of a disconnected experiment.
+
+### OpenCode, Deferred
+
+[OpenCode](https://opencode.ai/) is still interesting to me, but it is not the centerpiece of this version of the setup. The provider story is attractive, and I still like the shape of the project, but right now I get the best daily split from Claude Code, Codex, and pi.
 
 That's the pattern across the whole setup. The agent should be swappable more often than the process.
 
-## Superset As The Workspace Layer
+## Herdr As The Workspace Layer
 
-These days the center of gravity for my local workflow isn't really a terminal emulator - it's [Superset](https://superset.sh/).
+These days the center of gravity for my local workflow isn't really a terminal emulator. It is [Herdr](https://herdr.dev/), running inside WezTerm.
 
-Superset is where the parallel-agent side of my workflow becomes comfortable instead of chaotic. Isolated workspaces, persistent sessions, fast context switching, and a cleaner way to run multiple tasks without my machine becoming a pile of half-related branches and tabs.
+I used Superset for a while and liked the concept, but I wanted something more reliable and less tied to a third-party session model while Superset v2 settles. Herdr is closer to the thing I wanted: a tmux-like workspace manager built for agent-heavy terminal work, with spaces, tabs, panes, session persistence, and a config file I can sync with the rest of my dotfiles.
 
-It also matches how I actually work now. I still use normal terminals, but I no longer think of WezTerm or Ghostty as the primary story. Superset is the workspace layer that makes the system feel operational.
+{{< figure src="/images/macbook-agent-dev-setup/herdr.png" alt="Herdr workspace in WezTerm showing Claude Code, Codex, and pi running side by side, with agent status monitored in the bottom-left agents section" caption="Herdr is the current workspace layer. In this screenshot Claude Code, Codex, and pi are all running side by side, while the bottom-left agents section monitors their status." >}}
 
-The other reason I love it: I can wire workspace setup into Superset itself. When I create a new git worktree, Superset can automatically copy env files, shift ports so they don't collide with the main workspace or other worktrees, install packages, and start or seed supporting infra. All the boring setup work disappears. Most of the time, after Superset spins up the workspace, I just hit run.
+The setup is opinionated:
 
-{{< figure src="/images/claude-code-workflow/superset.png" alt="Superset workspace showing parallel agent sessions" caption="Superset is the workspace layer I use when I want isolation without losing continuity." >}}
+- WezTerm stays mostly as a stable outer shell.
+- Herdr owns spaces, tabs, panes, focus movement, and session layout.
+- Claude Code, Codex, and pi run side by side inside Herdr.
+- The bottom-left agents section gives me a live status board for those sessions, so I can see which agent is idle, active, or parked without opening every pane.
+- My WezTerm status bar shows Herdr workspace/tab context, CPU, memory, network, and cron health.
+- Keybindings are mapped so normal macOS muscle memory still works: `Cmd+T` for a tab, `Cmd+W` to close a pane/tab, `Cmd+Shift+Arrow` for tab/workspace movement, and `Cmd+Option+Arrow` for focus movement.
 
-## Remote And Mobile
+The important distinction: I want the workspace layer to remember where work lives. I do not want every agent client to invent its own session model and force me to translate between them.
 
-I keep a small VPS at [Jetorbit](https://www.jetorbit.com/) - 4 vCPU, 8 GB RAM - and I use it as a real remote agent box, not just a place to SSH into for emergencies. Both Claude Code and OpenCode run there.
+## Remote Work
+
+I keep a small VPS at [Jetorbit](https://www.jetorbit.com/) - 4 vCPU, 8 GB RAM - and I use it as a real remote agent box, not just a place to SSH into for emergencies.
 
 Because my Mac and VPS share the same `.agents` architecture, remote work feels like the same system in a different place, not a separate environment I have to mentally translate.
 
@@ -262,9 +279,9 @@ Honestly, this might be the most important part of the whole setup, and I almost
 
 I have **zero public ingress ports open on my VPS**. No port 22 for SSH. Nothing. The only way anything reaches the box is through [Tailscale](https://tailscale.com/), which puts my MacBook, VPS, iPhone, and work laptop on the same private overlay network.
 
-That basically takes the external attack surface of my VPS down to zero. There's nothing to scan, nothing to brute-force, nothing for a stray bot to find. Every service I run - SSH, Mosh, the OpenCode web tunnel, anything - is only reachable from devices already on my tailnet.
+That basically takes the external attack surface of my VPS down to zero. There's nothing to scan, nothing to brute-force, nothing for a stray bot to find. Every service I run - SSH, Mosh, dashboards, internal web tools, anything - is only reachable from devices already on my tailnet.
 
-{{< figure src="/images/claude-code-workflow/tailscale.png" alt="Tailscale overlay network connecting personal devices privately" caption="Source: tailscale.com" >}}
+{{< figure src="/images/macbook-agent-dev-setup/tailscale.png" alt="Tailscale overlay network connecting personal devices privately" caption="Source: tailscale.com" >}}
 
 Compared to the usual "open port 22 with key auth, hope nobody finds the box" approach, this is dramatically better. And the ergonomics are nicer too - no firewall whitelisting, no jump hosts, no juggling per-service ACLs.
 
@@ -282,35 +299,13 @@ What that means in practice:
 
 For long-running agent work over flaky networks, this is the difference between "remote workflow that actually works" and "rage-quitting back to the laptop."
 
-For notifications, [notification-go](https://github.com/777genius/claude-notifications-go) is mainly relevant when I'm using Claude Code directly in a terminal. If I'm already inside Superset, Superset handles notifications by default, so I don't stack another layer on top.
-
-### OpenCode On The VPS
-
-For OpenCode I take a different path. I wrap `opencode --web` in a shell helper called `ocw` that fires up the OpenCode web server and `cloudflared` together. One command, stable URL on my own domain, accessible from anywhere on my tailnet (and through Cloudflare for the public-facing path).
-
-```mermaid
-graph LR
-    A[ocw command] --> B[opencode --web<br/>localhost:port]
-    A --> C[cloudflared tunnel]
-    C --> D[oc-vps.abhipraya.dev]
-    B -.serves via tunnel.-> D
-```
-
-That setup is especially good for phone access because OpenCode already has a strong browser-friendly surface.
-
-The notification story is similar here. If I'm using OpenCode inside Superset, Superset handles notifications. If I'm not, [WhisperCode](https://apps.apple.com/id/app/whispercode/id6759430954) gives me the mobile notification and interaction layer.
-
-### iPhone Access
-
-On my iPhone I use [WhisperCode](https://apps.apple.com/id/app/whispercode/id6759430954) - basically OpenCode on iOS with speech-to-text. It connects to the OpenCode web server and feels much closer to a native mobile client than wrestling with a terminal on a small screen.
-
-If I really want to, I can also just open the web endpoint in a browser.
+For notifications, [notification-go](https://github.com/777genius/claude-notifications-go) is mainly relevant when I'm using Claude Code directly in a terminal. If I'm already inside Herdr, the terminal workspace itself is where I want the notification surface to stay.
 
 ### Session Persistence
 
 All my shell sessions on the VPS are managed by my homemade [tmux-menu](https://github.com/absolutepraya/dotfiles/blob/config/vps/scripts/tmux-menu), powered by [fzf](https://github.com/junegunn/fzf). Reconnecting usually means resuming the latest session state instead of rebuilding context from scratch.
 
-{{< figure src="/images/claude-code-workflow/tmux-menu.png" alt="tmux-menu showing fzf-powered session picker on VPS" caption="tmux-menu is the first thing I see when I log into the VPS. Pick a session, jump back into it." >}}
+{{< figure src="/images/macbook-agent-dev-setup/tmux-menu.png" alt="tmux-menu showing fzf-powered session picker on VPS" caption="tmux-menu is the first thing I see when I log into the VPS. Pick a session, jump back into it." >}}
 
 The flow looks like this:
 
@@ -331,12 +326,30 @@ This part is easy to underestimate. A remote workflow gets dramatically better t
 
 But most of the time I prefer the SSH route on the VPS for Claude Code - the interface is more complete. Remote Control is useful, just not my default.
 
+The [iPhone version of this setup](/posts/agents-dev-setup-on-iphone/) is now different enough that I split it into its own post. The short version: Blink Shell, Mosh, Tailscale, tmux, and Wispr Flow. The phone is not trying to be a tiny MacBook. It is a remote control surface for agents that are already running somewhere better.
+
+## Voice Input
+
+Voice input is one of the highest-leverage parts of the setup, because prompt-writing is often the bottleneck once the tooling is good.
+
+On the MacBook I mostly use [Wispr Flow](https://wisprflow.ai/). It is polished, fast, and good at turning messy spoken thoughts into clean text. When I run out of the free tier, I switch to [Handy](https://handy.computer/), which is free and open source.
+
+{{< figure src="/images/macbook-agent-dev-setup/wisprflow.png" alt="Wispr Flow website showing voice-to-text positioning and macOS download" caption="Wispr Flow is my default dictation layer on desktop. It is the smoothest option when I want polished text quickly." >}}
+
+{{< figure src="/images/macbook-agent-dev-setup/handy.png" alt="Handy website showing the open-source speech-to-text app for macOS" caption="Handy is the fallback I actually keep around, because it is local, lightweight, and fast enough." >}}
+
+For Handy, the model choice matters. I use Parakeet V3 because it has the best speed and quality balance for my use. The custom-word list matters too: project names, tool names, Indonesian names, weird repo terms, `pnpm`, `MCP`, `Codex`, `Todoist`, and all the other words normal dictation mangles.
+
+{{< figure src="/images/macbook-agent-dev-setup/handy-model.png" alt="Handy transcription model settings showing Parakeet V3 as active" caption="Parakeet V3 is the Handy model I keep active. Fast, accurate, and light enough for daily use." >}}
+
+{{< figure src="/images/macbook-agent-dev-setup/handy-custom.png" alt="Handy custom words list containing project names and developer-tool terms" caption="Custom words are what make dictation usable for software work. Without them, every agent prompt turns into cleanup." >}}
+
 ## Quality Of Life
 
 Smaller things that don't define the workflow but make the daily experience better:
 
 - ccstatusline keeps context usage, active tools, and status visible in the status line.
-- notification-go for terminal-first Claude Code sessions when Superset isn't already handling notifications.
+- notification-go for terminal-first Claude Code sessions when Herdr is not the active notification surface.
 - Custom keybindings everywhere - once the interface becomes muscle memory, agent work feels much less awkward.
 - Effort level cranked high when I want the agent to think harder, even at extra cost.
 
