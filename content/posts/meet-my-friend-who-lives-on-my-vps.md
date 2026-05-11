@@ -1,5 +1,5 @@
 ---
-title: "I Built a Friend Who Lives on My VPS"
+title: "Meet My Friend Who Lives on My VPS"
 date: 2026-05-10
 description: "How I replaced 1 GB of always-on Claude Code with a Hermes Agent named Yanto. A persistent personal assistant that lives on my VPS, talks to me through Telegram, Discord, and WhatsApp, knows my projects and partner, and handles small ops from a phone keyboard."
 tags: ["ai", "hermes-agent", "personal-assistant", "vps", "self-hosted", "telegram", "discord", "whatsapp"]
@@ -7,7 +7,7 @@ toc: true
 numbered_headings: true
 ---
 
-{{< figure src="/images/i-built-a-friend-who-lives-on-my-vps/hermes-landing.png" alt="Hermes Agent landing page from Nous Research, with the headline 'The agent that grows with you'" caption="The framework underneath everything in this post: Hermes Agent by Nous Research." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-landing.png" alt="Hermes Agent landing page from Nous Research, with the headline 'The agent that grows with you'" caption="The framework underneath everything in this post: Hermes Agent by Nous Research." >}}
 
 For about a year my VPS was a pet I had to drive in to feed. I would mosh into it at 11pm to bump a DNS record, restart a container, or check whether a cron actually fired. The work itself was thirty seconds. The friction was the laptop, the terminal, the shell prompt, the context-switch.
 
@@ -41,9 +41,9 @@ The architecture I cared about:
 
 Setup is two short wizard prompts. The first picks the model provider from a long menu of options (anything from Nous Portal and Anthropic to GitHub Copilot or a local Ollama). The second picks which messaging platforms to wire. Both are arrow-key TUIs, which feels right for a self-hosted thing.
 
-{{< figure src="/images/i-built-a-friend-who-lives-on-my-vps/hermes-provider-menu.png" alt="Hermes Agent provider selection TUI menu listing Nous Portal, OpenRouter, LM Studio, Anthropic, OpenAI Codex, GitHub Copilot, and many other providers" caption="Provider menu in `hermes setup`. Pick where the model runs. I went with GitHub Copilot routing Claude Sonnet 4.6, but switching is one command away." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-provider-menu.png" alt="Hermes Agent provider selection TUI menu listing Nous Portal, OpenRouter, LM Studio, Anthropic, OpenAI Codex, GitHub Copilot, and many other providers" caption="Provider menu in `hermes setup`. Pick where the model runs. I went with GitHub Copilot routing Claude Sonnet 4.6, but switching is one command away." >}}
 
-{{< figure src="/images/i-built-a-friend-who-lives-on-my-vps/hermes-platform-menu.png" alt="Hermes Agent gateway platform selection TUI listing Telegram, Discord, Slack, Mattermost, WhatsApp, Signal, Email, and others" caption="Platform menu in `hermes gateway setup`. Pick which transports the agent answers on. Telegram, Discord, and WhatsApp are the three I run." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-platform-menu.png" alt="Hermes Agent gateway platform selection TUI listing Telegram, Discord, Slack, Mattermost, WhatsApp, Signal, Email, and others" caption="Platform menu in `hermes gateway setup`. Pick which transports the agent answers on. Telegram, Discord, and WhatsApp are the three I run." >}}
 
 Visually, the whole pipeline looks like this:
 
@@ -57,7 +57,7 @@ graph TD
     Persona --> Agent["Agent loop<br>LLM + tool calling"]
 
     Agent --> Skills["54 shared skills<br>~/.agents/skills/"]
-    Agent --> MCP["MCP servers<br>brave, google-maps,<br>context7, todoist"]
+    Agent --> MCP["MCP servers<br>brave, google-maps, yahoo-finance,<br>context7, todoist"]
     Agent --> Shell["Shell with smart approvals<br>(auto-yes safe, prompt risky)"]
 
     Skills --> Reply["Reply<br>(text + MEDIA:/path tags)"]
@@ -134,7 +134,8 @@ This is the unsexy reality of prompt engineering. Half the work is making sure y
 
 Yanto loads my entire shared `~/.agents/skills/` directory. That is 54 skills today, the same set my Claude Code and OpenCode use. A few I lean on most:
 
-- `chart` (formerly `chart-ticker`): generates a TradingView-style PNG via the chart-img.com REST API for any ticker, indicator set, and timeframe. Aliases like `qqq`, `ihsg`, `snp`, `btc` map to exchange-prefixed symbols. Output is a file path, which Yanto includes as a `MEDIA:` tag. The Hermes gateway parses that tag and attaches the image to the chat.
+- `chart`: generates a TradingView-style PNG via the chart-img.com REST API for any ticker, indicator set, and timeframe. Aliases like `qqq`, `ihsg`, `snp`, `btc` map to exchange-prefixed symbols. Output is a file path, which Yanto includes as a `MEDIA:` tag. The Hermes gateway parses that tag and attaches the image to the chat.
+- `weather`: a thin wrapper around the free [Open-Meteo](https://open-meteo.com/) API. No key needed. Aliases preconfigured for the places I actually ask about: Pancoran, Cikokol, Gading Serpong, Jakarta, plus the major cities and any raw lat,lon. Pairs naturally with the Google Maps directions tool for combined "weather + commute" questions like "berangkat ke cikokol jam berapa enaknya, hujan ga".
 - `cf-dns`: a thin wrapper around the Cloudflare API for my `abhipraya.dev` zone. Add, remove, toggle proxy, list records.
 - `gws-*` skills: a family of Google Workspace CLI wrappers for Drive, Docs, Sheets, Slides, Calendar, Gmail. They map to the official `@googleworkspace/cli` binary. (Note for Debian 12 users: pin to `0.21.1` or older. The 0.22 series requires glibc 2.39, which is Debian 13.)
 - `scele-digest`: my daily university-deadline digest, originally written for Claude Code cron, still running there for now.
@@ -145,10 +146,13 @@ On top of skills, Yanto has MCP servers wired into Hermes:
 - `context7-mcp` for live library documentation
 - `brave-search-mcp-server` for general web search
 - `google-maps` (the [@cablate/mcp-google-map](https://github.com/cablate/mcp-google-map) package) for places, routes, geocoding
+- `yahoo-finance-mcp` ([Alex2Yang97/yahoo-finance-mcp](https://github.com/Alex2Yang97/yahoo-finance-mcp)) for real-time stock prices, news, fundamentals, options chains, analyst recommendations. Backed by the `yfinance` library, which covers both US tickers and Indonesian stocks via the `.JK` suffix (so `BBRI.JK`, `BBCA.JK`, etc), plus `^JKSE` for the IHSG composite.
 - `telegram-mcp` because some of my workflows write to Telegram channels other than the Yanto bot itself
 - `todoist` MCP for task management
 
 The Google Maps wiring deserves its own paragraph. I told Yanto that for any "find me a place" question, he should use both Google Maps and Brave together: Maps for the structured data (rating, hours, distance from a known anchor like my home in Pancoran or my partner's place in Tangerang), Brave for the vibe context (Lemon8, PergiKuliner, blog reviews in Indonesian about whether a place is actually homey or just trendy). Combined, the recommendation feels grounded instead of a Yelp-style summary.
+
+The Yahoo Finance MCP filled a real gap. The `chart` skill is great for visuals but doesn't actually know what price something is at right now. With `yahoo-finance` wired in, I can ask "BBRI sekarang berapa, sama 1 bulan terakhir gimana" and Yanto pulls the live quote, the 30-day history, and any recent news in one turn. The 15-minute Yahoo delay is fine for the kind of "is this a reasonable level to scale into" question I actually have. For tighter intraday work I would not use Yanto, but I rarely have that question.
 
 There is also an [RSSHub](https://docs.rsshub.app/) instance running on the same VPS at `localhost:1200`, exposed publicly at `rss.abhipraya.dev` behind basic auth. RSSHub turns almost any source on the web into an RSS feed, which means Yanto has a uniform way to read CNBC top news, Bloomberg markets, Bloomberg technology, Bloomberg opinion, and selected X user timelines without me writing a custom scraper for each. When I ask "to apa kabar pasar US" or "Bloomberg ada apa yang lagi heat", Yanto curls the relevant RSSHub route from inside the VPS, parses the XML with a quick Python one-liner, picks the top five items, and summarizes in his own voice with a citation. For named X accounts the route `/twitter/user/<handle>` works fine using a single auth token I keep in the RSSHub container env. Search-by-keyword on X is gated upstream, so for "what is X saying about $XAUUSD" type questions Yanto falls back to Brave with a `site:x.com` filter. The pattern in his memory file is explicit about which path to use for which kind of question, and to be honest with me when a route is broken instead of fabricating a summary.
 
@@ -186,11 +190,11 @@ DMs skip buffering entirely because every DM is already aimed at the bot.
 
 Two real Discord threads, lifted directly. The first is a markets question on a weekend. I asked about timing on the semiconductor ETF, dropped the `/chart` hint at the end, and Yanto pulled the chart, ran the technical setup (RSI, resistance, recent candle), pulled the latest Michael Burry "late-stage dot-com" warning into the picture, and gave me a measured "wait for pullback" read with a clear non-advisor disclaimer at the end. The chart image is delivered through the same `MEDIA:` tag mechanism described above.
 
-{{< figure src="/images/i-built-a-friend-who-lives-on-my-vps/yanto-chart-smh.png" alt="Discord conversation with Yanto analyzing the SMH semiconductor ETF, showing chart attachment and technical analysis with macro context" caption="A real chart-and-analysis conversation. The /chart hint at the end of my message tells Yanto to invoke the chart skill. He pulls SMH, reads the technical setup, weaves in macro context, and returns the chart inline." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-chart-smh.png" alt="Discord conversation with Yanto analyzing the SMH semiconductor ETF, showing chart attachment and technical analysis with macro context" caption="A real chart-and-analysis conversation. The /chart hint at the end of my message tells Yanto to invoke the chart skill. He pulls SMH, reads the technical setup, weaves in macro context, and returns the chart inline." >}}
 
 The second is an infra ask. I noticed `glances.abhipraya.dev` was publicly reachable and wanted it locked behind Tailscale instead. Yanto inspected the current state (DNS record, Cloudflare proxy, container binding), then proposed two approaches with tradeoffs (DNS-only vs firewall-based vs combo), recommended the combination, and walked through the exact `nginx`, DNS, and UFW steps after I gave the green light.
 
-{{< figure src="/images/i-built-a-friend-who-lives-on-my-vps/yanto-ops-glances.png" alt="Discord conversation with Yanto debugging glances public exposure, recommending DNS plus firewall approach to put glances behind Tailscale" caption="A real ops conversation. Yanto reads the current state, proposes two approaches with tradeoffs, and waits for me to pick. After I say 'gas', he walks through the concrete steps." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-ops-glances.png" alt="Discord conversation with Yanto debugging glances public exposure, recommending DNS plus firewall approach to put glances behind Tailscale" caption="A real ops conversation. Yanto reads the current state, proposes two approaches with tradeoffs, and waits for me to pick. After I say 'gas', he walks through the concrete steps." >}}
 
 Reading those back, the thing I notice most is that there is no friction. I am not typing commands. I am asking, the way I would ask a friend who happens to know my whole stack.
 
