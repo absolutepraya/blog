@@ -552,6 +552,24 @@ hr {
   transition: all 0.3s;
 }
 
+.footer-name {
+  position: relative;
+  padding-right: 1.55rem;
+}
+
+.footer-name::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: -0.525rem;
+  background: url('/images/mfdoom-sticker.png') no-repeat center / contain;
+  transform: rotate(-14deg);
+  pointer-events: none;
+}
+
 .smallcap a:hover {
   background-color: var(--color-blue);
   color: var(--bg-primary);
