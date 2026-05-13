@@ -33,6 +33,10 @@ The mr-bot fixes all three:
 
 The architectural details are in the b1 (TDD) and b2 (programming) blogs. The communication impact is that the team's Discord now serves as a low-friction MR notification surface, the kind of thing other teams use Slack apps to get.
 
+![Three live mr-bot cards in the team's #glab-mr-notif Discord channel: MR !302 (Qen, activity_log hooks), MR !285 (froklax, Supabase query limit), MR !268 (Sira-318 duplicate cache fix). Each card shows the MR title as a colored bar (green for opened, blue for merged), a Gemini-generated summary, author handle, source branch with an arrow to main, and the Linear ticket reference](/images/ppl/s4w1-c2-mr-bot-live.png)
+
+The screenshot above shows three real cards posted by the bot on the team's `#glab-mr-notif` channel: an in-progress MR by Qen (activity_log hooks), a recently merged MR by Bertrand (Supabase query limit raise), and Fadhli's duplicate-cache fix. Each card is one MR; the bot edits the same card across state transitions instead of posting new ones. The Gemini-generated summary is the body text under each title; the author, branch, and Linear ticket are pinned to the right.
+
 And I told the team about the change directly. May 12 05:10 in `#codebase-update`:
 
 > ges <#1501267039409406043> mute aja, gua dah bikin biar dia bakal ngetag orang yg bersangkutan di discord pas buka MR

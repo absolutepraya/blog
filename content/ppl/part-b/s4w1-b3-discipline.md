@@ -42,6 +42,8 @@ The week was dominated by sira-mr-bot (eight MRs) but also covered a security re
 
 Every branch follows `<user>/<type>/<SIRA-XX>-<topic>` or, for non-ticket cleanup work, `<user>/<topic>`. Every merge was squash-merge. The complete list is verifiable at the [filtered GitLab view](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests?scope=all&state=merged&author_username=absolutepraya&deployed_after=2026-05-07&deployed_before=2026-05-14).
 
+![GitLab merge request list filtered to author Daffa Abhipraya, deployed between 2026-05-07 and 2026-05-14, showing all 12 merged MRs from SIRA-366 down to SIRA-354 with green Merged badges and zero-conflict checklists](/images/ppl/s4w1-mr-list.png)
+
 ## Direct Main Commits: Scoped to Infra and Tooling
 
 The project AGENTS.md gives the product owner permission to push directly to main, but only for "non-feature, non-prod-codebase changes." Ten such commits this week:

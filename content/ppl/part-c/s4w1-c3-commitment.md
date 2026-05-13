@@ -42,6 +42,8 @@ The week's headline: a new FastAPI service shipped from zero to production-runni
 !303  SIRA-366 chore(web): improve React Doctor score
 ```
 
+![GitLab merge request list filtered to author Daffa Abhipraya, deployed between 2026-05-07 and 2026-05-14, showing all 12 merged MRs](/images/ppl/s4w1-mr-list.png)
+
 Eight of these are the mr-bot service in stages (initial build, edge-case hardening, infra integration, three iterations on Discord ping placement, summary format enforcement). Two are quality work on the React side (React Doctor gate + score improvements). One is the supply-chain security response. One is the RBAC expansion.
 
 The mr-bot stack happened in roughly this order across the week:

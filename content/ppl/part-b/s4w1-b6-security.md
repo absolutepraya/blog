@@ -11,9 +11,13 @@ toc: true
 
 Two security MRs this week. MR !299 (SIRA-365) was a fast response to the TanStack npm supply-chain attack: pin every dependency to an exact version and add `minimum-release-age=1440` to both `.npmrc` files. MR !300 (SIRA-364) is the bigger structural one: RBAC expansion that grants AR_STAFF a narrow set of new capabilities while hardening the admin-only boundary with a 437-line integration test suite and a 134-line role matrix doc that becomes the single source of truth.
 
-## The TanStack Incident and Why We Responded Fast
+## The "Mini Shai-Hulud" Incident and Why We Responded Fast
 
-On May 11, 2026, [Snyk's blog](https://snyk.io/blog/tanstack-npm-packages-compromised/) reported the TanStack npm supply-chain attack. The threat group TeamPCP compromised 84 malicious artifacts across 42 packages in the `@tanstack` namespace, including `@tanstack/react-router` (12.7M weekly downloads). The attack vector chained three vulnerabilities:
+On May 11-12, 2026, [Snyk's blog](https://snyk.io/blog/tanstack-npm-packages-compromised/) reported what Socket Security publicly named the **Mini Shai-Hulud** worm: 84 malicious npm package versions across 42 packages in the `@tanstack` namespace (plus `@equawk/*`, `@instralai/*`, and others), with suspected CI credential-stealing payload. The original Shai-Hulud worm from late 2025 set the template; this was a smaller but technically similar variant. Socket flagged every malicious version within six minutes of publication.
+
+![Socket Security tweet "BREAKING: 84 TanStack npm packages were compromised in an ongoing Mini Shai-Hulud supply chain attack, adding suspected CI credential-stealing malware" with a screenshot of the @tanstack/react-router page on socket.dev showing a red "Known malware" banner above the package summary](/images/ppl/s4w1-b6-shai-hulud-socket.png)
+
+The attack vector chained three vulnerabilities:
 
 1. A misconfigured GitHub Actions workflow (`pull_request_target` with fork-controlled code) let a malicious PR run with elevated privileges.
 2. The malicious code poisoned the pnpm package cache with a key matching the legitimate release workflow's later retrieval.
@@ -25,7 +29,11 @@ Our app uses `@tanstack/react-router` and `@tanstack/react-query` directly. If w
 
 ## Team Decision in Discord, Then the MR
 
-I posted to the team's `#dev` channel at 05:19 the same morning the news broke:
+I posted to the team's `#dev` channel the same morning the news broke, with the Snyk article and an "im pinning version lah, takut" message attached:
+
+![Discord #dev channel screenshot: user "praya" message at 00:39 "alhamdulillah bro" followed by a link to snyk.io/blog/tanstack-npm-packages-compromised/, then a second message "and btw im pinning version lah, takut (edited)" with the linked article preview rendering inline showing the headline "TanStack npm Packages Hit by Mini Shai-Hulud | Snyk" and a brief description of the worm](/images/ppl/s4w1-b6-discord-snyk-announcement.png)
+
+The full thread continued:
 
 > punya kita ga ke pin, masih pake `^...`
 >
@@ -35,11 +43,80 @@ I posted to the team's `#dev` channel at 05:19 the same morning the news broke:
 >
 > jangan pake `^`, or `latest`, or `>=`, or whatever
 
-And to `#codebase-update`:
+The team's reaction in the same channel was "alhamdulillah bro" plus a "untung bukan kita yang kena" from another teammate. The point of this paragraph is not the chat itself; it's that the policy decision (no more `^`, no more `latest`, pin everything) was made and communicated to the team within minutes of reading the Snyk article, then the MR landed about an hour later. Communication first, then code, then merge. That's the response cadence I want for future supply-chain incidents.
 
-> im pinning version lah anjg, takut
+## Before and After: What Pinning Actually Means
 
-with the Snyk link attached. The team's reaction was "alhamdulillah bro" plus a "untung bukan kita yang kena." The point of this paragraph is not the chat itself; it's that the policy decision (no more `^`, no more `latest`, pin everything) was made and communicated to the team within minutes of reading the Snyk article, then the MR landed about an hour later. Communication first, then code, then merge. That's the response cadence I want for future supply-chain incidents.
+The clearest way to show what changed in MR !299 is to look at the same dependency block before and after. Take a sample slice of `apps/api/pyproject.toml`:
+
+```toml
+# BEFORE: caret/tilde/inequality ranges — npm and pnpm are free to pick a newer
+# minor or patch on any install. A maliciously published 0.116.5 would have
+# matched ">=0.116.0" and gotten installed silently.
+dependencies = [
+    "fastapi>=0.116.0",
+    "pydantic>=2.10",
+    "supabase~=2.28",
+    "httpx>=0.27",
+    "cryptography>=44.0",
+]
+```
+
+```toml
+# AFTER: every dep pinned to the exact version the lockfile resolved. The only
+# way a different version lands now is a deliberate human PR that updates
+# pyproject.toml AND regenerates uv.lock together.
+dependencies = [
+    "fastapi==0.128.7",
+    "pydantic==2.12.5",
+    "supabase==2.28.0",
+    "httpx==0.28.1",
+    "cryptography==46.0.5",
+]
+```
+
+And the corresponding slice of `apps/web/package.json`:
+
+```json
+// BEFORE: caret prefixes everywhere. pnpm install reaches out to the npm
+// registry and picks the latest compatible minor on every fresh install.
+{
+  "dependencies": {
+    "@tanstack/react-router": "^1.123.0",
+    "@tanstack/react-query": "^5.91.0",
+    "react": "^19.2.0",
+    "vite": "^6.4.0",
+    "@supabase/supabase-js": "^2.83.0"
+  }
+}
+```
+
+```json
+// AFTER: exact versions. Plus pnpm.overrides for transitive deps that needed
+// CVE patches the upstream packages hadn't yet bumped to.
+{
+  "dependencies": {
+    "@tanstack/react-router": "1.123.5",
+    "@tanstack/react-query": "5.91.7",
+    "react": "19.2.0",
+    "vite": "6.4.2",
+    "@supabase/supabase-js": "2.83.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "rollup": ">=4.59.0",
+      "esbuild": ">=0.25.0",
+      "undici": ">=7.24.0",
+      "vite": ">=6.4.2",
+      "fast-uri": ">=3.1.2"
+    }
+  }
+}
+```
+
+The diff is mechanical but the effect is structural. In the BEFORE world, `pnpm install` is a function of (manifest + npm registry state at install time). Two developers running `pnpm install` on different days against the same manifest can end up with different node_modules. In the AFTER world, `pnpm install` is a function of the manifest alone. Same manifest, same install, same packages. Reproducibility is no longer "we hope the lockfile catches it"; it's a property of the manifest.
+
+The `pnpm.overrides` block is the second layer. Some transitive deps had open CVEs but their parent packages hadn't published a patch bump yet. The override forces pnpm to resolve those transitives to a known-good version regardless of what the parent wants. `rollup>=4.59.0`, `esbuild>=0.25.0`, and `vite>=6.4.2` all carry recent CVE patches.
 
 ## SIRA-365: Pin All Deps + 24-Hour Cooldown
 
@@ -54,22 +131,7 @@ apps/web/package.json   | 102 ++++++-------
 apps/web/pnpm-lock.yaml | 384 ++++++++--------------
 ```
 
-`apps/api/pyproject.toml` went from a mix of `>=` and `~=` specifiers to exact pins:
-
-```toml
-# Before: a mix of "I want at least X" specifiers
-"fastapi>=0.116.0"
-"supabase~=2.28"
-
-# After: exact versions, only updated when we deliberately do so
-"fastapi==0.128.7"
-"pydantic==2.12.5"
-"supabase==2.28.0"
-"httpx==0.28.1"
-"cryptography==46.0.5"
-```
-
-Same treatment for `apps/web/package.json`. Every `^` and `~` was replaced with the exact version from the lockfile. The lockfile is still authoritative, but the manifest now agrees with the lockfile, so a developer running `pnpm install` against a fresh checkout can't accidentally pull a newer minor that the lockfile resolver decided was compatible.
+The codeblock pair above ("Before and After: What Pinning Actually Means") shows the shape of the change. The lockfile is still authoritative, but the manifest now agrees with the lockfile, so a developer running `pnpm install` against a fresh checkout can't accidentally pull a newer minor that the lockfile resolver decided was compatible.
 
 **2. Install cooldown via `minimum-release-age`.** This is the structural protection. Both `.npmrc` files now contain:
 
@@ -186,3 +248,4 @@ Three patterns from this week:
 - Source: role constants: `apps/api/src/app/dependencies.py`
 - External reference: [Snyk: TanStack npm Packages Compromised (2026-05-11)](https://snyk.io/blog/tanstack-npm-packages-compromised/)
 - Team announcements: Discord `#dev` 2026-05-12 05:19 (policy statement on pinning), `#codebase-update` 2026-05-12 05:10 (Snyk link + decision to pin)
+- Incident severity reference: Socket Security tweet on the Mini Shai-Hulud worm (84 compromised package versions, CI credential-stealing payload)
