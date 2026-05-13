@@ -47,17 +47,13 @@ Two sentences. Tells the team to mute the old noisy channel, explains the new ca
 
 ## Proactive Security Announcement
 
-The same morning the TanStack supply-chain attack hit Snyk (b6 covers the technical response), I posted to `#dev` at 05:19:
+The same morning the TanStack supply-chain attack hit Snyk (b6 covers the technical response), Bertrand (`@froklax`) had dropped a postmortem link about npm supply-chain compromise into `#dev`. My thread back, captured live:
 
-> punya kita ga ke pin, masih pake `^...`
->
-> lemme handle
->
-> jadi best practice nya sekarang tuh karena banyak supply chain attack, itu harus pin version packages, semuanya
->
-> jangan pake `^`, or `latest`, or `>=`, or whatever
+![Discord #dev channel screenshot: Bertrand quoting a link to tanstack.com blog post about npm-supply-chain-compromise-postmortem with the note "ges ini tanstack compromised..." above, then my reply thread starting at 12:18: "nah", "harus pin versioning", "wait gua cek codebase", "aduh (edited)" followed by a snippet of the package.json showing entries like react-query and react-router with caret-prefixed version specifiers, then "WKWKWKWKKW", "punya kita ga ke pin, masih pake `^...`", "lemme handle", "jadi best practice nya sekarang tuh karena banyak supply chain attack, itu harus pin version packages, semuanya", "jangan pake `^`, or `latest`, or `>=`, or whatever (edited)"](/images/ppl/s4w1-c2-discord-snyk-thread.png)
 
-The information was a policy statement: this is what we do now, this is why. Bertrand's reaction was a question about webhook alert mechanism (unrelated thread, but useful adjacent discussion); Qen's was "untung bukan kita yang kena." Both reactions are signs the message landed; the team understood the new policy and processed the risk.
+What the thread actually shows is a small live debugging session, not a prepared announcement. Bertrand flags the link, I checked our codebase live in front of the team ("wait gua cek codebase", then "aduh"), realized we hadn't pinned anything, and ended with the policy statement. The team saw the discovery happen, not a sanitized after-the-fact summary.
+
+Bertrand's reaction was a question about webhook alert mechanism (unrelated thread, but useful adjacent discussion); Qen's was "untung bukan kita yang kena." Both reactions are signs the message landed; the team understood the new policy and processed the risk.
 
 Then the MR followed within the hour. The pattern: communicate the policy first, then ship the code that implements it. Future incidents get the same cadence.
 
