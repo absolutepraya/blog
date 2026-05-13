@@ -1,7 +1,7 @@
 ---
-title: "[S4, W1] PPL: Diagnosing a CI Bug for a Teammate Through Review"
+title: "[S4, W1] PPL: Two Reviews, Two Shapes: Diagnostic Unblock and Multi-Agent Depth Pass"
 date: 2026-05-13
-description: "One review this week, but it was the right one: diagnosing why @fadhliraihan's CI was failing because of an upstream supabase CLI version drift bug, pointing him at the fix I'd already pushed to main, and writing the kind of comment that unblocks instead of merely points out."
+description: "Two substantive review threads this week on the same teammate's MRs. The first on !268 diagnosed an unrelated CI bug and unblocked him with a one-command fix. The second on !304 was a thorough 13-finding depth pass on an atomic merge RPC, dispatched via 6 specialized review agents in parallel and posted as one consolidated thread."
 tags: ["ppl", "code-review"]
 slug: "s4w1-code-review"
 toc: true
@@ -9,9 +9,12 @@ toc: true
 
 ## What I Worked On
 
-Review output dropped this week. The mr-bot service consumed eight authored MRs and a security response consumed two more, so I only posted one substantive review thread, on MR !268 (Fadhli's stale-duplicate-client cache fix). The review itself is worth writing about because it's a different kind of review than the usual "here are 12 P1 findings." It's a diagnostic that explains why his CI was failing for a reason that had nothing to do with his code.
+Two substantive review threads this week, both on MRs authored by Fadhli (`@fadhliraihan`). Different shapes:
 
-Honest framing: this is a thin output week for reviews specifically. The reason is visible in the b1 and b3 blogs (12 authored MRs, including building a new service end-to-end). The trade-off was deliberate, not accidental.
+- **!268** (Sira-318 stale duplicate client cache): a diagnostic comment that unblocked his CI by explaining an environmental bug (supabase CLI version drift) that had nothing to do with his code. Short, surgical.
+- **!304** (SIRA-319 atomic duplicate client merge): a 13-finding depth pass on an atomic RPC with row locks. Dispatched 6 specialized review agents in parallel, aggregated findings, posted one consolidated threaded discussion. Long, structural.
+
+Both reviews used the same target author intentionally. Fadhli was running a multi-MR stretch on the duplicate-detection domain across two weeks (cache, then merge atomicity); reviewing both in sequence let me carry context forward instead of context-switching.
 
 ## MR !268: The Comment That Unblocked
 
@@ -37,29 +40,64 @@ Three things this comment does that a generic "your CI is failing" comment would
 
 **It gives a concrete unblock action.** "Rebase your branch onto main and push, ci should pass cleanly" is one command. The reviewer who instead writes "this might be a flaky test, just retry" leaves the author in the same broken state, just with a wasted CI minute.
 
-## Why This Counts as a Review
+The point of code review isn't "find bugs in the diff." It's "help the MR get to a mergeable state." When the diff is correct but the CI is broken for an unrelated reason, the right review action is to diagnose the unrelated reason and unblock.
 
-The point of code review isn't "find bugs in the diff." It's "help the MR get to a mergeable state." When the diff is correct but the CI is broken for an unrelated reason, the right review action is to diagnose the unrelated reason and unblock. Otherwise the author wastes hours re-running CI hoping something will randomly work.
+## MR !304: 13 Findings Through Multi-Agent Review
 
-The reverse pattern is also true: a review that finds no diff bugs but spends time helping the author land their MR is still a high-value review. I've benefited from this exact kind of review from teammates earlier in the project; passing it forward this week was deliberate.
+MR !304 (SIRA-319) replaced a non-atomic three-step merge (`reassign_invoices` then `reassign_reminder_logs` then `reassign_risk_scoring_logs` then `delete_client`) with a single PostgreSQL RPC that does all four mutations inside one transaction with `FOR UPDATE` row locks. The architectural direction was clearly right; the question was whether the implementation actually delivered the atomicity claim and held up under concurrency and error paths.
 
-## Cross-Reference Review on !284
+I ran six specialized review agents in parallel against the diff, each with a focused charter:
 
-The other "review" the GitLab API attributes to me this week is MR !284 (Andika's pnpm pin in web.Dockerfile). I didn't post a real thread there; the API counts a system reference because I mentioned !284 from !288 (`mentioned in merge request !288`). That's not a substantive review, and I won't claim it as one.
+- **code review**: general bugs, CLAUDE.md compliance, concurrency hazards
+- **test coverage**: did the new tests actually verify the atomicity claim
+- **silent failure hunt**: error paths, exception propagation, swallowed errors
+- **type design**: argument-order safety, primitive obsession on UUIDs
+- **comment analysis**: comment accuracy and rotting documentation
+- **simplify**: simplification opportunities preserving full functionality
 
-It is, however, worth noting that !284 fixed a related class of bug to !268: both were CI failures caused by non-deterministic version resolution in build tooling. Andika's fix pinned `pnpm@9` in `web.Dockerfile` and added `packageManager: pnpm@9.15.0` to `apps/web/package.json`. The pattern is the same: replace "latest" with a specific version so the build is reproducible.
+I then aggregated, deduplicated cross-agent findings (e.g. the deadlock risk was flagged by both code and silent-failure agents from different angles), and posted one consolidated review thread on the MR with positives section first, then P0/P1/P2/P3 severity grouping. Every finding had a code-snippet fix attached.
+
+The thirteen findings broke down as:
+
+- **P0 (3)**: deadlock risk on concurrent merges from non-deterministic lock order, PL/pgSQL `raise exception` messages downgraded to generic 500 because the router only catches `ValueError`, zero integration tests for the atomic RPC behavior despite atomicity being the whole point.
+- **P1 (4)**: same-type `str` arg swap risk on `merge_duplicate_clients(discard, keep)`, TOCTOU between active-pair check and RPC call, post-merge `get_client` failure masking a successful merge as 500, tests patching a private method which couples them to implementation.
+- **P2 (4)**: `is_dismissed_pair` should query by `pair_id` PK instead of two filter columns, redundant `_encryption_key` field, SIRA ticket prefix violating the "don't reference current task" rule, missing audit logs on refusals.
+- **P3 (2)**: redundant `drop function if exists`, `threshold=80` magic number.
+
+The P0 about lock ordering is the highest-impact finding. The original SQL locked `keep` then `discard`, which deadlocks if two admins concurrently merge the same pair from opposite directions (admin A: keep=X discard=Y; admin B: keep=Y discard=X). Postgres aborts one with `deadlock detected` which surfaces as a 500. The fix is to always lock in deterministic id order:
+
+```sql
+perform 1 from clients
+where id in (p_keep_client_id, p_discard_client_id)
+order by id
+for update;
+```
+
+The P0 about exception downgrade is structural too. The PL/pgSQL function carefully writes useful messages (`Cannot merge a client into itself`, `Keep client not found`), but `db.rpc().execute()` raises `postgrest.exceptions.APIError`, not `ValueError`. The router only catches `ValueError`, so every PL/pgSQL guard becomes a generic 500. The Python wrapper needs to catch `APIError` and translate predictable messages back to `ValueError` so the router can map them cleanly.
+
+## Why Multi-Agent Beats Solo Reviewing
+
+A single human reviewer reading MR !304 would have caught maybe half of those thirteen findings on a careful pass. Different agents specialize on different failure modes that a generalist eye routinely misses:
+
+- The silent-failure agent caught the `APIError` to `ValueError` translation gap because that's exactly what it's tuned to find. A general reviewer who's never been bitten by `postgrest.exceptions` would miss it.
+- The type-design agent caught the same-type `str` arg swap risk because that's a pure type-shape concern, not a logic bug.
+- The test-coverage agent caught the "zero integration test for atomicity" gap because it's grading the test suite against the project's stated philosophy, not just reading the new test names.
+- The simplify agent caught the `is_dismissed_pair(client_a_id, client_b_id)` redundancy because it traced data flow back to the call site where `pair_id` is already available.
+
+Running them in parallel kept review wall-time short. The cross-agent dedup step is where most of the human work lived: deciding which of two slightly different framings of the same finding to keep, and merging overlapping suggestions.
 
 ## What I Learned
 
-Two observations from this week's thin review output:
+Two patterns from this week's reviews:
 
-**A review that diagnoses an environmental bug for the author is as valuable as one that finds five P1s in the diff.** The unblock comment on !268 saved Fadhli probably an hour of "why is my CI flaky" debugging. That hour is more valuable to him than a list of style nits would have been.
+**Two reviews of different shapes serve different purposes.** !268 was a 5-minute review that saved Fadhli an hour of debugging. !304 was a 90-minute review that potentially saved the team from a production deadlock on concurrent admin actions. Neither shape would have substituted for the other.
 
-**Light weeks on reviews are recoverable; broken trust isn't.** This week I leaned heavily into feature work and accepted a low review count. That's recoverable next week. What's not recoverable is posting low-quality reviews to hit a count target. The single substantive review on !268 with a real diagnosis is worth more than five drive-by approvals.
+**Multi-agent review scales depth, not shallowness.** Dispatching six specialized agents in parallel gave me depth comparable to a 3-hour senior reviewer pass without that wall-clock cost. The bottleneck became aggregation and dedup, not finding the issues. For high-stakes MRs (anything that touches concurrency, atomicity, or destructive operations), this is the workflow I'll keep using.
 
 ## Evidence
 
 - [MR !268 Fix stale duplicate client cache](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/268): diagnostic review comment on supabase CLI version drift, posted as discussion thread
-- Direct commit `a4f0c61e` on main: `fix(ci): pin supabase CLI version to prevent postgres image tag drift` (the fix cited in the review)
-- Pipeline 16318 (verification cited in the review)
-- Related fix shipped in parallel by Andika: [MR !284 SIRA-356 pin pnpm@9](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/284): same "replace latest with a specific version" pattern
+- [MR !304 SIRA-319 Fix invalid and non-atomic duplicate client merge](https://gitlab.lab.local/joint-research/ui/smart-invoice-reminder/SIRA/-/merge_requests/304): 13-finding consolidated review (3 P0, 4 P1, 4 P2, 2 P3), posted as threaded discussion
+- Direct commit `a4f0c61e` on main: `fix(ci): pin supabase CLI version to prevent postgres image tag drift` (the fix cited in the !268 review)
+- Pipeline 16318 (verification cited in the !268 review)
+- Six review agents dispatched in parallel for !304: code-reviewer, pr-test-analyzer, silent-failure-hunter, type-design-analyzer, comment-analyzer, code-simplifier
