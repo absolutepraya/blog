@@ -40,7 +40,7 @@ Everything starts with a conversation. I describe what I want, usually messy and
 
 Sounds simple, but it changes the quality of the work a lot. A good brainstorming loop catches scope mistakes early, forces tradeoff conversations, and stops "simple" ideas from sneaking into messy implementations.
 
-When I know what I want but can't quite articulate it, I also use [/grill-me](https://skills.sh/mattpocock/skills/grill-me). Useful when I don't want the AI to politely guess what I mean. I want it to interrogate the plan, walk every branch of the decision tree, and force us into actual shared understanding before anyone touches code.
+When I know what I want but can't quite articulate it, I also use [/grill-with-docs](https://www.skills.sh/mattpocock/skills) (Matt Pocock's evolution of the older `/grill-me`). Useful when I don't want the AI to politely guess what I mean. I want it to interrogate the plan, walk every branch of the decision tree, and force us into actual shared understanding before anyone touches code.
 
 For UI-heavy work, I want the opposite kind of help. I don't want to manually art-direct every spacing choice or color decision. I want to freestyle the product direction and let the AI push toward something stronger. That's what [/ui-ux-pro-max](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) is for.
 
@@ -188,7 +188,9 @@ Google ships [an official CLI for Workspace](https://github.com/googleworkspace/
 
 {{< figure src="/images/macbook-agent-dev-setup/gws-skills.png" alt="Google Workspace CLI skills installed locally, covering sheets, docs, drive, gmail, calendar, and slides" caption="The full set of Google Workspace skills I keep installed locally." >}}
 
-The reason I prefer CLI over MCP here: the CLI is faster to invoke, faster to debug, doesn't require an always-on MCP process, and the skills wrap each command with the right context the agent needs. For a tool surface this big, that ergonomic win matters.
+A few reasons I prefer CLI over MCP here. The CLI exposes more capability than the MCP equivalent in most cases - Google's product surface is huge, and the official CLI keeps up with it more completely than any MCP wrapper I've used. It's also faster to invoke, faster to debug, and doesn't require an always-on MCP process.
+
+The bigger win is the bundled skills. Without them, getting an agent to use a CLI reliably means either explaining every subcommand by hand or telling it to go read the docs first. With the skills installed, neither is needed: calling `/gws-sheets` or `/gws-calendar` is enough. The skill already knows the right subcommands, flags, auth model, and project conventions, so the agent just acts. For a tool surface this big, that ergonomic win matters.
 
 ### Status Line
 
@@ -196,34 +198,48 @@ The status line at the bottom of the terminal is small, but it's the part of the
 
 {{< figure src="/images/macbook-agent-dev-setup/ccstatusline.png" alt="ccstatusline showing model, context usage, git branch, and tool activity" caption="ccstatusline is the small bar I rely on most. It keeps the things I care about visible without me having to ask." >}}
 
-## Skills I Reach For
+## Other Skills I Reach For
 
-I think of skills as a separate layer from the clients themselves. The tool matters, but the reusable behaviors matter more.
+I think of skills as a separate layer from the clients themselves. The tool matters, but the reusable behaviors matter more. `/superpowers` already showed up earlier in this post as the backbone of the workflow, so the rest of this section is the stuff I lean on outside that core.
 
-- [/superpowers](https://github.com/obra/superpowers) gives me the core workflow discipline.
-- [/pr-review-toolkit](https://github.com/anthropics/claude-plugins-official) is what I reach for when I want extra review pressure on tests, error handling, and quality.
-- [/grill-with-docs](https://www.skills.sh/mattpocock/skills) (the evolution of the older `/grill-me`) when I want the AI to interrogate my vague idea against the existing project's domain model, sharpening terminology and updating docs as decisions crystallise.
-- [/ui-ux-pro-max](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) when I want a stronger UI system than I'd get from default prompting.
+### Matt Pocock's Skills Pack
 
-For document work, I keep Anthropic's official document skills installed. They let the agent create or edit office files end-to-end, which is great when I'd rather review the output than open the app and type:
+A lot of what I rely on outside the official Anthropic and superpowers packs comes from Matt Pocock's bundle on [skills.sh](https://www.skills.sh/mattpocock/skills). The source lives on [GitHub](https://github.com/mattpocock/skills) if you want to read the markdown directly before installing anything.
+
+The ones I open most often:
+
+- [**`/grill-with-docs`**](https://www.skills.sh/mattpocock/skills/grill-with-docs) is the evolution of the older `/grill-me`. Same interrogation-style planning loop, but grounded in the project's existing `CONTEXT.md` and ADRs so the questions stay in-vocabulary instead of drifting generic. I use it when I want a plan stress-tested against decisions the team already made.
+- [**`/handoff`**](https://www.skills.sh/mattpocock/skills/handoff) writes the current conversation into a markdown file so a fresh agent, or a future me, can pick up without re-deriving context. I use it when I'm switching from one client to another, parking work to come back to, or seeding a new project from a long planning chat.
+- [**`/prototype`**](https://www.skills.sh/mattpocock/skills/prototype) spins up a throwaway answer to a specific design question. Two branches: a runnable terminal app to push a state machine around, or several wildly different UI variants on one route so you can toggle and compare. I don't reach for it as often as the others, but it's the right tool when the question is "let me actually feel this before I commit to it."
+- [**`/tdd`**](https://www.skills.sh/mattpocock/skills/tdd) keeps the red-green-refactor loop honest. The thing I value here is the anti-horizontal-slicing rule: one failing test, one piece of implementation, one green run, then the next test. It prevents the bulk-write-then-bulk-test pattern that ends up testing the shape of imagined code instead of the behavior I actually care about.
+- [**`/improve-codebase-architecture`**](https://www.skills.sh/mattpocock/skills/improve-codebase-architecture) is what I reach for when a codebase starts feeling shallow - lots of small modules with interfaces almost as complex as their implementations. It looks for "deepening opportunities" using a precise vocabulary (module, interface, seam, depth, leverage, locality) and the project's own `CONTEXT.md` plus ADRs as ground truth, so suggestions stay in-grain instead of becoming a generic refactor wishlist.
+- [**`/write-a-skill`**](https://www.skills.sh/mattpocock/skills/write-a-skill) is the meta-skill. When I notice I've configured the same kind of session three times, I run `/write-a-skill` so the preferences and conventions from that session become a reusable skill of my own. A handful of examples from my local setup:
+    - `/avanade-docs` and `/avanade-slides` for my Avanade internship work, so the agent already knows the brand palette, layout templates, and build pipeline whenever I shape a client deck or Word doc.
+    - `/scele` to check pending homework on Fasilkom UI's SCELE (our university LMS, a Moodle instance), work on assignments, and submit them straight from the agent instead of clicking through the portal.
+    - `/ppl-blog` to draft and update the Individual Review blogs at [blog.abhipraya.dev/ppl/](https://blog.abhipraya.dev/ppl/), where the team uses a specific Part A/B/C structure backed by evidence from GitLab MR reviews.
+    - `/weekly-log` runs on a cron once a week to generate the internship weekly log my college program requires. It pulls from the project's git commits, fills the official DOCX template, and uploads the result to Nextcloud, all without me noticing it's Monday.
+    - `/nextcloud` so any "read this file" or "upload this somewhere" instruction routes through my self-hosted Nextcloud automatically, no path-guessing.
+
+### Anthropic Document Skills
+
+For office-file work I keep Anthropic's official document skills installed. They let the agent create or edit Office files end-to-end, which is great when I'd rather review the output than open the app and type:
 
 - [/pptx](https://skills.sh/anthropics/skills/pptx) for PowerPoint decks
 - [/docx](https://skills.sh/anthropics/skills/docx) for Word documents
 - [/xlsx](https://skills.sh/anthropics/skills/xlsx) for Excel spreadsheets
 - [/pdf](https://skills.sh/anthropics/skills/pdf) for PDFs
 
-These pair really well with templates: hand the agent a template plus the source data, and the final document comes back ready to review. No typing in the app, no formatting fights.
+The reason I prefer Anthropic's bundle over community alternatives is reliability. Office file formats are weird internally: the underlying XML schemas are deep, and small mistakes corrupt the file silently. These skills have been hardened across enough document shapes that I almost never have to debug the skill itself, only the content I'm passing in. The trade-off is no exotic custom features, just files that open cleanly in PowerPoint, Word, Excel, and Acrobat without complaints.
 
-### Matt Pocock's Skills Pack
+They also pair really well with templates: hand the agent a template plus the source data, and the final document comes back ready to review. No typing in the app, no formatting fights.
 
-A lot of what I rely on outside the official Anthropic and superpowers packs comes from Matt Pocock's bundle on [skills.sh](https://www.skills.sh/mattpocock/skills). The source lives on [GitHub](https://github.com/mattpocock/skills) if you want to read the markdown directly before installing anything.
+### Supporting Skills
 
-The four I open most often:
+A few skills sit outside the everyday flow but pull weight when the moment is right.
 
-- **`/grill-with-docs`** is the evolution of the older `/grill-me`. Same interrogation-style planning loop, but grounded in the project's existing `CONTEXT.md` and ADRs so the questions stay in-vocabulary instead of drifting generic. I use it when I want a plan stress-tested against decisions the team already made.
-- **`/handoff`** writes the current conversation into a markdown file so a fresh agent, or a future me, can pick up without re-deriving context. I use it when I'm switching from one client to another, parking work to come back to, or seeding a new project from a long planning chat.
-- **`/prototype`** spins up a throwaway answer to a specific design question. Two branches: a runnable terminal app to push a state machine around, or several wildly different UI variants on one route so you can toggle and compare. I don't reach for it as often as the others, but it's the right tool when the question is "let me actually feel this before I commit to it."
-- **`/write-a-skill`** is the meta-skill. When I notice I've configured the same kind of session three times, I run `/write-a-skill` so the preferences and conventions from that session become a reusable skill of my own. That's how my local `/avanade-docs`, `/avanade-slides`, `/cv`, `/nextcloud`, and a handful of others were born.
+- [/pr-review-toolkit](https://github.com/anthropics/claude-plugins-official) is what I reach for when I want extra review pressure on tests, error handling, and code quality. The framing I like: it gives me a hostile read before I press merge, instead of the agent's default helpful-and-approving review tone.
+- [/impeccable](https://github.com/pbakaus/impeccable) is Paul Bakaus's frontend design suite, built on top of Anthropic's earlier `frontend-design` pack. It's not one skill but a family of 23 commands routed through a single namespace. The shape of it is: high-level workflows like `/impeccable shape` (plan UX before coding), `/impeccable craft` (full shape-then-build flow), `/impeccable critique` (design review), `/impeccable audit` (a11y + perf + responsive), and `/impeccable polish` (ship-readiness), plus focused single-aspect commands like `/impeccable typeset`, `/impeccable colorize`, `/impeccable animate`, `/impeccable layout`, `/impeccable harden`, `/impeccable onboard`, and tone-knobs like `/impeccable bolder`, `/impeccable quieter`, `/impeccable distill`, `/impeccable overdrive`. Setup runs once via `/impeccable teach`, which writes a project-level `PRODUCT.md` and `DESIGN.md` the rest of the commands key off. Useful when I want strong opinions about UI without supplying every spacing decision myself.
+- [/vercel-react-best-practices](https://www.skills.sh/vercel-labs/agent-skills/vercel-react-best-practices) is Vercel's pack of 64 prioritized React and Next.js performance rules across eight categories (async patterns, bundle size, server caching, client data fetching, re-render and rendering perf, JavaScript efficiency, advanced patterns). Each rule ships with an incorrect/correct code example and a short prefix code (`async-parallel`, `bundle-barrel-imports`, etc.) the agent can cite. I install it on React/Next.js projects so the agent has a referenceable rules library instead of relying on whatever it picked up in training.
 
 ### Anatomy Of A Skill
 
@@ -289,12 +305,6 @@ graph TD
 
 If you're hunting for new skills, [skills.sh](https://skills.sh/) is the place to browse. It indexes a huge number of community-published skills, and most of what I rely on day-to-day either comes from there or from official Anthropic plugin repos.
 
-### Usage Monitoring
-
-[OpenUsage](https://www.openusage.ai/) made the whole stack easier to live with. I use it to monitor usage limits across the AI products I pay for instead of checking each one separately. Once you're regularly moving between Claude, Codex, Cursor, and provider-backed tools, having one dashboard is more useful than it sounds.
-
-{{< figure src="/images/macbook-agent-dev-setup/openusage.png" alt="OpenUsage showing usage across multiple AI coding tools" caption="OpenUsage gives me one place to see how hard I'm pushing the different AI tools I use." >}}
-
 ## Where Each Tool Fits
 
 ### Claude Code
@@ -325,7 +335,7 @@ That's the pattern across the whole setup. The agent should be swappable more of
 
 These days the center of gravity for my local workflow isn't really a terminal emulator. It is [Herdr](https://herdr.dev/), running inside WezTerm.
 
-I used Superset for a while and liked the concept, but I wanted something more reliable and less tied to a third-party session model while Superset v2 settles. Herdr is closer to the thing I wanted: a tmux-like workspace manager built for agent-heavy terminal work, with spaces, tabs, panes, session persistence, and a config file I can sync with the rest of my dotfiles.
+I used [Superset](https://superset.sh/) for a while and liked the concept, but I wanted something more reliable and less tied to a third-party session model while Superset v2 settles. Herdr is closer to the thing I wanted: a tmux-like workspace manager built for agent-heavy terminal work, with spaces, tabs, panes, session persistence, and a config file I can sync with the rest of my dotfiles.
 
 {{< figure src="/images/macbook-agent-dev-setup/herdr.png" alt="Herdr workspace in WezTerm showing Claude Code, Codex, and pi running side by side, with agent status monitored in the bottom-left agents section" caption="Herdr is the current workspace layer. In this screenshot Claude Code, Codex, and pi are all running side by side, while the bottom-left agents section monitors their status." >}}
 
@@ -340,91 +350,40 @@ The setup is opinionated:
 
 The important distinction: I want the workspace layer to remember where work lives. I do not want every agent client to invent its own session model and force me to translate between them.
 
+If you prefer a GUI on top of your agent setup, Superset is the best option I've seen out there. The thing it gets right is keeping the best of CLI/TUI underneath: each agent still runs in its own native harness, so I can pair GPT-5.5 with Codex, Claude with Claude Code, or whichever model with its own provider's client. I think that matters because the provider usually understands their own model better than a third-party wrapper does, and the harness ships with the right defaults to back that up. Herdr just happens to fit me better because I never really left the terminal-first lane.
+
+## Usage Monitoring
+
+[OpenUsage](https://www.openusage.ai/) made the whole stack easier to live with. I use it to monitor usage limits across the AI products I pay for instead of checking each one separately. Once you're regularly moving between Claude, Codex, Cursor, and provider-backed tools, having one dashboard is more useful than it sounds.
+
+{{< figure src="/images/macbook-agent-dev-setup/openusage.png" alt="OpenUsage showing usage across multiple AI coding tools" caption="OpenUsage gives me one place to see how hard I'm pushing the different AI tools I use." >}}
+
 ## Remote Work
 
-I keep a small VPS at [Jetorbit](https://www.jetorbit.com/) - 4 vCPU, 8 GB RAM - and I use it as a real remote agent box, not just a place to SSH into for emergencies.
+The same `.agents` architecture and superpowers workflow also runs on a small VPS, accessed over Tailscale, Mosh, and tmux. I'm keeping the deep dive in [the iPhone version of this post](/posts/agents-dev-setup-on-iphone/), where it matters more (the phone is essentially a remote-only surface).
 
-Because my Mac and VPS share the same `.agents` architecture, remote work feels like the same system in a different place, not a separate environment I have to mentally translate.
-
-### Tailscale: The Most Important Piece
-
-Honestly, this might be the most important part of the whole setup, and I almost forgot to write about it.
-
-I have **zero public ingress ports open on my VPS**. No port 22 for SSH. Nothing. The only way anything reaches the box is through [Tailscale](https://tailscale.com/), which puts my MacBook, VPS, iPhone, and work laptop on the same private overlay network.
-
-That basically takes the external attack surface of my VPS down to zero. There's nothing to scan, nothing to brute-force, nothing for a stray bot to find. Every service I run - SSH, Mosh, dashboards, internal web tools, anything - is only reachable from devices already on my tailnet.
-
-{{< figure src="/images/macbook-agent-dev-setup/tailscale.png" alt="Tailscale overlay network connecting personal devices privately" caption="Source: tailscale.com" >}}
-
-Compared to the usual "open port 22 with key auth, hope nobody finds the box" approach, this is dramatically better. And the ergonomics are nicer too - no firewall whitelisting, no jump hosts, no juggling per-service ACLs.
-
-### Claude Code On The VPS
-
-For Claude Code, I usually connect through [Termius](https://termius.com/) and use [Mosh](https://mosh.org/) instead of plain SSH.
-
-The big difference: Mosh runs over UDP rather than TCP, and it doesn't tie the session to a single TCP connection. SSH dies the moment the underlying connection breaks; Mosh just keeps the session alive and resyncs when the network comes back.
-
-What that means in practice:
-
-- I can switch from mobile data to Wi-Fi mid-command and the session doesn't drop.
-- I can step into an elevator, lose signal entirely, and pick up where I was when I come out.
-- Putting my laptop to sleep and reopening it 30 minutes later doesn't kill the session.
-
-For long-running agent work over flaky networks, this is the difference between "remote workflow that actually works" and "rage-quitting back to the laptop."
-
-For notifications, [notification-go](https://github.com/777genius/claude-notifications-go) is mainly relevant when I'm using Claude Code directly in a terminal. If I'm already inside Herdr, the terminal workspace itself is where I want the notification surface to stay.
-
-### Session Persistence
-
-All my shell sessions on the VPS are managed by my homemade [tmux-menu](https://github.com/absolutepraya/dotfiles/blob/config/vps/scripts/tmux-menu), powered by [fzf](https://github.com/junegunn/fzf). Reconnecting usually means resuming the latest session state instead of rebuilding context from scratch.
-
-{{< figure src="/images/macbook-agent-dev-setup/tmux-menu.png" alt="tmux-menu showing fzf-powered session picker on VPS" caption="tmux-menu is the first thing I see when I log into the VPS. Pick a session, jump back into it." >}}
-
-The flow looks like this:
-
-```mermaid
-graph LR
-    A[ssh / mosh<br/>into VPS] --> B[tmux-menu launches]
-    B --> C[fzf picker:<br/>list of sessions]
-    C --> D{pick}
-    D -->|existing| E[attach -<br/>resume state]
-    D -->|new| F[create new<br/>session]
-```
-
-This part is easy to underestimate. A remote workflow gets dramatically better the moment "disconnecting" stops meaning "start over."
-
-### Where Claude Remote Control Still Fits
-
-[Claude Remote Control](https://code.claude.com/docs/en/remote-control) still has a place. If I specifically want the Claude app on my iPhone, it's the cleanest path.
-
-But most of the time I prefer the SSH route on the VPS for Claude Code - the interface is more complete. Remote Control is useful, just not my default.
-
-The [iPhone version of this setup](/posts/agents-dev-setup-on-iphone/) is now different enough that I split it into its own post. The short version: Blink Shell, Mosh, Tailscale, tmux, and Wispr Flow. The phone is not trying to be a tiny MacBook. It is a remote control surface for agents that are already running somewhere better.
+The short version: zero public ingress ports on the VPS, everything reachable only through the tailnet, and tmux session persistence means disconnecting doesn't reset context. The Mac version of this story is the same one, minus the "I'm on a phone" constraint.
 
 ## Voice Input
 
 Voice input is one of the highest-leverage parts of the setup, because prompt-writing is often the bottleneck once the tooling is good.
 
-On the MacBook I mostly use [Wispr Flow](https://wisprflow.ai/). It is polished, fast, and good at turning messy spoken thoughts into clean text. I keep [Handy](https://handy.computer/) installed as a free, open source fallback, but in practice I reach for Wispr Flow far more often.
+On the MacBook I mostly use [Wispr Flow](https://wisprflow.ai/). It is polished, fast, and good at turning messy spoken thoughts into clean text. The stats panel from my own account is the easiest way to show how much I lean on it day-to-day.
 
-{{< figure src="/images/macbook-agent-dev-setup/wisprflow.png" alt="Wispr Flow website showing voice-to-text positioning and macOS download" caption="Wispr Flow is my default dictation layer on desktop. It is the smoothest option when I want polished text quickly." >}}
+{{< figure src="/images/macbook-agent-dev-setup/wispr-stats.png" alt="Wispr Flow stats panel showing words dictated, time saved, and weekly streak across the last few months on this MacBook" caption="Wispr Flow stats from the last few months on this MacBook. The 'I reach for it far more often' line is not abstract." >}}
 
-{{< figure src="/images/macbook-agent-dev-setup/handy.png" alt="Handy website showing the open-source speech-to-text app for macOS" caption="Handy is the fallback I actually keep around, because it is local, lightweight, and fast enough." >}}
-
-For Handy, the model choice matters. I use Parakeet V3 because it has the best speed and quality balance for my use. The custom-word list matters too: project names, tool names, Indonesian names, weird repo terms, `pnpm`, `MCP`, `Codex`, `Todoist`, and all the other words normal dictation mangles.
+If you prefer a local-first setup, [Handy](https://handy.computer/) is the open source option I keep installed as a fallback. It runs entirely on the machine, so dictation works offline and nothing leaves the laptop. I keep Parakeet V3 as the active model because it gives the best speed-and-quality balance for daily use.
 
 {{< figure src="/images/macbook-agent-dev-setup/handy-model.png" alt="Handy transcription model settings showing Parakeet V3 as active" caption="Parakeet V3 is the Handy model I keep active. Fast, accurate, and light enough for daily use." >}}
-
-{{< figure src="/images/macbook-agent-dev-setup/handy-custom.png" alt="Handy custom words list containing project names and developer-tool terms" caption="Custom words are what make dictation usable for software work. Without them, every agent prompt turns into cleanup." >}}
 
 ## Quality Of Life
 
 Smaller things that don't define the workflow but make the daily experience better:
 
-- ccstatusline keeps context usage, active tools, and status visible in the status line.
-- notification-go for terminal-first Claude Code sessions when Herdr is not the active notification surface.
-- Custom keybindings everywhere - once the interface becomes muscle memory, agent work feels much less awkward.
-- Effort level cranked high when I want the agent to think harder, even at extra cost.
+- [ccstatusline](https://github.com/sirmalloc/ccstatusline) keeps context usage, active tools, and status visible in the status line.
+- A notifier wired into your agent and terminal so you get sound plus a desktop notification when the agent finishes, asks for a review, or hits a question it can't answer alone. Herdr and Superset already have this built in. For standalone Claude Code outside those, [notification-go](https://github.com/777genius/claude-notifications-go) is the cleanest drop-in. For other setups, the answer is usually a small hook in the agent's config plus whatever notification helper your terminal exposes.
+- Custom keybindings in WezTerm - once the interface becomes muscle memory, agent work feels much less awkward.
+- Effort level cranked up when I want the agent to think harder: `xhigh` (extra high) in Claude Code, `high` in Codex. Worth the extra cost on anything that benefits from longer reasoning.
 
 None of these is the reason the setup works. But once the foundation is good, small ergonomic wins add up.
 

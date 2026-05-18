@@ -70,6 +70,63 @@ graph TD
     Shared --> Tools["MCP tools<br>Todoist, Linear, Context7, browser tools, Telegram"]
 ```
 
+## The Remote Box
+
+I keep a small VPS at [Jetorbit](https://www.jetorbit.com/) - 4 vCPU, 8 GB RAM - and use it as a real remote agent box, not just a place to SSH into for emergencies. The phone setup is essentially a thin control surface for whatever is running on that box.
+
+Because my Mac and VPS share the same `.agents` architecture, remote work feels like the same system in a different place, not a separate environment I have to mentally translate. The phone slots in the same way.
+
+### Tailscale: The Most Important Piece
+
+Honestly, this might be the most important part of the whole setup.
+
+I have **zero public ingress ports open on my VPS**. No port 22 for SSH. Nothing. The only way anything reaches the box is through [Tailscale](https://tailscale.com/), which puts my MacBook, VPS, iPhone, and work laptop on the same private overlay network.
+
+That basically takes the external attack surface of my VPS down to zero. There's nothing to scan, nothing to brute-force, nothing for a stray bot to find. Every service I run - SSH, Mosh, dashboards, internal web tools, anything - is only reachable from devices already on my tailnet.
+
+{{< figure src="/images/iphone-agent-dev-setup/tailscale.png" alt="Tailscale overlay network connecting personal devices privately" caption="Source: tailscale.com" >}}
+
+Compared to the usual "open port 22 with key auth, hope nobody finds the box" approach, this is dramatically better. And the ergonomics are nicer too - no firewall whitelisting, no jump hosts, no juggling per-service ACLs.
+
+### Mosh Over The Wire
+
+Blink Shell connects in over [Mosh](https://mosh.org/) instead of plain SSH.
+
+The big difference: Mosh runs over UDP rather than TCP, and it doesn't tie the session to a single TCP connection. SSH dies the moment the underlying connection breaks. Mosh just keeps the session alive and resyncs when the network comes back.
+
+What that means in practice on a phone:
+
+- I can switch from mobile data to Wi-Fi mid-command and the session doesn't drop.
+- I can step into an elevator, lose signal entirely, and pick up where I was when I come out.
+- Locking the phone and coming back ten minutes later doesn't kill anything.
+
+For long-running agent work over flaky networks, this is the difference between "remote workflow that actually works on a phone" and "rage-quitting back to a laptop I might not have with me."
+
+### Session Persistence
+
+All my shell sessions on the VPS are managed by my homemade [tmux-menu](https://github.com/absolutepraya/dotfiles/blob/config/vps/scripts/tmux-menu), powered by [fzf](https://github.com/junegunn/fzf). Reconnecting usually means resuming the latest session state instead of rebuilding context from scratch.
+
+{{< figure src="/images/iphone-agent-dev-setup/tmux-menu.png" alt="tmux-menu showing fzf-powered session picker on VPS" caption="tmux-menu is the first thing I see when I log into the VPS. Pick a session, jump back into it." >}}
+
+The flow looks like this:
+
+```mermaid
+graph LR
+    A[ssh / mosh<br/>into VPS] --> B[tmux-menu launches]
+    B --> C[fzf picker:<br/>list of sessions]
+    C --> D{pick}
+    D -->|existing| E[attach -<br/>resume state]
+    D -->|new| F[create new<br/>session]
+```
+
+This part is easy to underestimate. A remote workflow gets dramatically better the moment "disconnecting" stops meaning "start over." On a phone it's the difference between using it for real work and using it for screenshots.
+
+### Where Claude Remote Control Still Fits
+
+[Claude Remote Control](https://code.claude.com/docs/en/remote-control) still has a place. If I specifically want the Claude app on my iPhone, it's the cleanest path - native UI, native notifications, no terminal in the loop.
+
+But most of the time I prefer the Blink Shell + Mosh + tmux route into the VPS for Claude Code, because the terminal interface is more complete and the same session keeps working when I move back to the MacBook. Remote Control is useful, just not my default.
+
 ## Voice Is The Interface
 
 Typing long prompts on the iPhone keyboard is the worst part of this workflow, so I avoid doing it.
