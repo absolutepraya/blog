@@ -202,7 +202,7 @@ I think of skills as a separate layer from the clients themselves. The tool matt
 
 - [/superpowers](https://github.com/obra/superpowers) gives me the core workflow discipline.
 - [/pr-review-toolkit](https://github.com/anthropics/claude-plugins-official) is what I reach for when I want extra review pressure on tests, error handling, and quality.
-- [/grill-me](https://skills.sh/mattpocock/skills/grill-me) when I want the AI to interrogate my vague idea until it becomes a precise spec.
+- [/grill-with-docs](https://www.skills.sh/mattpocock/skills) (the evolution of the older `/grill-me`) when I want the AI to interrogate my vague idea against the existing project's domain model, sharpening terminology and updating docs as decisions crystallise.
 - [/ui-ux-pro-max](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) when I want a stronger UI system than I'd get from default prompting.
 
 For document work, I keep Anthropic's official document skills installed. They let the agent create or edit office files end-to-end, which is great when I'd rather review the output than open the app and type:
@@ -213,6 +213,79 @@ For document work, I keep Anthropic's official document skills installed. They l
 - [/pdf](https://skills.sh/anthropics/skills/pdf) for PDFs
 
 These pair really well with templates: hand the agent a template plus the source data, and the final document comes back ready to review. No typing in the app, no formatting fights.
+
+### Matt Pocock's Skills Pack
+
+A lot of what I rely on outside the official Anthropic and superpowers packs comes from Matt Pocock's bundle on [skills.sh](https://www.skills.sh/mattpocock/skills). The source lives on [GitHub](https://github.com/mattpocock/skills) if you want to read the markdown directly before installing anything.
+
+The four I open most often:
+
+- **`/grill-with-docs`** is the evolution of the older `/grill-me`. Same interrogation-style planning loop, but grounded in the project's existing `CONTEXT.md` and ADRs so the questions stay in-vocabulary instead of drifting generic. I use it when I want a plan stress-tested against decisions the team already made.
+- **`/handoff`** writes the current conversation into a markdown file so a fresh agent, or a future me, can pick up without re-deriving context. I use it when I'm switching from one client to another, parking work to come back to, or seeding a new project from a long planning chat.
+- **`/prototype`** spins up a throwaway answer to a specific design question. Two branches: a runnable terminal app to push a state machine around, or several wildly different UI variants on one route so you can toggle and compare. I don't reach for it as often as the others, but it's the right tool when the question is "let me actually feel this before I commit to it."
+- **`/write-a-skill`** is the meta-skill. When I notice I've configured the same kind of session three times, I run `/write-a-skill` so the preferences and conventions from that session become a reusable skill of my own. That's how my local `/avanade-docs`, `/avanade-slides`, `/cv`, `/nextcloud`, and a handful of others were born.
+
+### Anatomy Of A Skill
+
+A skill is just a folder with a `SKILL.md` at the root. That's the whole minimum. Everything else is progressive disclosure: extra files only load when the skill explicitly tells the agent to read them.
+
+The simplest possible skill is one file:
+
+```
+my-skill/
+└── SKILL.md
+```
+
+A more involved skill bundles reference docs and executable helpers as you need them. There are two patterns I use most often.
+
+**Reference docs under `references/`.** When the skill carries too much detail to fit comfortably in one file, I split it into topic-scoped reference docs. The SKILL.md keeps the routing logic (cardinal rules, when to use, an index pointing at each reference doc), and the heavy detail lives in the references. My `/avanade-slides` skill is the strongest example:
+
+```
+avanade-slides/
+├── SKILL.md                              # ~8.5 KB - entry point, routing
+└── references/
+    ├── palette-and-typography.md         # ~6 KB
+    ├── layouts-and-cards.md              # ~13 KB
+    ├── icons-and-assets.md               # ~13 KB
+    ├── template-slides.md                # ~11 KB
+    ├── build-pipeline.md                 # ~10 KB
+    ├── architecture-diagrams.md          # ~24 KB
+    └── preferences-and-lessons.md        # ~16 KB
+```
+
+That's roughly 93 KB of reference material behind an 8.5 KB SKILL.md, and the agent only reads whichever sub-docs the current task actually needs. If I'm designing an architecture slide, it pulls in `architecture-diagrams.md`. If I'm picking colors, it pulls in `palette-and-typography.md`. The rest stays on disk.
+
+**Executable helpers under `bin/`.** When the skill is doing something deterministic, like talking to an API, calling a shell tool, or running a build, I drop a script under `bin/` and let the SKILL.md instruct the agent to shell out to it instead of regenerating the logic in prose. My `/nextcloud` skill is the canonical version:
+
+```
+nextcloud/
+├── SKILL.md          # entry point - front matter + instructions
+└── bin/
+    └── nc            # WebDAV CLI the skill shells out to
+```
+
+Front matter at the top of `SKILL.md` is what makes a skill discoverable by the agent:
+
+```md
+---
+name: nextcloud
+description: Use when the user references Nextcloud files (reading, uploading, saving, sharing, or managing files in cloud storage).
+---
+```
+
+The agent only loads `SKILL.md` upfront. Reference files under `references/` and helper scripts under `bin/` or `scripts/` stay on disk until the instructions explicitly point at them. That is the architecture trick: a skill can be much larger than the active context budget, because most of its contents live as "you'll read this only if you actually need it."
+
+```mermaid
+graph TD
+    Trigger["User says something matching<br/>the SKILL.md description"]
+    Trigger --> Load["Agent loads SKILL.md<br/>front matter + main instructions"]
+    Load --> Decide{"Does the skill<br/>need more?"}
+    Decide -->|No| Act["Agent acts on the<br/>instructions in SKILL.md"]
+    Decide -->|Yes, deeper docs| Refs["Agent reads<br/>references/*.md on demand"]
+    Decide -->|Yes, deterministic op| Bin["Agent shells out<br/>to bin/* scripts"]
+    Refs --> Act
+    Bin --> Act
+```
 
 If you're hunting for new skills, [skills.sh](https://skills.sh/) is the place to browse. It indexes a huge number of community-published skills, and most of what I rely on day-to-day either comes from there or from official Anthropic plugin repos.
 
@@ -228,7 +301,7 @@ If you're hunting for new skills, [skills.sh](https://skills.sh/) is the place t
 
 [Claude Code](https://www.anthropic.com/product/claude-code) is still my favorite place for deep terminal-native work. Especially good when I want long sessions that mix planning, editing, shell, and git without ceremony.
 
-It's also where the plugin and workflow ecosystem first clicked for me. For strong orchestration in a terminal-first environment, Claude Code is still a big part of the picture.
+It's also where the plugin and workflow ecosystem first clicked for me. Claude Code recently added a `/goal` command of its own, which closes the one real feature gap I used to feel against Codex. For strong orchestration in a terminal-first environment, it's still a big part of the picture.
 
 ### Codex
 
@@ -332,7 +405,7 @@ The [iPhone version of this setup](/posts/agents-dev-setup-on-iphone/) is now di
 
 Voice input is one of the highest-leverage parts of the setup, because prompt-writing is often the bottleneck once the tooling is good.
 
-On the MacBook I mostly use [Wispr Flow](https://wisprflow.ai/). It is polished, fast, and good at turning messy spoken thoughts into clean text. When I run out of the free tier, I switch to [Handy](https://handy.computer/), which is free and open source.
+On the MacBook I mostly use [Wispr Flow](https://wisprflow.ai/). It is polished, fast, and good at turning messy spoken thoughts into clean text. I keep [Handy](https://handy.computer/) installed as a free, open source fallback, but in practice I reach for Wispr Flow far more often.
 
 {{< figure src="/images/macbook-agent-dev-setup/wisprflow.png" alt="Wispr Flow website showing voice-to-text positioning and macOS download" caption="Wispr Flow is my default dictation layer on desktop. It is the smoothest option when I want polished text quickly." >}}
 
