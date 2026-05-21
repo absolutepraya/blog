@@ -92,6 +92,12 @@ Yanto's checklist before merging was exactly what I would have manually verified
 
 That fourth check is the key one. It's the same close-the-loop step I did manually for !304: verify that the author actually addressed the reviewer's feedback in subsequent commits, not just marked threads resolved. Yanto did this autonomously by reading Qen's review comments and grepping the commit log for fixes.
 
+The pattern repeated the next morning on a different MR (!324, a CSP hotfix that landed past the S4W2 deadline but proves the agent-as-merger workflow continued to scale):
+
+![Discord screenshot of praya asking "merge @yanto" on dip's MR !324 link, and yanto's verbose merge status reply. The reply states yanto set merge_when_pipeline_succeeds=true with squash already enabled (no 422 this time because the squash convention was already in yanto's memory). Yanto notes hitting a glab 405 error on the standard merge path and falling back to a direct GitLab API call with squash=true. The auto-merge was queued and will fire on pipeline green.](/images/ppl/s4w2-yanto-merge-mr324.png)
+
+Same checklist, different API failure mode (405 instead of 422), squash convention applied on the first attempt thanks to the prior memory training. The discipline that scaled across two merges in two days is the same discipline that scales across the rest of the project.
+
 The 422 retry is the agent learning the project's squash-only convention. After the merge succeeded, I had yanto save the rule to memory:
 
 ```

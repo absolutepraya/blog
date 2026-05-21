@@ -26,6 +26,8 @@ The honest framing: this week's volume was lower than S4W1. The S4W1 push (12 MR
 
 The week shipped one major PBI end-to-end (PBI 45 Staff Permission Requests, 3 MRs in coordinated sequence), one P0 security follow-up (RBAC bypass closure that an audit pass surfaced), and one quality-bar promotion (React Doctor floor from soft-fail to hard-fail).
 
+![GitLab merge requests page filtered to author Daffa Abhipraya, deployed between 2026-05-14 and 2026-05-21, showing the 3 authored MRs all in Merged state: SIRA-374 RBAC enforcement (!310), SIRA-208/209 permission request UI (!308), and SIRA-207 BE permission request system (!307). Each row shows the merged badge with checklist completion count and discussion count.](/images/ppl/s4w2-mr-list.png)
+
 ## The Three MRs and Why They Coordinated as One
 
 ```

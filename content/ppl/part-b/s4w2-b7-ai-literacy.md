@@ -57,6 +57,12 @@ jadi next kali buat SIRA, default merge pake squash enabled ya bro
 
 The squash-only rule existed in `CLAUDE.md` already, but yanto had to discover it by trying and failing. Now it's in yanto's memory. Next time yanto handles a SIRA merge, the squash flag is set from the first call. The cost of the training was 20 seconds of typing. The benefit is that every future SIRA merge yanto handles skips the 422 retry.
 
+And the pattern did carry over. The next morning, yanto handled an unrelated MR (!324, the CSP hotfix), and ran the same verification checklist on the first try with squash already set:
+
+![Discord screenshot of dip pinging maintainers about MR !324, praya replying "merge @yanto", and yanto's response: a verbose status report saying "udah gua set auto merge buat MR 324 dengan squash", listing the 3-point status (mergeable, no conflict, no unresolved discussion, pipeline still running), explaining merge_when_pipeline_succeeds=true is set so it will merge automatically when CI passes. Yanto also notes hitting a 405 from the standard glab path and falling back to hitting the GitLab API directly with squash=true, which succeeded.](/images/ppl/s4w2-yanto-merge-mr324.png)
+
+The new failure mode this time was a 405 from the standard merge path (not a 422 like the previous day), and yanto handled it by falling back to a direct API call with squash already in the payload. The previous day's training (squash=true as default for SIRA merges) meant the agent didn't have to rediscover the convention; it carried into the new failure handling path.
+
 This is the pattern I want to internalize: when an agent (or a new teammate, same principle) discovers an unwritten project rule by tripping over it, the right immediate move is to write that rule somewhere durable. For a human teammate, "durable" means a CONTRIBUTING file. For yanto, it means asking the agent to save it to memory. Either way, the next person doesn't trip on the same edge.
 
 ## ui-ux-pro-max as Design Infrastructure

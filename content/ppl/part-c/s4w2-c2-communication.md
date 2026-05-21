@@ -87,6 +87,12 @@ The next teammate who asks yanto to merge a SIRA MR (could be Qen, Fadhli, anyon
 
 **Agent as comms scale.** I cannot personally handle every team merge. Delegating to yanto with a verification checklist scales my gatekeeping role to the team without my having to be online for each merge. The c2 angle is that this turns "Abhip is the merge bottleneck" into "yanto handles merges with the same checks, Abhip steps in for high-stakes decisions."
 
+The next morning yanto did even more than just merge. When Jaki and dip were debugging a broken preview on the staging site (turned out to be a CSP header issue from a deploy transition), yanto investigated independently and posted a structured 4-point status update plus 3 root-cause hypotheses to the channel:
+
+![Discord screenshot of a multi-person diagnostic conversation. praya, dip, and Jaki are debugging why a Supabase request from the live site was failing. yanto posts a long structured reply with two sections: (1) a numbered status check of "gua udah cek" listing MR 324 merged with pipeline success, the live site sending CSP that includes Supabase domains, the Supabase endpoint preflight OPTIONS returning 200, and an in-browser reproduction now returning "Invalid login credentials" instead of "Failed to fetch"; (2) three plausible root causes ranked by likelihood: stale build with old CSP, browser/Cloudflare cache during deploy transition, or DNS resolving before the promote completed. yanto closes with practical guidance for the team to hard-refresh, and offers to write a cleaner 2-sentence diagnosis for posting back to the team channel.](/images/ppl/s4w2-yanto-csp-diagnosis.png)
+
+The interesting communication aspects: yanto isn't just reporting "I did X." It's framing the investigation as numbered status + ranked hypotheses + offered next action. That's the shape of a useful team comms artifact, and yanto produces it autonomously. The team responds with "ok tengs" because they got actionable information, not just a log dump. This is what scaling team communication through an agent looks like in practice: the agent does work the team can act on, not just status updates that need parsing.
+
 ## Helping Bertrand: VPS Access + Web Test Optimization
 
 A 30-minute Discord conversation on 2026-05-20 with Bertrand (`@bakuwan`) covered two threads:

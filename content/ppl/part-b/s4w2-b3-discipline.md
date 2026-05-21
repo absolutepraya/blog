@@ -24,6 +24,8 @@ Sprint 4 Week 2 (May 14 to 20) numbers:
 
 The volume dropped intentionally. S4W1 was a sira-mr-bot push (one big greenfield service across 12 small MRs). S4W2 was a Permission Request System push: one PBI shipped end-to-end across three coordinated MRs, with the third being a P0 bypass closure that the audit caught. Smaller surface, deeper coordination.
 
+![GitLab merge requests page filtered to author Daffa Abhipraya, deployed between 2026-05-14 and 2026-05-21, showing the 3 authored MRs all in Merged state: SIRA-374 RBAC enforcement (!310), SIRA-208/209 permission request UI (!308), and SIRA-207 BE permission request system (!307). The filter chips for Author, Deployed-After, and Deployed-Before are visible at the top.](/images/ppl/s4w2-mr-list.png)
+
 ## The Three MRs as One Coordinated PBI
 
 PBI 45 (Staff Permission Requests) is the structural answer to "how do AR_STAFF users propose sensitive changes that need admin review?" Three MRs landed in sequence this week:
