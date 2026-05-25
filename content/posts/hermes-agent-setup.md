@@ -143,7 +143,6 @@ Yanto loads my entire shared `~/.agents/skills/` directory. That is 136 skills t
 - `cf-dns`: a thin wrapper around the Cloudflare API for my `abhipraya.dev` zone. Add, remove, toggle proxy, list records.
 - `gws-*` skills: a family of Google Workspace CLI wrappers for Drive, Docs, Sheets, Slides, Calendar, Gmail. They map to the official `@googleworkspace/cli` binary. (Note for Debian 12 users: pin to `0.21.1` or older. The 0.22 series requires glibc 2.39, which is Debian 13.)
 - `scele-digest`: a daily university-deadline digest, open-source at [github.com/absolutepraya/skills/scele-digest](https://github.com/absolutepraya/skills/scele-digest). The skill talks to a Moodle install through its REST API using a personal student account (mine is Fasilkom UI's SCELE, but Moodle is the LMS most universities run). It also reads one configured class-chat source for lecturer and group context (I point it at the Telegram group my lecturers actually post in), auto-adds new deadlines to Todoist, and posts a structured Discord embed every morning at 7am. Per-semester course config lives in YAML so the skill outlives course changes.
-- `kp-weekly-log`: weekly internship log generator, fills a DOCX template, uploads to Nextcloud.
 
 On top of skills, Yanto has MCP servers wired into Hermes:
 
@@ -287,7 +286,6 @@ What changed is the cost of small operations. Before, the cost of a thirty-secon
 
 A few open threads I have not closed yet:
 
-- Migrating my last cron job from Claude Code OAuth to Hermes cron. The scele-digest one already moved (it runs under Hermes cron now). The remaining one is `kp-weekly-log`. Not urgent, it still works where it is.
 - A real X (Twitter) search path. The RSSHub `/twitter/keyword/<query>` route is gated by X. The current workaround is `brave_web_search` with `site:x.com` filter. It works but lags by 1 to 7 days because Brave indexes a subset. If real-time becomes important, the next step is twscrape with my own auth cookies.
 - Voice. Hermes supports voice memos with auto-transcription on Telegram and Discord. I have not turned it on. The use case I keep imagining is sending a voice memo while walking and getting a structured Todoist task back.
 
