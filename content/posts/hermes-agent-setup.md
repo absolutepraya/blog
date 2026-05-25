@@ -78,13 +78,15 @@ The agent is the boring half. The interesting half was deciding what kind of pre
 
 I did not want "Hermes the helpful assistant." I wanted something specific. A Jakartan friend who happens to have shell access. Casual, technically competent, drops slang naturally, makes light fun of me when I deserve it, refuses to act on serious things without confirming. The character ended up being Don Yanto El Guapo, "Yanto" or "to" in casual messages.
 
-I locked the persona into three layers, all loaded into every conversation. One file for the universal voice, one for what he knows about me, one for what he knows about everyone else:
+I locked the identity into three layers, all loaded into every conversation. One file for the universal voice, one for what he knows about me, plus per-guest cards for anyone else who shows up:
 
 1. `SOUL.md` defines the universal voice and hard rules. Lowercase by default, no em dash, no trailing emoji, no corporate hedge phrases, jaksel slang welcome, cringe level 3 acceptable. Self-check rules. Refusal patterns for catastrophic actions.
 2. `USER.md` is about me. My identity, my role at university, my internships, my projects, my Todoist defaults, my work on a course called PPL, my GitLab username on the internal sira instance, my home location. This is "owner" context. Default-aggressive autopilot applies whenever a message comes from me.
-3. `MEMORY.md` covers guests. Right now that is one peer (my partner). When messages come from her UID, default-cautious applies. Read-only stuff is fine. Anything that touches my data, my projects, or my accounts triggers a permission flow: Yanto DMs me on the same chat thread, asks "she wants X, oke gua bantu?", waits for my reply.
+3. Guests live in [Honcho](https://honcho.dev/) peer cards, one card per phone number. Right now that is just my partner. When messages come from her UID, default-cautious applies. Read-only stuff is fine. Anything that touches my data, my projects, or my accounts triggers a permission flow: Yanto DMs me on the same chat thread, asks "she wants X, oke gua bantu?", waits for my reply.
 
-Three flat markdown files. No vector store, no embeddings, no semantic search. The whole identity is text.
+There is also a `MEMORY.md` in the same directory but it serves a different purpose. It is a universal scratchpad for runtime auto-saves Yanto adds himself via the memory tool, things like "Abhip prefers dark mode by default for any new tool we set up", facts that are not owner-specific and not guest-specific. Most of the time it stays nearly empty. The identity-shaping work happens in the three layers above.
+
+Flat markdown plus tagged peer cards. No vector store, no embeddings, no semantic search. The whole identity is text.
 
 The way these layers compose into a single agent context every turn looks like this:
 
@@ -97,7 +99,7 @@ graph TD
         L1["1. ABSOLUTE OUTPUT RULES<br>hard constraints, override everything below<br>(no em dash, no trailing emoji, self-check)"]
         L2["2. SOUL.md<br>universal voice, persona, refusal patterns"]
         L3["3. USER.md<br>about the owner: identity, projects,<br>capabilities, Todoist defaults"]
-        L4["4. MEMORY.md<br>about guests: who they are,<br>permission flow rules"]
+        L4["4. Honcho peer cards<br>about guests: identity tag, nickname,<br>permission flow rules"]
     end
 
     Msg --> Stack
@@ -111,7 +113,7 @@ graph TD
     Cautious --> Reply
 ```
 
-The hard rules win on top. The persona shapes voice. The owner and guest files together decide who is talking and how cautious to be. Identity-aware behavior comes for free, because the same UID-to-defaults mapping is in plain text right next to the persona.
+The hard rules win on top. The persona shapes voice. The owner file and the guest peer cards together decide who is talking and how cautious to be. Identity-aware behavior comes for free, because the same UID-to-defaults mapping is in plain text right next to the persona.
 
 ### The Hard Rules
 
@@ -134,13 +136,13 @@ This is the unsexy reality of prompt engineering. Half the work is making sure y
 
 ## Capabilities
 
-Yanto loads my entire shared `~/.agents/skills/` directory. That is 54 skills today, the same set my Claude Code and OpenCode use. A few I lean on most:
+Yanto loads my entire shared `~/.agents/skills/` directory. That is 136 skills today (up from 54 when I first wrote this post in early May), the same set my Claude Code and OpenCode use. A few I lean on most:
 
 - `chart`: generates a TradingView-style PNG via the chart-img.com REST API for any ticker, indicator set, and timeframe. Aliases like `qqq`, `ihsg`, `snp`, `btc` map to exchange-prefixed symbols. Output is a file path, which Yanto includes as a `MEDIA:` tag. The Hermes gateway parses that tag and attaches the image to the chat.
 - `weather`: a thin wrapper around the free [Open-Meteo](https://open-meteo.com/) API. No key needed. Aliases preconfigured for the places I actually ask about: Pancoran, Cikokol, Gading Serpong, Jakarta, plus the major cities and any raw lat,lon. Pairs naturally with the Google Maps directions tool for combined "weather + commute" questions like "berangkat ke cikokol jam berapa enaknya, hujan ga".
 - `cf-dns`: a thin wrapper around the Cloudflare API for my `abhipraya.dev` zone. Add, remove, toggle proxy, list records.
 - `gws-*` skills: a family of Google Workspace CLI wrappers for Drive, Docs, Sheets, Slides, Calendar, Gmail. They map to the official `@googleworkspace/cli` binary. (Note for Debian 12 users: pin to `0.21.1` or older. The 0.22 series requires glibc 2.39, which is Debian 13.)
-- `scele-digest`: my daily university-deadline digest, originally written for Claude Code cron, still running there for now.
+- `scele-digest`: a daily university-deadline digest, open-source at [github.com/absolutepraya/skills/scele-digest](https://github.com/absolutepraya/skills/scele-digest). The skill talks to a Moodle install through its REST API using a personal student account (mine is Fasilkom UI's SCELE, but Moodle is the LMS most universities run). It also reads one configured class-chat source for lecturer and group context (I point it at the Telegram group my lecturers actually post in), auto-adds new deadlines to Todoist, and posts a structured Discord embed every morning at 7am. Per-semester course config lives in YAML so the skill outlives course changes.
 - `kp-weekly-log`: weekly internship log generator, fills a DOCX template, uploads to Nextcloud.
 
 On top of skills, Yanto has MCP servers wired into Hermes:
@@ -157,6 +159,14 @@ The Google Maps wiring deserves its own paragraph. I told Yanto that for any "fi
 The Yahoo Finance MCP filled a real gap. The `chart` skill is great for visuals but doesn't actually know what price something is at right now. With `yahoo-finance` wired in, I can ask "BBRI sekarang berapa, sama 1 bulan terakhir gimana" and Yanto pulls the live quote, the 30-day history, and any recent news in one turn. The 15-minute Yahoo delay is fine for the kind of "is this a reasonable level to scale into" question I actually have. For tighter intraday work I would not use Yanto, but I rarely have that question.
 
 There is also an [RSSHub](https://docs.rsshub.app/) instance running on the same VPS at `localhost:1200`, exposed publicly at `rss.abhipraya.dev` behind basic auth. RSSHub turns almost any source on the web into an RSS feed, which means Yanto has a uniform way to read CNBC top news, Bloomberg markets, Bloomberg technology, Bloomberg opinion, and selected X user timelines without me writing a custom scraper for each. When I ask "to apa kabar pasar US" or "Bloomberg ada apa yang lagi heat", Yanto curls the relevant RSSHub route from inside the VPS, parses the XML with a quick Python one-liner, picks the top five items, and summarizes in his own voice with a citation. For named X accounts the route `/twitter/user/<handle>` works fine using a single auth token I keep in the RSSHub container env. Search-by-keyword on X is gated upstream, so for "what is X saying about $XAUUSD" type questions Yanto falls back to Brave with a `site:x.com` filter. The pattern in his memory file is explicit about which path to use for which kind of question, and to be honest with me when a route is broken instead of fabricating a summary.
+
+### When the LLM Shouldn't Eyeball the Data
+
+The scele-digest skill taught me a pattern I now reach for whenever I catch myself asking the model to do something deterministic with a large blob.
+
+Early versions had the LLM read a 45 KB Telegram history dump through the MCP and pick out which messages fell inside the last 24 hours. It mostly worked. The failure mode was specific: occasionally it would surface a message from a completely different source as "the latest from the group". One morning it confidently summarized a notification from a bot called PorosAiccountantBot as ProgPar group activity, because that bot's posts happened to be cached in a `get_chat` metadata field. The chat history itself did not contain those messages at all.
+
+The fix was to take the windowing out of the model's hands. The skill now ships a small Python helper called `bin/tg-window` that uses Telethon directly, fetches messages from a configured chat, filters by timestamp, drops bot senders and system actions mechanically, and returns clean JSON. The LLM still writes the summary, but it works from a structured array of real messages instead of raw text. The lesson generalized for me. Anything that boils down to "load this blob, find the parts matching criterion X, give me back a clean subset" belongs in a deterministic Python helper, not in the prompt. The model writes the prose. Python does the slicing. Hallucination on the parts where it would have hurt drops to near zero.
 
 ### Yanto Has Reach Into All My Self-Hosted Stack
 
@@ -277,7 +287,7 @@ What changed is the cost of small operations. Before, the cost of a thirty-secon
 
 A few open threads I have not closed yet:
 
-- Migrating my two cron jobs from Claude Code OAuth to Hermes cron. Not urgent. They still work where they are.
+- Migrating my last cron job from Claude Code OAuth to Hermes cron. The scele-digest one already moved (it runs under Hermes cron now). The remaining one is `kp-weekly-log`. Not urgent, it still works where it is.
 - A real X (Twitter) search path. The RSSHub `/twitter/keyword/<query>` route is gated by X. The current workaround is `brave_web_search` with `site:x.com` filter. It works but lags by 1 to 7 days because Brave indexes a subset. If real-time becomes important, the next step is twscrape with my own auth cookies.
 - Voice. Hermes supports voice memos with auto-transcription on Telegram and Discord. I have not turned it on. The use case I keep imagining is sending a voice memo while walking and getting a structured Todoist task back.
 
