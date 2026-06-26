@@ -43,7 +43,7 @@ The architecture I cared about:
 
 Setup is two short wizard prompts. The first picks the model provider from a long menu of options (anything from Nous Portal and Anthropic to GitHub Copilot or a local Ollama). The second picks which messaging platforms to wire. Both are arrow-key TUIs, which feels right for a self-hosted thing.
 
-{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-provider-menu.png" alt="Hermes Agent provider selection TUI menu listing Nous Portal, OpenRouter, LM Studio, Anthropic, OpenAI Codex, GitHub Copilot, and many other providers" caption="Provider menu in `hermes setup`. Pick where the model runs. I went with GitHub Copilot routing Claude Sonnet 4.6, but switching is one command away." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-provider-menu.png" alt="Hermes Agent provider selection TUI menu listing Nous Portal, OpenRouter, LM Studio, Anthropic, OpenAI Codex, GitHub Copilot, and many other providers" caption="Provider menu in `hermes setup`. Pick where the model runs. I went with the OpenAI Codex provider running GPT-5.5, but switching is one command away." >}}
 
 {{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-platform-menu.png" alt="Hermes Agent gateway platform selection TUI listing Telegram, Discord, Slack, Mattermost, WhatsApp, Signal, Email, and others" caption="Platform menu in `hermes gateway setup`. Pick which transports the agent answers on. Telegram, Discord, and WhatsApp are the three I run." >}}
 
@@ -78,11 +78,11 @@ The agent is the boring half. The interesting half was deciding what kind of pre
 
 I did not want "Hermes the helpful assistant." I wanted something specific. A Jakartan friend who happens to have shell access. Casual, technically competent, drops slang naturally, makes light fun of me when I deserve it, refuses to act on serious things without confirming. The character ended up being Don Yanto El Guapo, "Yanto" or "to" in casual messages.
 
-I locked the identity into three layers, all loaded into every conversation. One file for the universal voice, one for what he knows about me, plus per-guest cards for anyone else who shows up:
+I locked the identity into three layers, all loaded into every conversation. One file for the universal voice, one for what he knows about me, plus per-guest notes for anyone else who shows up:
 
 1. `SOUL.md` defines the universal voice and hard rules. Lowercase by default, no em dash, no trailing emoji, no corporate hedge phrases, jaksel slang welcome, cringe level 3 acceptable. Self-check rules. Refusal patterns for catastrophic actions.
 2. `USER.md` is about me. My identity, my role at university, my internships, my projects, my Todoist defaults, my work on a course called PPL, my GitLab username on the internal sira instance, my home location. This is "owner" context. Default-aggressive autopilot applies whenever a message comes from me.
-3. Guests live in [Honcho](https://honcho.dev/) peer cards, one card per phone number. Right now that is just my partner. When messages come from her UID, default-cautious applies. Read-only stuff is fine. Anything that touches my data, my projects, or my accounts triggers a permission flow: Yanto DMs me on the same chat thread, asks "she wants X, oke gua bantu?", waits for my reply.
+3. Guests are recognized by their UID, with a short per-person note in the persona about who they are. Right now that is just my partner. When messages come from her UID, default-cautious applies. Read-only stuff is fine. Anything that touches my data, my projects, or my accounts triggers a permission flow: Yanto DMs me on the same chat thread, asks "she wants X, oke gua bantu?", waits for my reply.
 
 There is also a `MEMORY.md` in the same directory but it serves a different purpose. It is a universal scratchpad for runtime auto-saves Yanto adds himself via the memory tool, things like "Abhip prefers dark mode by default for any new tool we set up", facts that are not owner-specific and not guest-specific. Most of the time it stays nearly empty. The identity-shaping work happens in the three layers above.
 
@@ -99,7 +99,7 @@ graph TD
         L1["1. ABSOLUTE OUTPUT RULES<br>hard constraints, override everything below<br>(no em dash, no trailing emoji, self-check)"]
         L2["2. SOUL.md<br>universal voice, persona, refusal patterns"]
         L3["3. USER.md<br>about the owner: identity, projects,<br>capabilities, Todoist defaults"]
-        L4["4. Honcho peer cards<br>about guests: identity tag, nickname,<br>permission flow rules"]
+        L4["4. Per-guest notes<br>about guests: identity tag, nickname,<br>permission flow rules"]
     end
 
     Msg --> Stack
@@ -136,7 +136,7 @@ This is the unsexy reality of prompt engineering. Half the work is making sure y
 
 ## Capabilities
 
-Yanto loads my entire shared `~/.agents/skills/` directory. That is 136 skills today (up from 54 when I first wrote this post in early May), the same set my Claude Code and OpenCode use. A few I lean on most:
+Yanto loads my entire shared `~/.agents/skills/` directory. That is 138 skills today (up from 54 when I first wrote this post in early May), the same set my Claude Code and OpenCode use. A few I lean on most:
 
 - `chart`: generates a TradingView-style PNG via the chart-img.com REST API for any ticker, indicator set, and timeframe. Aliases like `qqq`, `ihsg`, `snp`, `btc` map to exchange-prefixed symbols. Output is a file path, which Yanto includes as a `MEDIA:` tag. The Hermes gateway parses that tag and attaches the image to the chat.
 - `weather`: a thin wrapper around the free [Open-Meteo](https://open-meteo.com/) API. No key needed. Aliases preconfigured for the places I actually ask about: Pancoran, Cikokol, Gading Serpong, Jakarta, plus the major cities and any raw lat,lon. Pairs naturally with the Google Maps directions tool for combined "weather + commute" questions like "berangkat ke cikokol jam berapa enaknya, hujan ga".
@@ -157,7 +157,7 @@ The Google Maps wiring deserves its own paragraph. I told Yanto that for any "fi
 
 The Yahoo Finance MCP filled a real gap. The `chart` skill is great for visuals but doesn't actually know what price something is at right now. With `yahoo-finance` wired in, I can ask "BBRI sekarang berapa, sama 1 bulan terakhir gimana" and Yanto pulls the live quote, the 30-day history, and any recent news in one turn. The 15-minute Yahoo delay is fine for the kind of "is this a reasonable level to scale into" question I actually have. For tighter intraday work I would not use Yanto, but I rarely have that question.
 
-There is also an [RSSHub](https://docs.rsshub.app/) instance running on the same VPS at `localhost:1200`, exposed publicly at `rss.abhipraya.dev` behind basic auth. RSSHub turns almost any source on the web into an RSS feed, which means Yanto has a uniform way to read CNBC top news, Bloomberg markets, Bloomberg technology, Bloomberg opinion, and selected X user timelines without me writing a custom scraper for each. When I ask "to apa kabar pasar US" or "Bloomberg ada apa yang lagi heat", Yanto curls the relevant RSSHub route from inside the VPS, parses the XML with a quick Python one-liner, picks the top five items, and summarizes in his own voice with a citation. For named X accounts the route `/twitter/user/<handle>` works fine using a single auth token I keep in the RSSHub container env. Search-by-keyword on X is gated upstream, so for "what is X saying about $XAUUSD" type questions Yanto falls back to Brave with a `site:x.com` filter. The pattern in his memory file is explicit about which path to use for which kind of question, and to be honest with me when a route is broken instead of fabricating a summary.
+There is also an [RSSHub](https://docs.rsshub.app/) instance running on the same VPS at `localhost:1200`, exposed publicly at `rss.abhipraya.dev` behind basic auth. RSSHub turns almost any source on the web into an RSS feed, which means Yanto has a uniform way to read CNBC top news, Bloomberg markets, Bloomberg technology, Bloomberg opinion, and selected X user timelines without me writing a custom scraper for each. When I ask "to apa kabar pasar US" or "Bloomberg ada apa yang lagi heat", Yanto curls the relevant RSSHub route from inside the VPS, parses the XML with a quick Python one-liner, picks the top five items, and summarizes in his own voice with a citation. For named X accounts the route `/twitter/user/<handle>` works using a couple of rotating auth tokens in the RSSHub container env, though X throttles the datacenter IP hard enough that the feeds often come back thin. Search-by-keyword on X is gated upstream, so for "what is X saying about $XAUUSD" type questions Yanto falls back to Brave with a `site:x.com` filter. The pattern in his memory file is explicit about which path to use for which kind of question, and to be honest with me when a route is broken instead of fabricating a summary.
 
 ### When the LLM Shouldn't Eyeball the Data
 
@@ -209,6 +209,58 @@ The second is an infra ask. I noticed `glances.abhipraya.dev` was publicly reach
 
 Reading those back, the thing I notice most is that there is no friction. I am not typing commands. I am asking, the way I would ask a friend who happens to know my whole stack.
 
+## Sending Yanto a TikTok
+
+A newer habit. I keep finding good stuff on TikTok and Instagram in the worst possible format. Someone posts a carousel of perfume picks, or a photo-mode slideshow of watch recommendations, with all the actual information baked into the images as text. It is genuinely useful and completely un-searchable later. Screenshotting it into my camera roll is where these go to die.
+
+So I taught Yanto to swallow them. I send him a TikTok or Instagram link on WhatsApp with something like "to cek ini, ada jam2 bagus, simpen ke folder Watch", and he does the whole thing: pulls every slide, reads them, writes a clean list, and files it into the right Karakeep folder with the images attached.
+
+Two small skills do the work, and Yanto's own vision glues them together.
+
+```mermaid
+graph TD
+    Link["TikTok / Instagram link<br>sent on WhatsApp"]
+    Link --> Media["media skill:<br>cobalt downloads every slide"]
+    Media --> Read["Yanto reads the slides himself<br>(vision turns text-on-image<br>into a clean list)"]
+    Read --> Save["karakeep skill:<br>bookmark + slides + note<br>into the chosen folder"]
+    Save --> Reply["reply in chat:<br>the extracted list plus a Karakeep link"]
+```
+
+The first skill, `media`, downloads a post's images to a temp directory through a self-hosted [cobalt](https://cobalt.tools/) instance on the VPS, a lovely open-source media downloader that turns a TikTok or Instagram link into a clean set of image files.
+
+The second skill, `karakeep`, saves a bookmark into a named folder, uploads the slide images as attachments, and writes the note. It has `save`, `lists`, and `search` subcommands so Yanto can browse my folders and check whether a link is already saved before adding a duplicate.
+
+The interesting part is the bit in the middle that is not a skill at all. Between fetching and saving, Yanto reads the slides himself. A perfume carousel is not just images, it is a list of names and notes and prices rendered as text on a photo. The model reads them, understands the layout, and writes a faithful markdown list that goes in the note. Plain OCR would give me a wall of disconnected words. Vision plus the model's understanding gives me "Dior Sauvage, fresh, ~1.2jt" as a clean line. That is the whole reason fetching and reading are separate steps instead of one bundled skill. I wanted the model doing the reading, not a bundled OCR engine.
+
+The folder-picking surprised me with how well it handled ambiguity. I have a lot of Karakeep folders, and some names repeat under different parents. If I say "simpen ke Watch" and there is both a `Wishlist > Watch` and a `Gifts > Watch`, the skill does not guess. It hands Yanto every match with its full parent path, Yanto reads the actual post content, sees it is wristwatches, and files it under the right one. If he genuinely cannot tell, he asks. The disambiguation lives in the skill, the judgment lives in the model.
+
+## The Screeners That Never Wake the Model
+
+The scele-digest cron uses the LLM to write prose. A different class of cron I have added since does the opposite. It never touches the model at all.
+
+Hermes can run a cron in `no_agent` mode, where a plain script runs on a schedule and its stdout is delivered straight to a Discord channel: no agent loop, no tokens. I use this for a few market screeners that are pure, deterministic Python.
+
+```mermaid
+graph TD
+    Cron["Hermes cron tick"]
+    Cron --> Type{"Job type"}
+    Type -- "agent job" --> LLM["scele-digest:<br>LLM reads structured data,<br>writes the digest prose"]
+    Type -- "no_agent job" --> Py["market screeners:<br>plain Python threshold checks<br>on live numbers"]
+    LLM --> Disc["Discord"]
+    Py --> Alert["alert only when a rule fires<br>(plus a chart)"]
+    Py --> Beat["heartbeat every run<br>(missing line means broken)"]
+    Alert --> Disc
+    Beat --> Disc
+```
+
+The one I lean on most is a DCA timing helper for the ETFs I dollar-cost-average into. Every hour during US market hours it pulls the live price, compares it against the daily moving averages and the recent high, and if a ticker has pulled back into a buy zone it posts a compact alert to Discord with the levels and an annotated chart, then goes quiet. It fires at most once per ticker per signal per day, so a dip that lingers for three hours does not spam me. It is explicitly a "here is a reasonable level to scale in" nudge, not advice and not an order, the same disclaimer Yanto gives in chat.
+
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-market-buy-alert.png" alt="Discord alert from Yanto showing a BUY setup for SPY with signal metrics, reasons, and news context, followed by an annotated SPY chart" caption="A deterministic screener alert. The BUY-setup text with its levels and reasons, then its chart right after, no LLM in the loop." >}}
+
+The detail I am proud of is that these screeners are honest about being alive. Each one posts a small heartbeat line to a firehose channel on every run, even a boring one with nothing to report, formatted as a single line like `heartbeat market-buy 21:30 WIB`. The point is inversion. I do not watch for alerts, I watch for a missing heartbeat. If a line stops showing up, the cron broke, and I know within the hour instead of discovering a week later that a screener silently died. The one screener that runs every five minutes only heartbeats on the hour, so the firehose stays readable.
+
+This is the scele windowing lesson taken to its limit. Anything that is a fixed rule on numbers does not need a language model. The model is for judgment and prose. A threshold check is just a threshold check, and running it as deterministic Python makes it cheap, fast, and impossible to hallucinate.
+
 ## The Infrastructure Under It
 
 The agent runs as a `systemd` system service:
@@ -217,12 +269,12 @@ The agent runs as a `systemd` system service:
 sudo systemctl status hermes-gateway
 ```
 
-The service file points to `~/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main gateway run --replace` and includes `Restart=always`. If the process dies, systemd brings it back. If I push a config change I run `sudo systemctl restart hermes-gateway` and Hermes reconnects to both Telegram and Discord in about six seconds.
+The service file points to `~/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main gateway run --replace` and includes `Restart=always`. If the process dies, systemd brings it back. If I push a config change I run `sudo systemctl restart hermes-gateway` and Hermes reconnects to Telegram and Discord in about six seconds, with the WhatsApp Cloud webhook a touch slower to come back up.
 
 Configuration lives in two files:
 
 - `~/.hermes/config.yaml` for runtime settings: model defaults, MCP server commands, approval modes, platform-specific behavior (auto-thread, reactions, mention requirements), context engine, memory limits.
-- `~/.hermes/.env` for secrets: Telegram bot token, Discord bot token, allowed user IDs, Chart-img API key, Google Maps API key.
+- `~/.hermes/.env` for secrets: Telegram bot token, Discord bot token, the WhatsApp Cloud API access token and phone-number ID, allowed user IDs, Chart-img API key, Google Maps API key.
 
 Secrets never appear in the synced config repo. My `sync.sh` script scrubs every file before commit using a regex pass: ENV keys redacted by name match, plus pattern matches for tokens like `lin_api_*`, `ctx7sk-*`, `AIza*` (Google), and Discord bot token format `M[NTU]...XXX.YYY.ZZZ`.
 
@@ -256,7 +308,7 @@ Yanto knows my partner exists. When she messages him, three things change:
 
 The mechanism is simple. Her Discord and WhatsApp IDs are in `MEMORY.md`. The persona file says: when messages come from one of these IDs, apply guest-cautious defaults. The agent does the rest with no special hardcoded routing logic.
 
-This works on every platform Hermes supports, by design. Cross-platform identity is consistent. If she texts him from WhatsApp tomorrow with the same number that is in `MEMORY.md`, he picks up the same guest-cautious behavior.
+This works on every platform Hermes supports, by design. Cross-platform identity is consistent. If she texts him from WhatsApp with the same number that is in `MEMORY.md`, he picks up the same guest-cautious behavior.
 
 ## What I Stopped Doing
 
@@ -286,7 +338,7 @@ What changed is the cost of small operations. Before, the cost of a thirty-secon
 
 A few open threads I have not closed yet:
 
-- A real X (Twitter) search path. The RSSHub `/twitter/keyword/<query>` route is gated by X. The current workaround is `brave_web_search` with `site:x.com` filter. It works but lags by 1 to 7 days because Brave indexes a subset. If real-time becomes important, the next step is twscrape with my own auth cookies.
+- A reliable X (Twitter) read path. Refreshing the RSSHub auth tokens fixed the outright 401s, so named user timelines authenticate again, but X rate-limits the datacenter IP so the feeds still come back thin, and keyword search (`/twitter/keyword/<query>`) is gated entirely. The workaround for "what is X saying about $XAUUSD" type questions stays `brave_web_search` with a `site:x.com` filter, which lags by 1 to 7 days. A residential proxy, or twscrape with my own cookies, is the real fix if it ever matters enough.
 - Voice. Hermes supports voice memos with auto-transcription on Telegram and Discord. I have not turned it on. The use case I keep imagining is sending a voice memo while walking and getting a structured Todoist task back.
 
 ## What This Setup Is Actually Good For
@@ -305,4 +357,4 @@ I built Yanto because the friction of mosh-ing into my server was eating my even
 
 The personality matters more than I expected. Capability without character feels like another Cursor sidebar. Character with capability feels like having someone on your team. The ratio of "does the work" to "is annoying to interact with" is what decides whether you actually use the thing.
 
-My VPS is the same Debian box it was three months ago. Nothing about the hardware changed. What changed is that it now has a name, a voice, two messaging accounts, and a sense of when to bother me. That has been enough to make a 4-core, 8 GB box feel like a teammate.
+My VPS is the same Debian box it was three months ago. Nothing about the hardware changed. What changed is that it now has a name, a voice, three messaging accounts, and a sense of when to bother me. That has been enough to make a 4-core, 8 GB box feel like a teammate.
