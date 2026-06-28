@@ -14,7 +14,7 @@ People keep asking how my AI dev setup actually works. Friends, classmates, engi
 
 Short answer: I don't lean on one AI coding tool for everything. I run a shared workflow, shared instructions, shared skills, and shared commands across multiple clients. The three I reach for on the MacBook are [Claude Code](https://www.anthropic.com/product/claude-code), [Codex](https://openai.com/codex/), and [pi](https://github.com/withpi/codemode). Around them sit the supporting pieces: specialist skills, MCP tools, voice dictation, dotfiles sync, and a workspace layer that keeps sessions isolated without making the environment feel fragmented.
 
-If you're already on [GitHub Copilot](https://github.com/features/copilot), [Cursor](https://cursor.com/), Claude Code, or Codex and curious what a CLI-first, agent-heavy workflow looks like once it grows up, this is mine.
+If you're already on [GitHub Copilot](https://github.com/features/copilot), Claude Code, or Codex and curious what a CLI-first, agent-heavy workflow looks like once it grows up, this is mine.
 
 ## Why I Use Multiple Agents
 
@@ -24,7 +24,7 @@ Some are great for deep terminal-native sessions. Some let me swap providers fre
 
 That's the leverage. I keep the process stable and let the tools specialize. Shared instructions, shared skills, shared commands, shared infrastructure - that means I can move between agents without restarting from zero.
 
-Claude Code, Codex, and pi are the center of the story right now. OpenCode is deliberately deferred for me at the moment. I still like the idea of it, especially the provider flexibility, but my current local setup is built around the tools whose harnesses I actually want to live inside every day.
+Claude Code, Codex, and pi are the center of the story right now. OpenCode is wired into the same shared setup but it is not a daily driver for me at the moment. I still like it, especially the provider flexibility, but my current daily split is built around the tools whose harnesses I actually want to live inside every day.
 
 ## The Workflow: Idea to Shipped Code
 
@@ -96,16 +96,15 @@ The workflow above doesn't happen by magic. The trick is that the environment is
 
 At the project level I still care a lot about instruction files like `AGENTS.md` and `CLAUDE.md`. But at user scope, I keep the shared source of truth in `.agents`, then expose it into different clients through thin wrappers. Behavior doesn't reset when I jump from Claude Code to Codex, pi, or a remote shell.
 
-### Shared Skills And Commands
+### Shared Skills
 
-The idea is simple: instead of reconfiguring every tool, I keep one canonical folder of instructions, skills, and commands, and let each tool read from it. The shared pieces are what make the system feel durable:
+The idea is simple: instead of reconfiguring every tool, I keep one canonical folder of instructions and skills, and let each tool read from it. The shared pieces are what make the system feel durable:
 
 - shared instructions
 - shared skill definitions
-- shared command docs
 - thin tool-specific wrappers per runtime
 
-The same idea shows up in different places: I keep one conceptual command or skill, and surface it in Claude Code, Codex, pi, Cursor, or OpenCode in the way each tool expects. The wrapper changes, the intent stays stable.
+The same idea shows up in different places: I keep one conceptual skill, and surface it in Claude Code, Codex, pi, or OpenCode in the way each tool expects. The wrapper changes, the intent stays stable.
 
 That's also why the setup survives migration. The workflow lives in files and conventions, not in habit.
 
@@ -116,53 +115,35 @@ graph TD
     A["~/.agents<br/>source of truth"]
     A --> AGENTS["AGENTS.md<br/>shared instructions"]
     A --> SKILLS["skills/<br/>shared skills"]
-    A --> COMMANDS["commands/<br/>shared command docs"]
 
     AGENTS -->|symlink| CC
+    AGENTS -->|symlink| CX
     AGENTS -->|symlink| PI
+    AGENTS -->|symlink| OC
 
     SKILLS -->|symlink farm| CC
-    SKILLS -->|symlink farm| CX
-    SKILLS -->|symlink farm| PI
-    SKILLS -->|symlink farm| CR
-
-    COMMANDS -->|thin wrapper| CC
-    COMMANDS -->|thin wrapper| CX
-    COMMANDS -->|thin wrapper| PI
-    COMMANDS -->|thin wrapper| CR
+    SKILLS -->|read directly| CX
+    SKILLS -->|via settings| PI
+    SKILLS -->|read directly| OC
 
     CC[Claude Code]
     CX[Codex]
     PI[pi]
-    CR[Cursor]
+    OC[OpenCode]
 
     style CC fill:#DE7356,color:#fff,stroke:#a35140,stroke-width:2px
     style CX fill:#74AA9C,color:#fff,stroke:#4f7d72,stroke-width:2px
     style PI fill:#111111,color:#fff,stroke:#888,stroke-width:2px
-    style CR fill:#ffffff,color:#000,stroke:#888,stroke-width:2px
+    style OC fill:#7C3AED,color:#fff,stroke:#5b2bb0,stroke-width:2px
 ```
 
-Clients can change. Models can change. As long as the shared instructions, skills, and command docs stay stable, I don't have to rebuild the workflow from scratch every time I move to a different surface.
-
-### Commands
-
-Commands compress recurring workflows into something named and repeatable.
-
-I mostly care about work-oriented commands. The list shifts over time, but the pattern doesn't: if I notice I keep asking for the same kind of engineering task, I want a command for it.
-
-A few I lean on:
-
-- /update-branch for syncing a working branch safely
-- /address-pr-reviews for turning review comments into an execution loop
-- /create-pr for packaging finished work into a pull request flow
-
-The specific names don't matter much. The point is the workflow stops depending on perfect prompting memory.
+Clients can change. Models can change. As long as the shared instructions and skills stay stable, I don't have to rebuild the workflow from scratch every time I move to a different surface.
 
 ### MCP And Web Tools
 
 [Model Context Protocol](https://modelcontextprotocol.io/) is how the agents stop guessing and start using the rest of my stack directly.
 
-The MCP-backed tools I rely on most:
+The MCP-backed tools I rely on most (the exact set varies a bit per client):
 
 - [Context7](https://context7.com/) for docs lookup. Easiest way to dodge stale library guesses.
 - [Brave Search MCP](https://github.com/brave/brave-search-mcp-server) for general discovery.
@@ -177,7 +158,7 @@ The recent improvement is that Codex is no longer the only client with the full 
 
 There's one part of the stack where I deliberately don't use MCP: Google Workspace.
 
-Google ships [an official CLI for Workspace](https://github.com/googleworkspace/cli) that wraps the Discovery API for all consumer Google products. It also ships a set of agent skills. I install all of them, and they cover basically everything I'd want to do across Google's product line:
+Google ships [an open-source CLI for Workspace](https://github.com/googleworkspace/cli) that wraps the Discovery API for all consumer Google products. It also ships a set of agent skills. I install all of them, and they cover basically everything I'd want to do across Google's product line:
 
 - **Sheets** - read and write cell values, append rows, run formulas, insert charts, format ranges.
 - **Docs** - read and append content, manage shared docs.
@@ -210,15 +191,14 @@ The ones I open most often:
 
 - [**`/grill-with-docs`**](https://www.skills.sh/mattpocock/skills/grill-with-docs) is the evolution of the older `/grill-me`. Same interrogation-style planning loop, but grounded in the project's existing `CONTEXT.md` and ADRs so the questions stay in-vocabulary instead of drifting generic. I use it when I want a plan stress-tested against decisions the team already made.
 - [**`/handoff`**](https://www.skills.sh/mattpocock/skills/handoff) writes the current conversation into a markdown file so a fresh agent, or a future me, can pick up without re-deriving context. I use it when I'm switching from one client to another, parking work to come back to, or seeding a new project from a long planning chat.
-- [**`/prototype`**](https://www.skills.sh/mattpocock/skills/prototype) spins up a throwaway answer to a specific design question. Two branches: a runnable terminal app to push a state machine around, or several wildly different UI variants on one route so you can toggle and compare. I don't reach for it as often as the others, but it's the right tool when the question is "let me actually feel this before I commit to it."
 - [**`/tdd`**](https://www.skills.sh/mattpocock/skills/tdd) keeps the red-green-refactor loop honest. The thing I value here is the anti-horizontal-slicing rule: one failing test, one piece of implementation, one green run, then the next test. It prevents the bulk-write-then-bulk-test pattern that ends up testing the shape of imagined code instead of the behavior I actually care about.
 - [**`/improve-codebase-architecture`**](https://www.skills.sh/mattpocock/skills/improve-codebase-architecture) is what I reach for when a codebase starts feeling shallow - lots of small modules with interfaces almost as complex as their implementations. It looks for "deepening opportunities" using a precise vocabulary (module, interface, seam, depth, leverage, locality) and the project's own `CONTEXT.md` plus ADRs as ground truth, so suggestions stay in-grain instead of becoming a generic refactor wishlist.
-- [**`/write-a-skill`**](https://www.skills.sh/mattpocock/skills/write-a-skill) is the meta-skill. When I notice I've configured the same kind of session three times, I run `/write-a-skill` so the preferences and conventions from that session become a reusable skill of my own. A handful of examples from my local setup:
-    - `/avanade-docs` and `/avanade-slides` for my Avanade internship work, so the agent already knows the brand palette, layout templates, and build pipeline whenever I shape a client deck or Word doc.
-    - `/scele` to check pending homework on Fasilkom UI's SCELE (our university LMS, a Moodle instance), work on assignments, and submit them straight from the agent instead of clicking through the portal.
-    - `/ppl-blog` to draft and update the Individual Review blogs at [blog.abhipraya.dev/ppl/](https://blog.abhipraya.dev/ppl/), where the team uses a specific Part A/B/C structure backed by evidence from GitLab MR reviews.
-    - `/weekly-log` runs on a cron once a week to generate the internship weekly log my college program requires. It pulls from the project's git commits, fills the official DOCX template, and uploads the result to Nextcloud, all without me noticing it's Monday.
-    - `/nextcloud` so any "read this file" or "upload this somewhere" instruction routes through my self-hosted Nextcloud automatically, no path-guessing.
+Beyond the installed packs, the highest-leverage habit is writing my own skills. When I notice I've configured the same kind of session three times, I turn it into a reusable skill so the preferences and conventions carry over automatically. A handful from my local setup:
+
+- deck and doc skills for my internship's client work, so the agent already knows the brand palette, layout templates, and build pipeline whenever I shape a client deck or Word doc.
+- a homework skill for my university's LMS (a Moodle instance) to check pending assignments, work on them, and submit straight from the agent instead of clicking through the portal.
+- a skill for the structured course-review blogs my program requires, following the set format the team uses.
+- `/nextcloud` so any "read this file" or "upload this somewhere" instruction routes through my self-hosted Nextcloud automatically, no path-guessing.
 
 ### Anthropic Document Skills
 
@@ -238,8 +218,8 @@ They also pair really well with templates: hand the agent a template plus the so
 A few skills sit outside the everyday flow but pull weight when the moment is right.
 
 - [/pr-review-toolkit](https://github.com/anthropics/claude-plugins-official) is what I reach for when I want extra review pressure on tests, error handling, and code quality. The framing I like: it gives me a hostile read before I press merge, instead of the agent's default helpful-and-approving review tone.
-- [/impeccable](https://github.com/pbakaus/impeccable) is Paul Bakaus's frontend design suite, built on top of Anthropic's earlier `frontend-design` pack. It's not one skill but a family of 23 commands routed through a single namespace. The shape of it is: high-level workflows like `/impeccable shape` (plan UX before coding), `/impeccable craft` (full shape-then-build flow), `/impeccable critique` (design review), `/impeccable audit` (a11y + perf + responsive), and `/impeccable polish` (ship-readiness), plus focused single-aspect commands like `/impeccable typeset`, `/impeccable colorize`, `/impeccable animate`, `/impeccable layout`, `/impeccable harden`, `/impeccable onboard`, and tone-knobs like `/impeccable bolder`, `/impeccable quieter`, `/impeccable distill`, `/impeccable overdrive`. Setup runs once via `/impeccable teach`, which writes a project-level `PRODUCT.md` and `DESIGN.md` the rest of the commands key off. Useful when I want strong opinions about UI without supplying every spacing decision myself.
-- [/vercel-react-best-practices](https://www.skills.sh/vercel-labs/agent-skills/vercel-react-best-practices) is Vercel's pack of 64 prioritized React and Next.js performance rules across eight categories (async patterns, bundle size, server caching, client data fetching, re-render and rendering perf, JavaScript efficiency, advanced patterns). Each rule ships with an incorrect/correct code example and a short prefix code (`async-parallel`, `bundle-barrel-imports`, etc.) the agent can cite. I install it on React/Next.js projects so the agent has a referenceable rules library instead of relying on whatever it picked up in training.
+- [/impeccable](https://github.com/pbakaus/impeccable) is Paul Bakaus's frontend design suite, built on top of Anthropic's earlier `frontend-design` pack. It's not one skill but a family of around two dozen commands routed through a single namespace. The shape of it is: high-level workflows like `/impeccable shape` (plan UX before coding), `/impeccable craft` (full shape-then-build flow), `/impeccable critique` (design review), `/impeccable audit` (a11y + perf + responsive), and `/impeccable polish` (ship-readiness), plus focused single-aspect commands like `/impeccable typeset`, `/impeccable colorize`, `/impeccable animate`, `/impeccable layout`, `/impeccable harden`, `/impeccable onboard`, and tone-knobs like `/impeccable bolder`, `/impeccable quieter`, `/impeccable distill`, `/impeccable overdrive`. A one-time setup command writes a project-level `PRODUCT.md` and `DESIGN.md` the rest of the commands key off. Useful when I want strong opinions about UI without supplying every spacing decision myself.
+- [/vercel-react-best-practices](https://www.skills.sh/vercel-labs/agent-skills/vercel-react-best-practices) is Vercel's pack of 70+ prioritized React and Next.js performance rules across eight categories (async patterns, bundle size, server caching, client data fetching, re-render and rendering perf, JavaScript efficiency, advanced patterns). Each rule ships with an incorrect/correct code example and a short prefix code (`async-parallel`, `bundle-barrel-imports`, etc.) the agent can cite. I install it on React/Next.js projects so the agent has a referenceable rules library instead of relying on whatever it picked up in training.
 
 ### Anatomy Of A Skill
 
@@ -254,22 +234,22 @@ my-skill/
 
 A more involved skill bundles reference docs and executable helpers as you need them. There are two patterns I use most often.
 
-**Reference docs under `references/`.** When the skill carries too much detail to fit comfortably in one file, I split it into topic-scoped reference docs. The SKILL.md keeps the routing logic (cardinal rules, when to use, an index pointing at each reference doc), and the heavy detail lives in the references. My `/avanade-slides` skill is the strongest example:
+**Reference docs under `references/`.** When the skill carries too much detail to fit comfortably in one file, I split it into topic-scoped reference docs. The SKILL.md keeps the routing logic (cardinal rules, when to use, an index pointing at each reference doc), and the heavy detail lives in the references. My internship slide-deck skill is the strongest example:
 
 ```
-avanade-slides/
+work-slides/
 ├── SKILL.md                              # ~8.5 KB - entry point, routing
 └── references/
     ├── palette-and-typography.md         # ~6 KB
-    ├── layouts-and-cards.md              # ~13 KB
-    ├── icons-and-assets.md               # ~13 KB
+    ├── layouts-and-cards.md              # ~18 KB
+    ├── icons-and-assets.md               # ~12 KB
     ├── template-slides.md                # ~11 KB
     ├── build-pipeline.md                 # ~10 KB
-    ├── architecture-diagrams.md          # ~24 KB
-    └── preferences-and-lessons.md        # ~16 KB
+    ├── architecture-diagrams.md          # ~42 KB
+    └── preferences-and-lessons.md        # ~20 KB
 ```
 
-That's roughly 93 KB of reference material behind an 8.5 KB SKILL.md, and the agent only reads whichever sub-docs the current task actually needs. If I'm designing an architecture slide, it pulls in `architecture-diagrams.md`. If I'm picking colors, it pulls in `palette-and-typography.md`. The rest stays on disk.
+That's roughly 120 KB of reference material behind an 8.5 KB SKILL.md, and the agent only reads whichever sub-docs the current task actually needs. If I'm designing an architecture slide, it pulls in `architecture-diagrams.md`. If I'm picking colors, it pulls in `palette-and-typography.md`. The rest stays on disk.
 
 **Executable helpers under `bin/`.** When the skill is doing something deterministic, like talking to an API, calling a shell tool, or running a build, I drop a script under `bin/` and let the SKILL.md instruct the agent to shell out to it instead of regenerating the logic in prose. My `/nextcloud` skill is the canonical version:
 
@@ -321,7 +301,7 @@ The feature I use more than I expected is `/goal`. It gives a long session a dur
 
 ### pi
 
-[pi](https://github.com/withpi/codemode) is my overflow and provider-flexibility lane. I use it when I want models or plans outside Claude Code and Codex, especially GitHub Copilot Enterprise and OpenCode Go.
+[pi](https://github.com/withpi/codemode) is my overflow and provider-flexibility lane. I use it when I want a model or plan outside my main Claude Code and Codex sessions, currently routed through GitHub Copilot (GPT-5.4 and GPT-5.5).
 
 The important part is that pi is not a separate world. It loads the same user instructions and now has a bridge to the same MCP tools Codex uses. That makes it useful as an extra execution surface instead of a disconnected experiment.
 
@@ -345,7 +325,7 @@ The setup is opinionated:
 - Herdr owns spaces, tabs, panes, focus movement, and session layout.
 - Claude Code, Codex, and pi run side by side inside Herdr.
 - The bottom-left agents section gives me a live status board for those sessions, so I can see which agent is idle, active, or parked without opening every pane.
-- My WezTerm status bar shows Herdr workspace/tab context, CPU, memory, network, and cron health.
+- My WezTerm status bar shows Herdr workspace/tab context, CPU, memory, network, and background-job status (dotfiles sync, backups).
 - Keybindings are mapped so normal macOS muscle memory still works: `Cmd+T` for a tab, `Cmd+W` to close a pane/tab, `Cmd+Shift+Arrow` for tab/workspace movement, and `Cmd+Option+Arrow` for focus movement.
 
 The important distinction: I want the workspace layer to remember where work lives. I do not want every agent client to invent its own session model and force me to translate between them.
@@ -354,15 +334,19 @@ If you prefer a GUI on top of your agent setup, Superset is the best option I've
 
 ## Usage Monitoring
 
-[OpenUsage](https://www.openusage.ai/) made the whole stack easier to live with. I use it to monitor usage limits across the AI products I pay for instead of checking each one separately. Once you're regularly moving between Claude, Codex, Cursor, and provider-backed tools, having one dashboard is more useful than it sounds.
+[OpenUsage](https://www.openusage.ai/) made the whole stack easier to live with. Once you're regularly moving between Claude, Codex, and a few provider-backed tools, one place to see how hard you're pushing each one beats opening five dashboards to check whether you're about to hit a limit.
 
-{{< figure src="/images/macbook-agent-dev-setup/openusage.png" alt="OpenUsage showing usage across multiple AI coding tools" caption="OpenUsage gives me one place to see how hard I'm pushing the different AI tools I use." >}}
+It just shipped a brand-new version, and that's the one I run now: a free, open-source menu-bar app where you pick the exact metrics and subscriptions you care about and keep them a click away. The data stays on your own machine, which is the whole pitch, "the only AI usage tracker that's truly yours." It now covers Claude, Codex, Cursor, Devin, Grok, and Antigravity.
+
+{{< figure src="/images/macbook-agent-dev-setup/openusage.png" alt="OpenUsage homepage for the new version with the headline 'The Only AI Usage Tracker That's Truly Yours', a free open-source menu-bar app supporting Claude, Codex, Cursor, Devin, Grok, and Antigravity" caption="The new OpenUsage: a free, open-source menu-bar tracker you shape to your own metrics and subscriptions." >}}
+
+{{< figure src="/images/macbook-agent-dev-setup/openusage-window.png" alt="OpenUsage menu-bar panel showing session and weekly limits, reset timers, and usage-trend charts for Claude and Codex" caption="The menu-bar panel in daily use: session and weekly limits, reset timers, and usage trends per tool, all a click away." >}}
 
 ## Remote Work
 
 The same `.agents` architecture and superpowers workflow also runs on a small VPS, accessed over Tailscale, Mosh, and tmux. I'm keeping the deep dive in [the iPhone version of this post](/posts/agents-dev-setup-on-iphone/), where it matters more (the phone is essentially a remote-only surface).
 
-The short version: zero public ingress ports on the VPS, everything reachable only through the tailnet, and tmux session persistence means disconnecting doesn't reset context. The Mac version of this story is the same one, minus the "I'm on a phone" constraint.
+The short version: no public admin or SSH ingress on the VPS (shell access is tailnet-only), the only public routes are a handful of auth-gated services, and tmux session persistence means disconnecting doesn't reset context. The Mac version of this story is the same one, minus the "I'm on a phone" constraint.
 
 ## Voice Input
 
