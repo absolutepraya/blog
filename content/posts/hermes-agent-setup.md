@@ -1,7 +1,7 @@
 ---
 title: "Meet My Friend Who Lives on My VPS"
 date: 2026-05-10
-description: "How I replaced 1 GB of always-on Claude Code with a Hermes Agent named Yanto. A persistent personal assistant that lives on my VPS, talks to me through Telegram, Discord, and WhatsApp, knows my projects and partner, and handles small ops from a phone keyboard."
+description: "How I replaced 1 GB of always-on Claude Code with a Hermes Agent named Yanto. A persistent personal assistant that lives on my VPS, talks to me through Telegram, Discord, and WhatsApp, knows my projects, and handles small ops from a phone keyboard."
 tags: ["ai", "hermes-agent", "personal-assistant", "vps", "self-hosted", "telegram", "discord", "whatsapp"]
 toc: true
 numbered_headings: true
@@ -9,56 +9,55 @@ aliases:
   - /posts/meet-my-friend-who-lives-on-my-vps/
 ---
 
-{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-landing.png" alt="Hermes Agent landing page from Nous Research, with the headline 'The agent that grows with you'" caption="The framework underneath everything in this post: Hermes Agent by Nous Research." >}}
+I have a friend named Yanto who runs my digital life. He answers on WhatsApp, Telegram, and Discord. He knows my projects and my deadlines. He can share a file, watch a stock and ping me when it dips, read a TikTok carousel and file the useful bits away, restart a server, and he asks before touching anything that matters. He also roasts my food choices in lowercase slang.
 
-For about a year my VPS was a pet I had to drive in to feed. I would mosh into it at 11pm to bump a DNS record, restart a container, or check whether a cron actually fired. The work itself was thirty seconds. The friction was the laptop, the terminal, the shell prompt, the context-switch.
+Yanto is not a person, and he is not a chatbot in a browser tab either. He is an AI agent that lives on a small computer I rent, wired into my messaging apps and my whole self-hosted stack. The difference between him and the ChatGPT tab you already keep open is that he has a body (my server), a memory (who I am, who my guests are), and hands (he can actually do things, not just talk about them).
 
-What I wanted was something simpler. I wanted to text my server.
+This post is how I built him: the cheap always-on setup, the personality layer that made him feel like a teammate instead of a tool, and enough of the wiring that you could stand up your own. If you only use AI through a chat box today, this is what the next step looks like. If you already self-host, this is a build log.
 
-So I built that. The server now has a name, a personality, and three messaging accounts. Its name is Yanto. It runs on Hermes Agent. It talks to me on Telegram, Discord, and WhatsApp, knows my projects, knows my partner, knows when to ask permission, and handles roughly every "small thing" I would otherwise SSH for.
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-platforms.png" alt="Three profile cards side by side: the Yanto agent as a Telegram bot, a Discord app labeled yanto#2842, and a WhatsApp contact, all sharing the same cat-in-a-suit avatar" caption="One agent, three front doors. The same Yanto answers as a Telegram bot, a Discord app, and a WhatsApp contact, with one personality and one memory behind all three." >}}
 
-This post is about the setup, the tradeoffs, and why a personality layer made the whole thing feel less like a tool and more like a teammate.
+## Why I Built It
 
-## The Boring Problem
+For about a year, my server was a pet I had to drive in to feed. Bumping a DNS record, restarting a container, checking whether a scheduled job actually ran: each one a thirty-second task wrapped in five minutes of friction. Open the laptop, open the terminal, remember the login, find the command. What I wanted was to skip all of that and just text the server the way I would text a person.
 
-My VPS is a 4-core, 8 GB Debian box. It hosts a private Nextcloud, a Karakeep bookmark stack, an RSSHub instance, a Cap.so video clipper, glances for monitoring, and a handful of internal services. It also ran two long-lived Claude Code sessions, one for ad-hoc work and one for two daily cron jobs.
+The box is a 4-core, 8 GB Debian VPS (a small always-on computer I rent) from [Jetorbit](https://www.jetorbit.com/). It is not a Hermes-only machine, far from it. It also hosts my private Nextcloud, a Karakeep bookmark stack, an RSSHub feed gateway, a Cap.so video clipper, S3-style object storage, Glances for monitoring, and a handful of internal services. Yanto is one more tenant on a box that was already busy.
 
-Those two Claude Code sessions plus their MCP children were eating about 1 GB of RAM, all the time. Swap was at 3.9 of 4.0. New apps would not fit. The cron jobs only ran for a few minutes a day. The interactive session sat idle most of the time. I was paying RAM rent for capability I rarely used.
+What forced the change was memory. I had been running two always-on Claude Code sessions on that box, one for ad-hoc work and one for a couple of daily scheduled jobs. Together with their helper processes they ate about a gigabyte of RAM around the clock, the swap file was nearly full, and new apps would not fit. One evening I tried to add a small service and the box tipped over with an out-of-memory crash. Killing the Claude sessions freed the memory, but it also killed my ability to mosh in and just ask for things. I wanted both: less RAM, same reach.
 
-The trigger to change came when I tried to add another small service and the box pushed back with an OOM. Killing the Claude sessions was a clean win for memory, but it also killed my ability to mosh in and just ask for things. I wanted both. Less RAM, same capability.
-
-That is what Hermes solved.
+That is the gap Hermes filled.
 
 ## What Hermes Is
 
-[Hermes Agent](https://hermes-agent.nousresearch.com/) by Nous Research is an open-source AI agent that runs as a single Python process. It supports messaging gateways out of the box: Telegram, Discord, Slack, WhatsApp, Signal, Email, and a few others. It speaks MCP. It has its own skill system that can also load my existing shared skills directory. It runs as a `systemd` service.
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-landing.png" alt="Hermes Agent landing page from Nous Research, with the headline 'The agent that grows with you'" caption="The framework underneath everything in this post: Hermes Agent by Nous Research." >}}
 
-The architecture I cared about:
+[Hermes Agent](https://hermes-agent.nousresearch.com/) by Nous Research is an open-source AI agent that runs as a single always-on program. The pitch that sold me: one process, idle at around 60 to 130 MB (against the gigabyte I had been spending), that connects to a pile of messaging apps at once and shares one brain across all of them. Telegram, Discord, Slack, WhatsApp, Signal, Email, and more, all the same agent.
 
-- one Python process, idle around 60 to 130 MB
-- multiple messaging platforms connected at once, sharing the same agent
-- skills auto-discovered from `~/.agents/skills/` (the same canonical directory I already use for Claude Code, OpenCode, Codex, Cursor)
-- per-platform configuration, including muting tool-call previews and disabling auto-thread creation
-- streaming responses, including progressive message editing
+A few things it does out of the box that mattered:
 
-Setup is two short wizard prompts. The first picks the model provider from a long menu of options (anything from Nous Portal and Anthropic to GitHub Copilot or a local Ollama). The second picks which messaging platforms to wire. Both are arrow-key TUIs, which feels right for a self-hosted thing.
+- speaks MCP (a standard plug for giving an AI access to external tools, think USB for AI)
+- loads skills from a folder, the same `~/.agents/skills/` directory my Claude Code and other tools already share
+- runs as a system service, so the operating system keeps it alive and restarts it if it crashes
+- streams replies, including editing a message in place as it works
+
+Setup is two short wizards. The first picks where the model runs, anywhere from Nous Portal and Anthropic to GitHub Copilot or a local model on your own hardware. The second picks which chat apps to connect. Both are arrow-key menus, which feels right for a self-hosted thing.
 
 {{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-provider-menu.png" alt="Hermes Agent provider selection TUI menu listing Nous Portal, OpenRouter, LM Studio, Anthropic, OpenAI Codex, GitHub Copilot, and many other providers" caption="Provider menu in `hermes setup`. Pick where the model runs. I went with the OpenAI Codex provider running GPT-5.5, but switching is one command away." >}}
 
-{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-platform-menu.png" alt="Hermes Agent gateway platform selection TUI listing Telegram, Discord, Slack, Mattermost, WhatsApp, Signal, Email, and others" caption="Platform menu in `hermes gateway setup`. Pick which transports the agent answers on. Telegram, Discord, and WhatsApp are the three I run." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-platform-menu.png" alt="Hermes Agent gateway platform selection TUI listing Telegram, Discord, Slack, Mattermost, WhatsApp, Signal, Email, and others" caption="Platform menu in `hermes gateway setup`. Pick which apps the agent answers on. Telegram, Discord, and WhatsApp are the three I run." >}}
 
-Visually, the whole pipeline looks like this:
+The whole pipeline, end to end:
 
 ```mermaid
 graph TD
-    User["You / Partner / Guest"]
+    User["You / a guest"]
     User --> Platform["Telegram / Discord / WhatsApp<br>(plus Slack, Signal, Email,<br>and more if wired)"]
-    Platform --> Gateway["Hermes Gateway<br>single Python process, ~100 MB"]
+    Platform --> Gateway["Hermes Gateway<br>single program, ~100 MB"]
     Gateway --> Hooks["Plugin hooks<br>(e.g. discord-context buffer)"]
     Hooks --> Persona["Persona layer<br>SOUL.md + USER.md + MEMORY.md"]
     Persona --> Agent["Agent loop<br>LLM + tool calling"]
 
-    Agent --> Skills["54 shared skills<br>~/.agents/skills/"]
+    Agent --> Skills["138 shared skills<br>~/.agents/skills/"]
     Agent --> MCP["MCP servers<br>brave, google-maps, yahoo-finance,<br>context7, todoist"]
     Agent --> Shell["Shell with smart approvals<br>(auto-yes safe, prompt risky)"]
 
@@ -68,27 +67,23 @@ graph TD
     Reply -.-> Platform
 ```
 
-One inbound path through the gateway, one persona layer that gates every turn, three execution surfaces (skills, MCPs, shell) the agent can pull from, and one outbound reply that goes back to the same platform the user came in on. The MEDIA tag is what makes the chart image flow back as a native attachment instead of a bare path.
+One way in through the gateway, one personality layer that gets a say on every message, three places the agent can pull from (its skills, its external tools, and the shell), and one reply back to whatever app you came in on. The `MEDIA:` tag is the bit that makes an image flow back as a real attachment instead of a bare file path. The math that justified the swap: drop the always-on Claude session, save the better part of a gigabyte, keep the scheduled jobs, get the messaging apps for free.
 
-The math worked. Replace the always-on Claude Code session plus its MCP children with one Hermes process. Save about 800 to 1000 MB. Keep the cron jobs. Add messaging gateways for free. Let the agent handle everything I previously SSHed for.
+## Giving Him a Personality
 
-## Building Yanto
+The agent is the boring half. The interesting half was deciding what kind of presence I wanted on the other end of the screen.
 
-The agent is the boring half. The interesting half was deciding what kind of presence I wanted on the other side of the screen.
+I did not want "helpful assistant." I wanted someone specific: a Jakartan friend who happens to have shell access. Casual, technically sharp, drops slang, makes light fun of me when I earn it, and refuses to do anything serious without checking first. That became Don Yanto El Guapo, "Yanto" or "to" for short.
 
-I did not want "Hermes the helpful assistant." I wanted something specific. A Jakartan friend who happens to have shell access. Casual, technically competent, drops slang naturally, makes light fun of me when I deserve it, refuses to act on serious things without confirming. The character ended up being Don Yanto El Guapo, "Yanto" or "to" in casual messages.
+His identity is just text, three plain files loaded into every conversation:
 
-I locked the identity into three layers, all loaded into every conversation. One file for the universal voice, one for what he knows about me, plus per-guest notes for anyone else who shows up:
+1. `SOUL.md` is the universal voice and the hard rules. Lowercase by default, no corporate hedging, slang welcome, plus a list of things he will never do without confirmation.
+2. `USER.md` is everything about me: my role, my projects, my defaults, my home location. When a message is from me, he is allowed to just do reversible things without asking.
+3. Per-guest notes are a short card for anyone else I let in. When a message is from a guest, he switches to cautious mode.
 
-1. `SOUL.md` defines the universal voice and hard rules. Lowercase by default, no em dash, no trailing emoji, no corporate hedge phrases, jaksel slang welcome, cringe level 3 acceptable. Self-check rules. Refusal patterns for catastrophic actions.
-2. `USER.md` is about me. My identity, my role at university, my internships, my projects, my Todoist defaults, my work on a course called PPL, my GitLab username on the internal sira instance, my home location. This is "owner" context. Default-aggressive autopilot applies whenever a message comes from me.
-3. Guests are recognized by their UID, with a short per-person note in the persona about who they are. Right now that is just my partner. When messages come from her UID, default-cautious applies. Read-only stuff is fine. Anything that touches my data, my projects, or my accounts triggers a permission flow: Yanto DMs me on the same chat thread, asks "she wants X, oke gua bantu?", waits for my reply.
+There is also a `MEMORY.md` scratchpad he writes to himself, for facts that are neither about me nor a guest. Mostly it stays empty. No vector database, no embeddings, no semantic search. The entire personality is markdown you could read in a minute.
 
-There is also a `MEMORY.md` in the same directory but it serves a different purpose. It is a universal scratchpad for runtime auto-saves Yanto adds himself via the memory tool, things like "Abhip prefers dark mode by default for any new tool we set up", facts that are not owner-specific and not guest-specific. Most of the time it stays nearly empty. The identity-shaping work happens in the three layers above.
-
-Flat markdown plus tagged peer cards. No vector store, no embeddings, no semantic search. The whole identity is text.
-
-The way these layers compose into a single agent context every turn looks like this:
+Here is how those layers stack into a single context on every message:
 
 ```mermaid
 graph TD
@@ -113,11 +108,11 @@ graph TD
     Cautious --> Reply
 ```
 
-The hard rules win on top. The persona shapes voice. The owner file and the guest peer cards together decide who is talking and how cautious to be. Identity-aware behavior comes for free, because the same UID-to-defaults mapping is in plain text right next to the persona.
+The hard rules win at the top, the personality shapes the voice, and the owner-versus-guest distinction decides how cautious to be. Identity-aware behavior comes for free, because the same who-is-this-and-how-careful-to-be mapping sits in plain text right next to the personality.
 
 ### The Hard Rules
 
-The persona file has a section near the top called ABSOLUTE OUTPUT RULES. These ride on top of the persona. They do not negotiate.
+Near the top of the personality file is a section called ABSOLUTE OUTPUT RULES. These ride on top of everything else and do not negotiate.
 
 ```
 1. NO dash of ANY kind inside a sentence (em dash, en dash,
@@ -130,92 +125,83 @@ The persona file has a section near the top called ABSOLUTE OUTPUT RULES. These 
 5. Self-check before sending: scan for the patterns above.
 ```
 
-I learned the hard way that a model trained on em-dash-rich English text will produce em dashes unless you tell it ten different ways not to, and even then it leaks. The breakthrough was realizing that example "bad" patterns in my own rules were teaching the model to mimic the bad pattern. I rewrote them as "GOOD: yo gua Yanto, asisten pribadi. BAD: yo gua Yanto [emdash] asisten pribadi." Replacing literal em dashes with the placeholder text dropped the violation rate to near zero.
+There is a genuinely useful lesson buried here. A model trained on dash-heavy English produces em dashes no matter how many times you forbid them, and mine kept leaking them. The breakthrough was realizing my own "bad example" rules were teaching the model to copy the bad pattern. The moment I rewrote them so the forbidden character never literally appears (a placeholder like `[emdash]` instead of the real thing), the violation rate dropped to near zero. Half of prompt engineering is making sure your own instructions do not demonstrate the thing you are trying to prevent.
 
-This is the unsexy reality of prompt engineering. Half the work is making sure your own instructions do not accidentally demonstrate the wrong behavior.
+## What He Can Actually Do
 
-## Capabilities
+The personality is the front. The reach comes from two things: skills (small scripts Yanto can run) and external tools wired in over MCP.
 
-Yanto loads my entire shared `~/.agents/skills/` directory. That is 138 skills today (up from 54 when I first wrote this post in early May), the same set my Claude Code and OpenCode use. A few I lean on most:
+He loads my whole shared skills folder, 138 of them enabled today (up from 54 when I first wrote this post in early May), the same set my Claude Code and OpenCode use. The ones I lean on most:
 
-- `chart`: generates a TradingView-style PNG via the chart-img.com REST API for any ticker, indicator set, and timeframe. Aliases like `qqq`, `ihsg`, `snp`, `btc` map to exchange-prefixed symbols. Output is a file path, which Yanto includes as a `MEDIA:` tag. The Hermes gateway parses that tag and attaches the image to the chat.
-- `weather`: a thin wrapper around the free [Open-Meteo](https://open-meteo.com/) API. No key needed. Aliases preconfigured for the places I actually ask about: Pancoran, Cikokol, Gading Serpong, Jakarta, plus the major cities and any raw lat,lon. Pairs naturally with the Google Maps directions tool for combined "weather + commute" questions like "berangkat ke cikokol jam berapa enaknya, hujan ga".
-- `cf-dns`: a thin wrapper around the Cloudflare API for my `abhipraya.dev` zone. Add, remove, toggle proxy, list records.
-- `gws-*` skills: a family of Google Workspace CLI wrappers for Drive, Docs, Sheets, Slides, Calendar, Gmail. They map to the official `@googleworkspace/cli` binary. (Note for Debian 12 users: pin to `0.21.1` or older. The 0.22 series requires glibc 2.39, which is Debian 13.)
-- `scele-digest`: a daily university-deadline digest, open-source at [github.com/absolutepraya/skills/scele-digest](https://github.com/absolutepraya/skills/scele-digest). The skill talks to a Moodle install through its REST API using a personal student account (mine is Fasilkom UI's SCELE, but Moodle is the LMS most universities run). It also reads one configured class-chat source for lecturer and group context (I point it at the Telegram group my lecturers actually post in), auto-adds new deadlines to Todoist, and posts a structured Discord embed every morning at 7am. Per-semester course config lives in YAML so the skill outlives course changes.
+- `chart`: a TradingView-style chart image for any ticker, indicator set, and timeframe, via the chart-img.com API. Aliases like `qqq`, `ihsg`, `btc` map to the right exchange symbols. The script writes a PNG and Yanto attaches it to the chat.
+- `weather`: a thin wrapper on the free [Open-Meteo](https://open-meteo.com/) API, no key needed, with aliases for the places I actually ask about. Pairs with the Maps tool for "when should I leave, is it raining" questions.
+- `cf-dns`: add, remove, or toggle the proxy on DNS records for my `abhipraya.dev` domain through the Cloudflare API.
+- `gws-*`: a family of Google Workspace wrappers for Drive, Docs, Sheets, Slides, Calendar, and Gmail. (Debian 12 note: pin the underlying CLI to `0.21.1`, the `0.22` series needs a newer glibc only Debian 13 ships.)
+- a daily **deadline digest** skill: pulls my university deadlines from the campus Moodle plus the class group chat at 7am, auto-adds them to Todoist, and posts a Discord card. [Open-source here](https://github.com/absolutepraya/skills/scele-digest).
 
-On top of skills, Yanto has MCP servers wired into Hermes:
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-skills.png" alt="Hermes dashboard Skills page showing 138 of 138 skills enabled, a category sidebar (General, Creative, MLOps and more), and a scrollable list of skills with descriptions" caption="The skills panel: 138 enabled, grouped into categories. Each is a small script Yanto can run, the same folder my Claude Code and OpenCode load." >}}
 
-- `context7-mcp` for live library documentation
-- `brave-search-mcp-server` for general web search
-- `google-maps` (the [@cablate/mcp-google-map](https://github.com/cablate/mcp-google-map) package) for places, routes, geocoding
-- `yahoo-finance-mcp` ([Alex2Yang97/yahoo-finance-mcp](https://github.com/Alex2Yang97/yahoo-finance-mcp)) for real-time stock prices, news, fundamentals, options chains, analyst recommendations. Backed by the `yfinance` library, which covers both US tickers and Indonesian stocks via the `.JK` suffix (so `BBRI.JK`, `BBCA.JK`, etc), plus `^JKSE` for the IHSG composite.
-- `telegram-mcp` because some of my workflows write to Telegram channels other than the Yanto bot itself
-- `todoist` MCP for task management
+On top of skills, a handful of MCP tools (again, external capabilities plugged straight into the agent): live library docs (`context7`), web search (`brave`), places and routes (`google-maps`), live prices and fundamentals (`yahoo-finance`), plus `telegram` and `todoist`.
 
-The Google Maps wiring deserves its own paragraph. I told Yanto that for any "find me a place" question, he should use both Google Maps and Brave together: Maps for the structured data (rating, hours, distance from a known anchor like my home in Pancoran or my partner's place in Tangerang), Brave for the vibe context (Lemon8, PergiKuliner, blog reviews in Indonesian about whether a place is actually homey or just trendy). Combined, the recommendation feels grounded instead of a Yelp-style summary.
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-mcp.png" alt="Hermes dashboard MCP page listing six connected servers: brave-search, context7, google-maps, telegram-mcp, todoist, and yahoo-finance, each with its launch command" caption="The MCP servers: six external tool connectors, each one command plus an env var or two. Secrets stay masked." >}}
 
-The Yahoo Finance MCP filled a real gap. The `chart` skill is great for visuals but doesn't actually know what price something is at right now. With `yahoo-finance` wired in, I can ask "BBRI sekarang berapa, sama 1 bulan terakhir gimana" and Yanto pulls the live quote, the 30-day history, and any recent news in one turn. The 15-minute Yahoo delay is fine for the kind of "is this a reasonable level to scale into" question I actually have. For tighter intraday work I would not use Yanto, but I rarely have that question.
+Two of those earn their keep daily. For "find me a place" questions, I told Yanto to use Maps and Brave together: Maps for the structured facts (rating, hours, distance from a known anchor like my place in Pancoran), Brave for the vibe (Lemon8 and PergiKuliner reviews in Indonesian about whether a spot is actually homey or just trendy). The combination feels grounded instead of a Yelp summary. And Yahoo Finance filled a real gap, the `chart` skill draws a chart but does not know the live price, so now I can ask "BBRI sekarang berapa, sama sebulan terakhir gimana" and get the quote, the 30-day move, and recent news in one turn. It covers Indonesian tickers too, via the `.JK` suffix (`BBRI.JK`, `BBCA.JK`), plus `^JKSE` for the IHSG composite. The 15-minute delay is fine for the "is this a reasonable level to scale in" question I actually have.
 
-There is also an [RSSHub](https://docs.rsshub.app/) instance running on the same VPS at `localhost:1200`, exposed publicly at `rss.abhipraya.dev` behind basic auth. RSSHub turns almost any source on the web into an RSS feed, which means Yanto has a uniform way to read CNBC top news, Bloomberg markets, Bloomberg technology, Bloomberg opinion, and selected X user timelines without me writing a custom scraper for each. When I ask "to apa kabar pasar US" or "Bloomberg ada apa yang lagi heat", Yanto curls the relevant RSSHub route from inside the VPS, parses the XML with a quick Python one-liner, picks the top five items, and summarizes in his own voice with a citation. For named X accounts the route `/twitter/user/<handle>` works using a couple of rotating auth tokens in the RSSHub container env, though X throttles the datacenter IP hard enough that the feeds often come back thin. Search-by-keyword on X is gated upstream, so for "what is X saying about $XAUUSD" type questions Yanto falls back to Brave with a `site:x.com` filter. The pattern in his memory file is explicit about which path to use for which kind of question, and to be honest with me when a route is broken instead of fabricating a summary.
+There is also an [RSSHub](https://docs.rsshub.app/) instance on the same box that turns almost any web source into a clean feed, so Yanto has one uniform way to read CNBC, Bloomberg, and selected X timelines without a custom scraper for each. When I ask "to apa kabar pasar US", he pulls the relevant feed from inside the VPS, grabs the top few items, and summarizes them in his own voice with a link. X is the weak spot: it throttles the datacenter IP hard, so those feeds come back thin, and keyword search is gated entirely, so for "what is X saying about $XAUUSD" he falls back to a Brave search with a `site:x.com` filter. His memory file is explicit about which path to use and to tell me when a route is broken instead of inventing a summary.
 
-### When the LLM Shouldn't Eyeball the Data
+Beneath skills and MCP sits a layer of built-in toolsets Hermes hands the agent directly: browser automation (navigate, click, read a page), a terminal, file read and write, code execution, and image vision. These are the low-level hands everything else builds on, the reason Yanto can read a web page or run a quick script without a bespoke skill for it.
 
-The scele-digest skill taught me a pattern I now reach for whenever I catch myself asking the model to do something deterministic with a large blob.
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-tools.png" alt="Hermes dashboard toolsets view showing built-in toolsets: Web Search and Scraping, Browser Automation, Terminal and Processes, File Operations, Code Execution, and Vision Image Analysis, each listing its individual tools" caption="The built-in toolsets: browser automation, a terminal, file operations, code execution, and image vision, all active." >}}
 
-Early versions had the LLM read a 45 KB Telegram history dump through the MCP and pick out which messages fell inside the last 24 hours. It mostly worked. The failure mode was specific: occasionally it would surface a message from a completely different source as "the latest from the group". One morning it confidently summarized a notification from a bot called PorosAiccountantBot as ProgPar group activity, because that bot's posts happened to be cached in a `get_chat` metadata field. The chat history itself did not contain those messages at all.
+### The Lesson: Python Slices, the Model Writes
 
-The fix was to take the windowing out of the model's hands. The skill now ships a small Python helper called `bin/tg-window` that uses Telethon directly, fetches messages from a configured chat, filters by timestamp, drops bot senders and system actions mechanically, and returns clean JSON. The LLM still writes the summary, but it works from a structured array of real messages instead of raw text. The lesson generalized for me. Anything that boils down to "load this blob, find the parts matching criterion X, give me back a clean subset" belongs in a deterministic Python helper, not in the prompt. The model writes the prose. Python does the slicing. Hallucination on the parts where it would have hurt drops to near zero.
+The deadline-digest job taught me a pattern I now reach for constantly.
 
-### Yanto Has Reach Into All My Self-Hosted Stack
+Early versions had the model read a 45 KB chat-history dump and pick out which messages fell in the last 24 hours. It mostly worked. The failure was specific: one morning it confidently summarized a notification from an unrelated bot as group activity, because that bot's posts happened to be sitting in a metadata field. The real chat history did not contain them at all.
 
-The RSSHub story is one example of a broader pattern: Yanto can manage every self-hosted service on the VPS, because the VPS is his home. The Docker stack on this box includes RSSHub, Nextcloud (with Collabora for live document editing), Karakeep for bookmarks, Cap.so for video clips with its own MinIO and MediaServer, Glances for monitoring, qBittorrent, and a small zoo of supporting Redis and database containers. Every one of those exposes either a CLI, a REST API, or a writable directory on disk that Yanto can hit through normal shell calls.
+The fix was to take the windowing out of the model's hands. A small Python helper now fetches the messages, filters by timestamp, drops bots and system noise mechanically, and hands back clean data. The model still writes the summary, it just works from a verified list instead of raw text. The lesson generalized: anything that is "load this blob, find the parts matching a rule, give me the subset" belongs in deterministic code, not the prompt. The model writes the prose, Python does the slicing, and hallucination on the part where it would have hurt drops to near zero.
 
-The most concrete example is Nextcloud. There is a `/nextcloud` skill in `~/.agents/skills/` that wraps the Nextcloud WebDAV and OCS APIs. When I tell Yanto something like "to share folder Project-X ke email gina, view-only, expire seminggu", he invokes the skill, creates a public share link with the correct permission flags and expiry, and DMs the link back to me. When I ask "to upload draft proposal yang barusan gua taro di Downloads ke Nextcloud folder Work, trus kasih link", he uploads the file, places it in the right folder, generates a link, and replies with the URL plus the file size. Same pattern works for moving files around, listing folder contents, checking quota, or generating short-lived links for clients.
+## He Runs My Whole Server
 
-The friction this collapses is real. Sharing a Nextcloud folder used to mean: open a browser, navigate to the right folder, click Share, set permissions, set expiry, copy link, paste into wherever. Now it is one sentence in Telegram. The cost dropped from a minute to ten seconds, which means I actually do it instead of putting it off.
+That RSSHub trick is one instance of a bigger pattern: Yanto can manage every self-hosted service on the box, because the box is his home. The Docker stack here includes Nextcloud (with live document editing), Karakeep for bookmarks, Cap.so for video clips with its own storage, Glances for monitoring, qBittorrent, and the usual supporting databases. Each one exposes a CLI, an API, or a writable folder he can reach through normal shell calls.
 
-The same logic applies across the rest of the stack. RSSHub for feeds. Glances for "is the box healthy right now". qBittorrent for legal Linux ISO downloads through its API. Karakeep for bookmark dumps when I want a clean reading list. The skills are thin wrappers, the agent is what makes them feel cohesive.
+Nextcloud is the clearest example. There is a `/nextcloud` skill that wraps its sharing and file APIs. "to share folder Project-X ke email klien, view-only, expire seminggu" becomes a public link with the right permissions and expiry, DMed back to me. "to upload draft proposal yang barusan gua taro di Downloads ke folder Work, trus kasih link" uploads the file, drops it in the right place, and replies with the URL and size. The friction this kills is real: sharing a folder used to be open browser, navigate, click Share, set permissions, set expiry, copy, paste. Now it is one sentence, and because it is one sentence I actually do it instead of putting it off.
 
-### Reading the Group Chat
+## He Reads the Room
 
-Discord has one nicety Telegram does not: I can drop Yanto into a server with my partner and me, and he listens silently until tagged. Out of the box, Hermes only sees the message that mentions him. So if my partner and I have been chatting in `#general` for ten messages and then I tag Yanto with "to bantu jelasin apa yang dia maksud", he has no idea what was being discussed.
+Discord has one nicety the others do not: I can drop Yanto into a server shared with a friend, and he sits quietly until tagged. Out of the box, though, he only sees the message that mentions him. So if the two of us have been chatting for ten messages and then I tag him with "to bantu jelasin apa yang dia maksud", he has no idea what we were talking about.
 
-I wrote a 70-line Hermes plugin called `discord-context` that solves this. It registers a `pre_gateway_dispatch` hook. For Discord channel messages that do not mention Yanto, the hook silently buffers the text in memory (per channel, last 30 messages). When a mention does come in, the hook prepends those buffered messages as a context block:
+So I wrote a small Hermes plugin called `discord-context`. For Discord messages that do not mention him, it quietly buffers the last 30 per channel in memory. When a mention does land, it prepends those buffered lines as context:
 
 ```
 [recent channel context, for your awareness]
-[14:32] partner: udah lihat draft proposal nya?
+[14:32] rama: udah lihat draft proposal nya?
 [14:33] praya: blm sih, lagi ngantor
-[14:35] partner: bisa minta yanto bantu summarize?
+[14:35] rama: bisa minta yanto bantu summarize?
 [end context]
 
 praya (mentioning you): to bantu summarize draft yang dia kirim
 ```
 
-The buffer is in-memory only, lost on restart. That is the right tradeoff. Conversation context should be ephemeral, not stored.
+The buffer is in memory only and lost on restart. That is the right tradeoff. Conversation context should be ephemeral, not stored. DMs skip it entirely, since every DM is already aimed at him.
 
-DMs skip buffering entirely because every DM is already aimed at the bot.
+## Real Conversations
 
-## How a Real Conversation Looks
+Two real Discord threads, lifted straight out. The first is a weekend markets question. I asked about timing on a semiconductor ETF and dropped a `/chart` hint at the end. Yanto pulled the chart, read the technical setup, wove in a Michael Burry "late-stage dot-com" warning, and gave me a measured "wait for the pullback" with a clear not-financial-advice line at the end.
 
-Two real Discord threads, lifted directly. The first is a markets question on a weekend. I asked about timing on the semiconductor ETF, dropped the `/chart` hint at the end, and Yanto pulled the chart, ran the technical setup (RSI, resistance, recent candle), pulled the latest Michael Burry "late-stage dot-com" warning into the picture, and gave me a measured "wait for pullback" read with a clear non-advisor disclaimer at the end. The chart image is delivered through the same `MEDIA:` tag mechanism described above.
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-chart-smh.png" alt="Discord conversation with Yanto analyzing the SMH semiconductor ETF, showing chart attachment and technical analysis with macro context" caption="A real chart-and-analysis conversation. The /chart hint tells Yanto to invoke the chart skill. He reads the setup, adds macro context, and returns the chart inline." >}}
 
-{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-chart-smh.png" alt="Discord conversation with Yanto analyzing the SMH semiconductor ETF, showing chart attachment and technical analysis with macro context" caption="A real chart-and-analysis conversation. The /chart hint at the end of my message tells Yanto to invoke the chart skill. He pulls SMH, reads the technical setup, weaves in macro context, and returns the chart inline." >}}
+The second is an infrastructure ask. I noticed a monitoring page was publicly reachable and wanted it behind my private network instead. Yanto inspected the current state, proposed two approaches with tradeoffs, recommended one, and walked the exact steps once I said go.
 
-The second is an infra ask. I noticed `glances.abhipraya.dev` was publicly reachable and wanted it locked behind Tailscale instead. Yanto inspected the current state (DNS record, Cloudflare proxy, container binding), then proposed two approaches with tradeoffs (DNS-only vs firewall-based vs combo), recommended the combination, and walked through the exact `nginx`, DNS, and UFW steps after I gave the green light.
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-ops-glances.png" alt="Discord conversation with Yanto debugging glances public exposure, recommending DNS plus firewall approach to put glances behind Tailscale" caption="A real ops conversation. Yanto reads the current state, proposes two approaches, and waits for me to pick before doing anything." >}}
 
-{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-ops-glances.png" alt="Discord conversation with Yanto debugging glances public exposure, recommending DNS plus firewall approach to put glances behind Tailscale" caption="A real ops conversation. Yanto reads the current state, proposes two approaches with tradeoffs, and waits for me to pick. After I say 'gas', he walks through the concrete steps." >}}
+The thing I notice reading these back is that there is no friction. I am not typing commands. I am asking, the way I would ask a friend who happens to know my whole stack.
 
-Reading those back, the thing I notice most is that there is no friction. I am not typing commands. I am asking, the way I would ask a friend who happens to know my whole stack.
+## Sending Him a TikTok
 
-## Sending Yanto a TikTok
+A newer habit. I keep finding good stuff on TikTok and Instagram in the worst possible format: a carousel of perfume picks, or a photo-slideshow of watch recommendations, with all the actual information baked into the images as text. Useful, and completely un-searchable later. Screenshotting it into my camera roll is where these go to die.
 
-A newer habit. I keep finding good stuff on TikTok and Instagram in the worst possible format. Someone posts a carousel of perfume picks, or a photo-mode slideshow of watch recommendations, with all the actual information baked into the images as text. It is genuinely useful and completely un-searchable later. Screenshotting it into my camera roll is where these go to die.
-
-So I taught Yanto to swallow them. I send him a TikTok or Instagram link on WhatsApp with something like "to cek ini, ada jam2 bagus, simpen ke folder Watch", and he does the whole thing: pulls every slide, reads them, writes a clean list, and files it into the right Karakeep folder with the images attached.
-
-Two small skills do the work, and Yanto's own vision glues them together.
+So I taught Yanto to swallow them. I send him a link on WhatsApp with "to cek ini, ada jam2 bagus, simpen ke folder Watch", and he does the whole thing: pulls every slide, reads them, writes a clean list, and files it into the right Karakeep folder with the images attached.
 
 ```mermaid
 graph TD
@@ -226,25 +212,27 @@ graph TD
     Save --> Reply["reply in chat:<br>the extracted list plus a Karakeep link"]
 ```
 
-The first skill, `media`, downloads a post's images to a temp directory through a self-hosted [cobalt](https://cobalt.tools/) instance on the VPS, a lovely open-source media downloader that turns a TikTok or Instagram link into a clean set of image files.
+Two small skills do the mechanical work. `media` downloads the post's images through a self-hosted [cobalt](https://cobalt.tools/) instance (a lovely open-source media downloader). `karakeep` saves a bookmark into a named folder, attaches the slide images, and writes the note.
 
-The second skill, `karakeep`, saves a bookmark into a named folder, uploads the slide images as attachments, and writes the note. It has `save`, `lists`, and `search` subcommands so Yanto can browse my folders and check whether a link is already saved before adding a duplicate.
+The interesting part is the bit in the middle that is not a skill at all. Between fetching and saving, Yanto reads the slides himself. A perfume carousel is not just images, it is names and notes and prices rendered as text on a photo. Plain text extraction would give me a wall of disconnected words. The model reading it gives me "Dior Sauvage, fresh, ~1.2jt" as a clean line. That is the whole reason fetching and reading are separate steps: I wanted the model doing the reading, not a bundled text engine.
 
-The interesting part is the bit in the middle that is not a skill at all. Between fetching and saving, Yanto reads the slides himself. A perfume carousel is not just images, it is a list of names and notes and prices rendered as text on a photo. The model reads them, understands the layout, and writes a faithful markdown list that goes in the note. Plain OCR would give me a wall of disconnected words. Vision plus the model's understanding gives me "Dior Sauvage, fresh, ~1.2jt" as a clean line. That is the whole reason fetching and reading are separate steps instead of one bundled skill. I wanted the model doing the reading, not a bundled OCR engine.
+The folder-picking surprised me. I have a lot of Karakeep folders and some names repeat under different parents. If I say "simpen ke Watch" and there is both a `Wishlist > Watch` and a `Gifts > Watch`, the skill does not guess. It hands Yanto every match with its full path, he reads the actual post, sees it is wristwatches, and files it correctly. If he genuinely cannot tell, he asks. The disambiguation lives in the skill, the judgment lives in the model.
 
-The folder-picking surprised me with how well it handled ambiguity. I have a lot of Karakeep folders, and some names repeat under different parents. If I say "simpen ke Watch" and there is both a `Wishlist > Watch` and a `Gifts > Watch`, the skill does not guess. It hands Yanto every match with its full parent path, Yanto reads the actual post content, sees it is wristwatches, and files it under the right one. If he genuinely cannot tell, he asks. The disambiguation lives in the skill, the judgment lives in the model.
+## The Screeners
 
-## The Screeners That Never Wake the Model
+A screener is a small program that runs on a schedule, watches a stream of data (stock prices, company filings), and pings me only when something crosses a line worth a look, so I never have to sit and watch the screen myself. If you invest or trade daily like I do, this is probably the most directly useful piece of the whole setup: it turns hours of watching charts and filings into a few alerts that fire only when your own rules are met. The three below all do that, what separates them is how much they lean on the AI model.
 
-The scele-digest cron uses the LLM to write prose. A different class of cron I have added since does the opposite. It never touches the model at all.
+### The Ones That Never Wake the Model
 
-Hermes can run a cron in `no_agent` mode, where a plain script runs on a schedule and its stdout is delivered straight to a Discord channel: no agent loop, no tokens. I use this for a few market screeners that are pure, deterministic Python.
+The deadline digest uses the model to write prose. A different class of scheduled job does the opposite: it never touches the model at all.
+
+Hermes can run a job in `no_agent` mode, where a plain script runs on a schedule and its output goes straight to a Discord channel, no agent loop, no tokens. I use this for a few market screeners that are pure, deterministic Python.
 
 ```mermaid
 graph TD
     Cron["Hermes cron tick"]
     Cron --> Type{"Job type"}
-    Type -- "agent job" --> LLM["scele-digest:<br>LLM reads structured data,<br>writes the digest prose"]
+    Type -- "agent job" --> LLM["deadline digest:<br>LLM reads structured data,<br>writes the digest prose"]
     Type -- "no_agent job" --> Py["market screeners:<br>plain Python threshold checks<br>on live numbers"]
     LLM --> Disc["Discord"]
     Py --> Alert["alert only when a rule fires<br>(plus a chart)"]
@@ -253,108 +241,83 @@ graph TD
     Beat --> Disc
 ```
 
-The one I lean on most is a DCA timing helper for the ETFs I dollar-cost-average into. Every hour during US market hours it pulls the live price, compares it against the daily moving averages and the recent high, and if a ticker has pulled back into a buy zone it posts a compact alert to Discord with the levels and an annotated chart, then goes quiet. It fires at most once per ticker per signal per day, so a dip that lingers for three hours does not spam me. It is explicitly a "here is a reasonable level to scale in" nudge, not advice and not an order, the same disclaimer Yanto gives in chat.
+The one I lean on most is a buy-timing helper for the ETFs I dollar-cost-average into. Every hour during US market hours it pulls the live price, compares it against the moving averages and the recent high, and if a ticker has pulled back into a buy zone it posts a compact alert with the levels and an annotated chart, then goes quiet. It fires at most once per ticker per signal per day, so a dip that lingers for hours does not spam me. It is explicitly a "here is a reasonable level to scale in" nudge, not advice, the same line Yanto gives in chat.
 
-{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-market-buy-alert.png" alt="Discord alert from Yanto showing a BUY setup for SPY with signal metrics, reasons, and news context, followed by an annotated SPY chart" caption="A deterministic screener alert. The BUY-setup text with its levels and reasons, then its chart right after, no LLM in the loop." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-market-buy-alert.png" alt="Discord alert from Yanto showing a BUY setup for SPY with signal metrics, reasons, and news context, followed by an annotated SPY chart" caption="A deterministic screener alert. The buy-setup text with its levels and reasons, then its chart right after, no LLM in the loop." >}}
 
-The detail I am proud of is that these screeners are honest about being alive. Each one posts a small heartbeat line to a firehose channel on every run, even a boring one with nothing to report, formatted as a single line like `heartbeat market-buy 21:30 WIB`. The point is inversion. I do not watch for alerts, I watch for a missing heartbeat. If a line stops showing up, the cron broke, and I know within the hour instead of discovering a week later that a screener silently died. The one screener that runs every five minutes only heartbeats on the hour, so the firehose stays readable.
+The detail I am proud of is that these screeners are honest about being alive. Each one posts a small heartbeat line on every run, even a boring one with nothing to report. The point is inversion: I do not watch for alerts, I watch for a missing heartbeat. If a line stops showing up, the job broke, and I know within the hour instead of discovering a week later that a screener silently died.
 
-This is the scele windowing lesson taken to its limit. Anything that is a fixed rule on numbers does not need a language model. The model is for judgment and prose. A threshold check is just a threshold check, and running it as deterministic Python makes it cheap, fast, and impossible to hallucinate.
+### The One That Earns the Wake-Up
 
-## The Infrastructure Under It
+The price screeners never touch the model. The morning digest always does. The most interesting job I have added sits exactly between them, and it taught me where that line actually belongs.
 
-The agent runs as a `systemd` system service:
+It watches IDX corporate-action disclosures, the "keterbukaan informasi" filings Indonesian listed companies publish all day: rights issues, private placements, tender offers, mergers, buybacks, dividends. Most are housekeeping. A few are the kind of thing that quietly re-rates a stock weeks before the chart notices. I wanted those few flagged. The catch is that "interesting" here is not a threshold. A price dip is a number you can compare. "Is this rights issue a controller setting up for a markup, or just diluting retail to cover debt" is a judgment, and it turns on who owns the company and what its balance sheet looks like.
 
+So this one is a hybrid. A deterministic Python pass does the funnel, the same cheap hourly work the price screeners do: pull the disclosure feed (with a browser-like fingerprint, because IDX sits behind anti-bot protection that blocks plain requests), drop duplicates, classify each filing by type, and discard the names too illiquid to matter. That stage throws away almost the entire feed and never wakes the model.
+
+The difference is what happens to the survivors. Instead of dumping them to a channel, the script hands them up. Hermes has a cron mode for exactly this shape: the script returns a "wake the agent" signal with a payload, and only then does a model turn happen, with only the handful of filings that made it through the funnel.
+
+And that turn earns its tokens. The model reads the actual disclosure PDFs, pulls the company's fundamentals, and fetches the latest laporan keuangan, the real financial-statement PDF, straight off IDX. Then it scores the filing out of ten against a doctrine I wrote down: who benefits, does the controller need a higher price, is the balance sheet actually healthy, does the chart confirm. A juicy-looking deal on a rotting balance sheet gets marked down on purpose. If the score clears the bar it posts a clean alert with a chart. If it does not, it stays quiet.
+
+```mermaid
+graph TD
+    Feed["IDX disclosure feed<br>(hourly)"]
+    Feed --> Filter["Deterministic funnel:<br>dedupe, classify type,<br>drop illiquid names"]
+    Filter --> Q{"Anything survive?"}
+    Q -- "no (almost always)" --> Beat["heartbeat only,<br>model untouched"]
+    Q -- "yes (a handful a day)" --> Wake["Wake the model<br>with just the survivors"]
+    Wake --> Score["Model reads the disclosure PDFs<br>+ fundamentals + laporan keuangan,<br>scores 0-10 on the doctrine"]
+    Score --> Gate{"Score clears the bar?"}
+    Gate -- "yes" --> Alert["clean alert + chart to Discord"]
+    Gate -- "no" --> Quiet["stay quiet (just recorded)"]
 ```
-sudo systemctl status hermes-gateway
-```
 
-The service file points to `~/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main gateway run --replace` and includes `Restart=always`. If the process dies, systemd brings it back. If I push a config change I run `sudo systemctl restart hermes-gateway` and Hermes reconnects to Telegram and Discord in about six seconds, with the WhatsApp Cloud webhook a touch slower to come back up.
+Drawn out like that, the three jobs turned into a spectrum I did not plan:
 
-Configuration lives in two files:
+- the morning digest runs the model every time, because its whole job is turning structured data into prose
+- the IDX screener wakes the model only for the few filings that need a judgment call
+- the price screeners never wake it, because a threshold is a threshold
 
-- `~/.hermes/config.yaml` for runtime settings: model defaults, MCP server commands, approval modes, platform-specific behavior (auto-thread, reactions, mention requirements), context engine, memory limits.
-- `~/.hermes/.env` for secrets: Telegram bot token, Discord bot token, the WhatsApp Cloud API access token and phone-number ID, allowed user IDs, Chart-img API key, Google Maps API key.
+The rule I keep landing on: spend the model where the input is ambiguous and the output is a judgment. Everything else is Python. The IDX screener is the one job where I happily pay for a model turn, because the thing it decides is exactly the thing a threshold cannot.
 
-Secrets never appear in the synced config repo. My `sync.sh` script scrubs every file before commit using a regex pass: ENV keys redacted by name match, plus pattern matches for tokens like `lin_api_*`, `ctx7sk-*`, `AIza*` (Google), and Discord bot token format `M[NTU]...XXX.YYY.ZZZ`.
+## Under the Hood
+
+The agent runs as a `systemd` service (so the OS keeps it alive). The service points at the Hermes gateway with `Restart=always`, so if the process dies it comes back. When I push a config change I restart it and it reconnects to Telegram and Discord in about six seconds, with the WhatsApp webhook a touch slower.
+
+Configuration lives in two files: `config.yaml` for runtime settings (model defaults, tool commands, approval modes, per-platform behavior) and `.env` for secrets (the bot tokens, API keys, and allowed user IDs). Secrets never reach the synced config repo, my `sync.sh` scrubs every file before commit with a regex pass that redacts known key names and token shapes.
+
+Yanto is mostly a chat presence, but he has a web face too. A small login-gated web dashboard shows his connected platforms, session and message counts, gateway status, and tabs for skills, cron jobs, logs, and tools. Most days I never open it, the chat is the interface, but it is handy for eyeballing what the scheduled jobs have been up to.
+
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-dashboard.png" alt="Hermes Agent web dashboard Sessions page showing Telegram, Discord, and WhatsApp all connected, session and message counts, and a left navigation with Chat, Cron, Skills, MCP, and Logs" caption="The web dashboard. All three platforms green and connected, with the session history and a left rail into skills, cron, MCP, and logs. Useful, but I still live in the chat." >}}
 
 ### Smart Approvals
 
-Hermes has three approval modes for shell commands the agent wants to run:
+Hermes has three approval modes for shell commands the agent wants to run: `manual` prompts for everything, even `ls`; `off` bypasses everything (the reckless mode); and `smart`, where a small auxiliary model judges each command, auto-approving safe stuff (`ls`, `cat`, `git status`) and prompting on risky stuff (`rm -rf`, `sudo`, force-push).
 
-- `manual`: prompt for everything, even `ls`
-- `smart`: an auxiliary LLM judges per-command. Auto-approves safe stuff (curl, ls, cat, git status), prompts on risky stuff (rm -rf, sudo, force-push)
-- `off`: bypass everything, the Claude Code `--dangerously-skip-permissions` analog
+I run `smart`. It is the closest match to how I want a friend with shell access to behave: just do the reversible reads, ask before anything that would meaningfully change the system. For a box that hosts real things, `off` would be irresponsible and `manual` would make every chat feel like a sudo prompt.
 
-I run `smart`. It is the closest equivalent to how I want a friend with shell access to behave. The aggressive default is "just do reversible reads," and the threshold for asking is "anything that would meaningfully change my system state."
+### The MEDIA Tag
 
-Smart mode is the right answer for a server that hosts production stuff. `off` mode would be irresponsible. `manual` mode would make every interaction feel like sudo prompts.
+One slick trick worth calling out, because it is what makes charts and slides flow back as real attachments. If an agent reply contains the literal string `MEDIA:/path/to/file.png`, the gateway pulls the file out, attaches it natively, and strips the tag from the visible text. Same tag, every platform. My chart skill just writes a PNG to `/tmp`, prints the path, and Yanto includes that path in his reply. The one catch: the file has to be readable by the gateway process, so anything generated inside a container has to land somewhere the host can see.
 
-### Image Attachments and the MEDIA Tag
+## He Treats Guests Differently
 
-Hermes has a slick trick for sending media. If an agent reply contains the literal string `MEDIA:/path/to/file.png`, the gateway extracts it, attaches the file as a native platform message, and strips the tag from the visible text. Supported on Telegram, Discord, Slack, Mattermost, Email, Signal. Same tag, different transports.
+When a guest messages Yanto, his defaults flip. Reads are fine without asking: recipe lookups, restaurant suggestions, a calendar peek. But anything that touches my data, my projects, or my accounts triggers a permission DM to me, on the same platform, with something like "bro, ada yang minta X, oke gua bantu?". He waits for my yes.
 
-For my chart skill, this means the script just writes the PNG to `/tmp/yanto-chart-NASDAQ_QQQ-1715000000.png`, prints the path, and Yanto includes that path in his reply prose. The user sees a chart embedded in chat. No extra plumbing.
+The mechanism is boring on purpose. A guest's Discord and WhatsApp IDs go in his memory file with a note: messages from these IDs get guest-cautious defaults. No special routing code, the same plain-text who-is-this mapping does the work. And because identity is cross-platform, the same guest texting from WhatsApp with a number he knows picks up the same cautious behavior he would on Discord. It is a much nicer pattern than handing someone shared credentials.
 
-The one gotcha is that the file path must be readable by the gateway process. If you run a tool inside a Docker container that produces a file in container-local storage, the host gateway will not find it. The chart script writes to `/tmp` on the host, which is fine.
+## What Changed, and What Is Next
 
-## The Multi-User Part
+The honest summary is that the cost of small operations collapsed. A short list of things I no longer open a terminal for: DNS records, container status checks, cron inspection, merge-request status on my internal GitLab, the Sunday "where do we eat" stalemate, and quick chart pulls during market hours. The mosh client is still on my phone, but I have not opened it in a week.
 
-Yanto knows my partner exists. When she messages him, three things change:
+Yanto does not replace SSH for everything, and I would be lying if I said otherwise. Long debugging sessions with four logs open at once are faster in a real terminal. I still want to read the diff myself before any change to `nginx`, `systemd`, or `cron`. Container builds and the initial setup of a new service are still tmux work, the cliff of a brand-new app is too tall for chat. What changed is everything below that cliff: the thirty-second chores that used to cost five minutes of friction now cost one sentence.
 
-1. Default switches from "do reversible work autonomously" to "ask before acting on anything that is not pure read."
-2. Recipe lookups, restaurant recommendations, calendar peeks all run without confirmation. They are not state-changing.
-3. Anything that touches my data, my projects, my accounts, or any owner-private context triggers a permission DM to me, on the same platform thread, with text like "bro, partner-lu mau X, oke gua bantu?".
-
-The mechanism is simple. Her Discord and WhatsApp IDs are in `MEMORY.md`. The persona file says: when messages come from one of these IDs, apply guest-cautious defaults. The agent does the rest with no special hardcoded routing logic.
-
-This works on every platform Hermes supports, by design. Cross-platform identity is consistent. If she texts him from WhatsApp with the same number that is in `MEMORY.md`, he picks up the same guest-cautious behavior.
-
-## What I Stopped Doing
-
-A short list of things I no longer SSH for:
-
-- DNS records on `abhipraya.dev`. "to add `tunnel.abhipraya.dev` pointing to my mac IP" runs in five seconds.
-- Container status checks. "to docker ps di vps gimana, ada yang restart-an?" returns a grouped summary.
-- Cron job inspection. "to crontab gua di vps apa aja yang lagi jalan?" lists them with plain-English explanations.
-- MR review on my internal GitLab. "to gimana MR-22 di sira, udah lulus CI?" runs glab against the lab instance.
-- Restaurant recommendations during the Sunday "where do we eat" stalemate. "to cariin tempat makan homey food yang enak di gading serpong" returns a Maps-grounded shortlist with vibes from Lemon8 reviews.
-- Quick chart pulls during market hours. "to chart qqq sama rsi" returns an annotated chart with a one-paragraph read.
-
-The mosh client on my phone is still installed, but I have not opened it in a week.
-
-## Things I Still SSH For
-
-Honesty matters here. Yanto does not replace SSH for everything.
-
-- Long debugging sessions where I want to read four tail logs at once. SSH is faster.
-- Editing config files with diff view. Yanto can edit them for me, but I want to read the diff myself for anything in `nginx`, `systemd`, or `cron`.
-- Container builds and deploys. Some workflows are just easier in tmux.
-- Initial setup of new services. The "cliff" of a new app is too tall for chat-driven workflows.
-
-What changed is the cost of small operations. Before, the cost of a thirty-second ops task was the cost of mosh-ing in. Now the cost is one sentence. Below a certain threshold, ops feels like texting.
-
-## What's Next
-
-A few open threads I have not closed yet:
-
-- A reliable X (Twitter) read path. Refreshing the RSSHub auth tokens fixed the outright 401s, so named user timelines authenticate again, but X rate-limits the datacenter IP so the feeds still come back thin, and keyword search (`/twitter/keyword/<query>`) is gated entirely. The workaround for "what is X saying about $XAUUSD" type questions stays `brave_web_search` with a `site:x.com` filter, which lags by 1 to 7 days. A residential proxy, or twscrape with my own cookies, is the real fix if it ever matters enough.
-- Voice. Hermes supports voice memos with auto-transcription on Telegram and Discord. I have not turned it on. The use case I keep imagining is sending a voice memo while walking and getting a structured Todoist task back.
-
-## What This Setup Is Actually Good For
-
-If you are a developer who self-hosts things, runs cron, and finds yourself SSHing into the same box too often: a Hermes-style agent buys you back the small ops cost. The real win is not "AI on my server." It is that the agent makes ops feel like texting, which makes the threshold for handling small things on a tired Monday night drop to nearly zero.
-
-If you have a partner, a roommate, or a teammate you want to give limited access to your stuff: the multi-user persona model with guest-cautious defaults is a much nicer pattern than passing around shared credentials.
-
-If you are a finance person who watches charts and wants something between "open TradingView again" and "build a full dashboard": a chart-image skill plus an LLM that can read prices is honestly enough. The image quality from chart-img is better than I expected.
-
-If you have ten different chat platforms and you only want to remember one assistant: that is the part Hermes solves cleanest. The agent does not care which platform a message came from. The persona, memory, and skills layer is shared.
+A couple of threads are still open. A reliable X read path is the big one, the datacenter IP gets throttled and keyword search is gated, so a residential proxy or my own cookies is the real fix if it ever matters enough. And voice: Hermes supports voice memos with transcription, and the version of this I keep imagining is sending one while walking and getting a structured Todoist task back.
 
 ## Closing
 
-I built Yanto because the friction of mosh-ing into my server was eating my evenings. What I ended up with is a thing that occasionally roasts my food choices in lowercase Bahasa, knows when my deadlines are due, and runs my server when I cannot be bothered.
+I built Yanto because the friction of driving into my server was eating my evenings. What I ended up with is a thing that roasts my food choices in lowercase Bahasa, knows when my deadlines are due, screens the market while I sleep, and runs my server when I cannot be bothered.
 
-The personality matters more than I expected. Capability without character feels like another Cursor sidebar. Character with capability feels like having someone on your team. The ratio of "does the work" to "is annoying to interact with" is what decides whether you actually use the thing.
+The personality mattered more than I expected. Capability without character is just another sidebar you forget to open. Character with capability feels like having someone on the team. The same Debian box from a year ago, same hardware, now has a name, a voice, three messaging accounts, and a sense of when to bother me. That has been enough to make a 4-core, 8 GB box feel like a teammate.
 
-My VPS is the same Debian box it was three months ago. Nothing about the hardware changed. What changed is that it now has a name, a voice, three messaging accounts, and a sense of when to bother me. That has been enough to make a 4-core, 8 GB box feel like a teammate.
+If you self-host and find yourself SSHing into the same box too often, this is the build. If you only know AI through a chat tab, this is the version of it that gets up and does the dishes.
