@@ -49,11 +49,11 @@ That last point is the whole game. Mobile development only becomes comfortable w
 
 The agents themselves do not need to run on the phone. They run on a MacBook or VPS session, depending on what I am doing.
 
-Claude Code is there because my Anthropic Max Plan works cleanly in Claude Code, especially after Claude tightened usage outside their own agent. Codex is there because OpenAI's own harness is the nicest place to use OpenAI models, and `/goal` has become one of the best long-session primitives. pi is there for model providers outside those two lanes, especially GitHub Copilot Enterprise and OpenCode Go.
+Claude Code is there because my Anthropic Max Plan works cleanly in Claude Code, especially after Claude tightened usage outside their own agent. Codex is there because OpenAI's own harness is the nicest place to use OpenAI models, and `/goal` has become one of the best long-session primitives. pi is there for GitHub Copilot models (GPT-5.4 and GPT-5.5) when I want a lane outside those two.
 
-OpenCode is deferred for this setup. I still like the project, but right now the phone workflow is terminal-first, not browser-first.
+OpenCode is wired into the same `.agents` setup but isn't my daily driver for the phone workflow. I still like the project, but right now the phone flow is terminal-first, not browser-first.
 
-The important part is consistency. The same `.agents` instructions, skills, commands, and MCP surfaces exist across the tools. When I open a phone session, I am not entering a separate mobile environment. I am attaching to the same system from a smaller control surface.
+The important part is consistency. The same `.agents` instructions, skills, and MCP surfaces exist across the tools. When I open a phone session, I am not entering a separate mobile environment. I am attaching to the same system from a smaller control surface.
 
 ```mermaid
 graph TD
@@ -64,7 +64,7 @@ graph TD
     Tmux --> Claude["Claude Code"]
     Tmux --> Codex["Codex"]
     Tmux --> Pi["pi"]
-    Claude --> Shared["~/.agents<br>instructions, skills, commands"]
+    Claude --> Shared["~/.agents<br>instructions, skills"]
     Codex --> Shared
     Pi --> Shared
     Shared --> Tools["MCP tools<br>Todoist, Linear, Context7, browser tools, Telegram"]
@@ -80,9 +80,9 @@ Because my Mac and VPS share the same `.agents` architecture, remote work feels 
 
 Honestly, this might be the most important part of the whole setup.
 
-I have **zero public ingress ports open on my VPS**. No port 22 for SSH. Nothing. The only way anything reaches the box is through [Tailscale](https://tailscale.com/), which puts my MacBook, VPS, iPhone, and work laptop on the same private overlay network.
+The admin plane of my VPS is tailnet-only. There's **no public SSH, no open port 22** - the only way to get a shell on the box is through [Tailscale](https://tailscale.com/), which puts my MacBook, VPS, iPhone, and work laptop on the same private overlay network. SSH, Mosh, and the internal dashboards bind to the tailnet, not the public internet.
 
-That basically takes the external attack surface of my VPS down to zero. There's nothing to scan, nothing to brute-force, nothing for a stray bot to find. Every service I run - SSH, Mosh, dashboards, internal web tools, anything - is only reachable from devices already on my tailnet.
+The handful of things that do face the public internet are deliberately narrow and auth-gated: a couple of HTTPS services behind nginx, each with its own login, plus one inbound webhook. Everything else - shells, internal tools, the parts an attacker would actually want - has no public ingress at all. There's no exposed port 22 to scan or brute-force, and the admin surface is effectively invisible from outside the tailnet.
 
 {{< figure src="/images/iphone-agent-dev-setup/tailscale.png" alt="Tailscale overlay network connecting personal devices privately" caption="Source: tailscale.com" >}}
 
@@ -131,7 +131,7 @@ But most of the time I prefer the Blink Shell + Mosh + tmux route into the VPS f
 
 Typing long prompts on the iPhone keyboard is the worst part of this workflow, so I avoid doing it.
 
-On the phone I use Wispr Flow. The floating dictation UI means I can speak a messy instruction, clean it up lightly, and send it into the terminal. For agent work this is a much better input method than thumb-typing a paragraph into a prompt.
+On the phone I use Wispr Flow. It installs as a keyboard I tap to speak into, so I can say a messy instruction, clean it up lightly, and send it into the terminal. For agent work this is a much better input method than thumb-typing a paragraph into a prompt.
 
 {{< figure src="/images/iphone-agent-dev-setup/wisprflow-iphone.png" alt="Wispr Flow listening interface on iPhone showing the iPhone microphone as the active input" caption="Wispr Flow turns the phone from a typing surface into a steering surface. That is the difference between usable and annoying." >}}
 
