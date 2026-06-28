@@ -106,6 +106,16 @@ Use Hugo's `figure` shortcode to add a subtitle/caption below an image:
 
 The caption renders as italic muted text centered below the image.
 
+### Combining Images Into One Figure
+
+To place several images side by side as a single figure (e.g. a platform triptych), combine them into one file first with ImageMagick, then reference that one output:
+
+```bash
+magick a.png b.png c.png -resize x520 -background '#0b0e11' -splice 16x0 +append -chop 16x0 -border 16x16 out.png
+```
+
+Use `+append` (with `-splice`/`-chop`/`-border` for even gaps and padding all around). Avoid `montage`, which needs a font config that may be missing and errors out.
+
 ### Automatic WebP Compression
 
 Images are automatically converted to WebP on commit via a pre-commit hook. The flow:
@@ -239,6 +249,18 @@ When writing blog post content:
 
 - **No em dashes** (`—`). Use a regular hyphen (`-`), comma, or restructure the sentence instead.
 - **No emoji**. None. Not in titles, not in body text, not anywhere.
+- **Humanized, conversational voice.** Write like a person talking, not a report. Avoid AI tells: formal openers ("It is important to note", "What matters is"), abstract concluders ("Ultimately", "In conclusion"), and hedge phrases. Be concrete and specific over generic.
+- **On-ramp then depth** (technical posts). Lead each technical beat with one plain-English sentence (what it is, why it matters) before the detail, so a non-technical reader stays with you and a technical reader still gets the substance.
+
+## Privacy: Before Publishing a Personal Post
+
+Posts here go out under a real-name byline, so nothing in them is anonymous. Before publishing anything personal, scan for and make a conscious call on each:
+
+- Home or precise location (neighborhood, address).
+- Real names of non-public people (partner, friends, clients). Generalize to roles instead.
+- Internal hostnames, URLs, or reachable endpoints (attack surface).
+- Financial holdings, positions, or account identifiers.
+- **Screenshots**: check for usernames, phone numbers, IDs, message text, and dashboard session previews. Redact inside the image, the alt text and caption do not hide pixels.
 
 ## Do NOT
 
