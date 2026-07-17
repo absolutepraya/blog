@@ -80,11 +80,10 @@ export function visualLayout(count) {
 }
 
 export async function prepareVisuals({ sources, staticDir, workDir, ratio, warn }) {
-  const [width, height] = cropSize(ratio);
-  const visuals = [];
+  const prepared = [];
 
   for (const [index, source] of sources.entries()) {
-    if (visuals.length === 3) break;
+    if (prepared.length === 3) break;
 
     try {
       const inputPath = source.kind === 'image'
@@ -93,11 +92,18 @@ export async function prepareVisuals({ sources, staticDir, workDir, ratio, warn 
       const resize = source.kind === 'image'
         ? { fit: 'cover', position: 'centre' }
         : { fit: 'contain', background: '#fdf6e3' };
-      visuals.push(await sharp(inputPath).resize(width, height, resize).png().toBuffer());
+      prepared.push({ input: await sharp(inputPath).png().toBuffer(), resize });
     } catch (error) {
       warn(`Skipped social-card ${source.kind} visual: ${error.message}`);
     }
   }
 
-  return visuals;
+  const selectedRatio = ratio || visualLayout(prepared.length).ratio;
+  if (!selectedRatio) return [];
+
+  const [width, height] = cropSize(selectedRatio);
+  return Promise.all(prepared.map(({ input, resize }) => sharp(input)
+    .resize(width, height, resize)
+    .png()
+    .toBuffer()));
 }

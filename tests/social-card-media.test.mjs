@@ -63,3 +63,26 @@ test('prepareVisuals skips missing files and returns a 16:9 image crop', async (
   assert.equal(warnings.length, 1);
   await rm(workDir, { recursive: true, force: true });
 });
+
+test('prepareVisuals chooses a square crop when one source survives', async () => {
+  const workDir = await mkdtemp(join(tmpdir(), 'social-card-'));
+  const imagesDir = join(workDir, 'images');
+  await mkdir(imagesDir);
+  await sharp({
+    create: { width: 40, height: 20, channels: 4, background: '#268bd2' },
+  }).png().toFile(join(imagesDir, 'source.png'));
+
+  const visuals = await prepareVisuals({
+    sources: [
+      { kind: 'image', value: '/images/missing.png' },
+      { kind: 'image', value: '/images/source.png' },
+    ],
+    staticDir: workDir,
+    workDir,
+    warn: () => {},
+  });
+
+  const metadata = await sharp(visuals[0]).metadata();
+  assert.deepEqual({ width: metadata.width, height: metadata.height }, { width: 220, height: 220 });
+  await rm(workDir, { recursive: true, force: true });
+});

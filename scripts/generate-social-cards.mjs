@@ -1,15 +1,24 @@
 import { createHash } from 'node:crypto';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { Resvg } from '@resvg/resvg-js';
+import sharp from 'sharp';
+import { extractVisualSources, prepareVisuals, visualLayout } from './social-card-media.mjs';
 
 const root = process.cwd();
 const outputDir = join(root, 'static', 'social');
 const siteDescription = 'Thoughts on software, systems, and stuff';
 const width = 1200;
 const height = 630;
+const fontFiles = [
+  join(root, 'static/fonts/ubuntu-400.ttf'),
+  join(root, 'static/fonts/ubuntu-700.ttf'),
+  join(root, 'static/fonts/ubuntu-mono-400.ttf'),
+  join(root, 'static/fonts/ubuntu-mono-700.ttf'),
+];
 
 function parseCsvLine(line) {
   const values = [];
@@ -79,9 +88,9 @@ function wrap(text, maxChars, maxLines) {
   return lines.slice(0, maxLines);
 }
 
-function titleLayout(title) {
+function titleLayout(title, maxWidth) {
   for (let fontSize = 70; fontSize >= 36; fontSize -= 2) {
-    const maxChars = Math.floor(1056 / (fontSize * 0.54));
+    const maxChars = Math.floor(maxWidth / (fontSize * 0.54));
     const lines = wrap(title, maxChars, 3);
     if (lines.length <= 2 && lines.join(' ').length === title.trim().replace(/\s+/g, ' ').length) {
       return { fontSize, lineHeight: Math.round(fontSize * 1.15), lines };
@@ -94,30 +103,34 @@ function textLines(lines, x, baseline, lineHeight, attributes = '') {
   return lines.map((line, index) => `<text x="${x}" y="${baseline + index * lineHeight}" ${attributes}>${escapeXml(line)}</text>`).join('\n');
 }
 
-function cardSvg({ label, title, description }) {
-  const titleBlock = titleLayout(title);
-  const descriptionLines = wrap(description, 69, 3);
-  const titleBaseline = 310;
-  const titleBottom = titleBaseline + (titleBlock.lines.length - 1) * titleBlock.lineHeight;
-  const descriptionBaseline = Math.max(438, titleBottom + 68);
-
-  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-  <rect width="${width}" height="${height}" fill="#fdf6e3"/>
-  <rect x="72" y="62" width="260" height="54" rx="0" fill="#586e75"/>
-  <text x="91" y="99" fill="#fdf6e3" font-family="Arial, sans-serif" font-size="33" font-weight="700">~/abhipraya</text>
-  <rect x="72" y="157" width="1056" height="3" fill="#268bd2"/>
-  <text x="72" y="228" fill="#268bd2" font-family="Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="2">${escapeXml(label)}</text>
-  ${textLines(titleBlock.lines, 72, titleBaseline, titleBlock.lineHeight, `fill="#586e75" font-family="Arial, sans-serif" font-size="${titleBlock.fontSize}" font-weight="700"`)}
-  ${textLines(descriptionLines, 72, descriptionBaseline, 30, 'fill="#657b83" font-family="Arial, sans-serif" font-size="24"')}
-  <rect x="72" y="550" width="1056" height="1" fill="#93a1a1"/>
-  <text x="72" y="587" fill="#657b83" font-family="Arial, sans-serif" font-size="21">blog.abhipraya.dev</text>
-</svg>`;
+function formatDate(value) {
+  if (!value || value.startsWith('0001-01-01')) return '';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+    timeZone: 'Asia/Jakarta',
+  }).format(new Date(value)).toUpperCase();
 }
 
-function sourceLabel(record) {
-  if (record.path === 'content/about.md') return 'ABOUT';
-  if (record.path.endsWith('/_index.md')) return record.title === 'PPL' ? 'PPL' : 'SECTION';
-  return record.section === 'ppl' ? 'PPL' : 'POSTS';
+function cardSvg({ title, description, date, hasVisualRail }) {
+  const textWidth = hasVisualRail ? 690 : 984;
+  const titleBlock = titleLayout(title, textWidth);
+  const descriptionLines = wrap(description, Math.floor(textWidth / 12.5), 3);
+  const titleBaseline = 246;
+  const titleBottom = titleBaseline + (titleBlock.lines.length - 1) * titleBlock.lineHeight;
+  const descriptionBaseline = Math.max(384, titleBottom + 52);
+  const dateText = formatDate(date);
+
+  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+  <rect x="72" y="72" width="270" height="56" fill="#586e75"/>
+  <text x="80" y="117" fill="#fdf6e3" font-family="Ubuntu" font-size="40" font-weight="700" letter-spacing="2">~/abhipraya</text>
+  ${dateText ? `<text x="1128" y="112" text-anchor="end" fill="#586e75" font-family="Ubuntu Mono" font-size="24">${dateText}</text>` : ''}
+  <rect x="72" y="164" width="1056" height="350" fill="none" stroke="#93a1a1" stroke-width="4"/>
+  ${textLines(titleBlock.lines, 108, titleBaseline, titleBlock.lineHeight, `fill="#586e75" font-family="Ubuntu" font-size="${titleBlock.fontSize}" font-weight="700"`)}
+  ${textLines(descriptionLines, 108, descriptionBaseline, 30, 'fill="#657b83" font-family="Ubuntu" font-size="24"')}
+  <text x="72" y="555" fill="#657b83" font-family="Ubuntu Mono" font-size="21">blog.abhipraya.dev</text>
+</svg>`;
 }
 
 function fallbackDescription(record) {
@@ -125,6 +138,26 @@ function fallbackDescription(record) {
   if (record.permalink === 'https://blog.abhipraya.dev/ppl/') return 'Course blogs and working notes.';
   if (record.path.endsWith('/_index.md')) return `Browse ${record.title}.`;
   return siteDescription;
+}
+
+function sourceFromPath(path) {
+  if (!path) return '';
+  try {
+    return readFileSync(join(root, path), 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+async function framedVisual(buffer, rotation) {
+  const bordered = await sharp(buffer)
+    .extend({ top: 4, bottom: 4, left: 4, right: 4, background: '#93a1a1' })
+    .png()
+    .toBuffer();
+  return sharp(bordered)
+    .rotate(rotation, { background: '#fdf6e3' })
+    .png()
+    .toBuffer();
 }
 
 const hugo = spawnSync('hugo', ['list', 'all'], { cwd: root, encoding: 'utf8' });
@@ -135,17 +168,18 @@ if (hugo.status !== 0) {
 
 const records = hugo.stdout.trim().split('\n').slice(1).map((line) => {
   const [path, slug, title, date, expiryDate, publishDate, draft, permalink, kind, section] = parseCsvLine(line);
-  return { path, slug, title, permalink, kind, section };
+  return { path, slug, title, date, permalink, kind, section };
 }).filter((record) => record.section !== 'private');
 
 const cards = [
-  { path: '/', label: 'HOME', title: 'Daffa Abhipraya', description: siteDescription },
-  { path: '/tags/', label: 'TAGS', title: 'Tags', description: 'Posts organized by topic.' },
+  { path: '/', title: 'Daffa Abhipraya', description: siteDescription },
+  { path: '/tags/', title: 'Tags', description: 'Posts organized by topic.' },
   ...records.map((record) => ({
     path: new URL(record.permalink).pathname,
-    label: sourceLabel(record),
     title: record.title,
     description: descriptionFromSource(record.path) || fallbackDescription(record),
+    date: record.date,
+    body: record.kind === 'page' ? sourceFromPath(record.path) : '',
   })),
 ];
 
@@ -162,17 +196,40 @@ for (const record of records) {
 }
 for (const tag of tags) {
   const slug = tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  cards.push({ path: `/tags/${slug}/`, label: 'TAG', title: `#${tag}`, description: `Posts tagged ${tag}.` });
+  cards.push({ path: `/tags/${slug}/`, title: `#${tag}`, description: `Posts tagged ${tag}.` });
 }
 
 await rm(outputDir, { recursive: true, force: true });
 await mkdir(outputDir, { recursive: true });
-for (const card of cards) {
-  const svg = cardSvg(card);
-  const png = new Resvg(svg, {
-    font: { loadSystemFonts: true },
-  }).render().asPng();
-  await writeFile(join(outputDir, `${cardId(card.path)}.png`), png);
+const workDir = await mkdtemp(join(tmpdir(), 'blog-social-card-'));
+try {
+  for (const card of cards) {
+    const visuals = card.body ? await prepareVisuals({
+      sources: extractVisualSources(card.body),
+      staticDir: join(root, 'static'),
+      workDir,
+      warn: (message) => process.stderr.write(`${message}\n`),
+    }) : [];
+    const layout = visualLayout(visuals.length);
+    const visualLayers = await Promise.all(visuals.map((visual, index) => framedVisual(visual, layout.slots[index].rotation)));
+    const svg = cardSvg({ ...card, hasVisualRail: visuals.length > 0 });
+    const overlay = new Resvg(svg, {
+      font: { fontFiles, loadSystemFonts: false },
+    }).render().asPng();
+    const png = await sharp({
+      create: { width, height, channels: 4, background: '#fdf6e3' },
+    }).composite([
+      ...visualLayers.map((input, index) => ({
+        input,
+        left: layout.slots[index].x,
+        top: layout.slots[index].y,
+      })),
+      { input: overlay, left: 0, top: 0 },
+    ]).png().toBuffer();
+    await writeFile(join(outputDir, `${cardId(card.path)}.png`), png);
+  }
+} finally {
+  await rm(workDir, { recursive: true, force: true });
 }
 
 console.log(`Generated ${cards.length} social preview cards.`);
