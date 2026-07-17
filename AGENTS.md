@@ -78,7 +78,7 @@ Post content here in standard Markdown.
 
 ### Social Preview Cards
 
-Every public page receives an automatically generated 1200 by 630 PNG social preview card at build time. Hugo emits its URL through Open Graph and Twitter Card metadata. The card is typographic and uses the light Solarized theme, the `~/abhipraya` wordmark, a blue section label, page title, description, and `blog.abhipraya.dev` footer.
+Every public page receives an automatically generated 1200 by 630 PNG social preview card at build time. Hugo emits its URL through Open Graph and Twitter Card metadata. The card uses the light Solarized theme, the exact `~/abhipraya` header treatment from `.smallcap a`, the post date at the top right, page title, description, and `blog.abhipraya.dev` footer. Public regular posts select up to three local Markdown images, `figure` images, or Mermaid diagrams in body order for a bordered right-side visual rail. Three visuals use 16:9 crops, two use 4:3, one uses a square crop, and no eligible visual keeps the text full-width. Remote and failed sources are skipped with a build warning.
 
 Private pages emit no social-preview metadata and receive `noindex, nofollow, noimageindex`.
 

@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
-import { extractVisualSources, prepareVisuals, visualLayout } from '../scripts/social-card-media.mjs';
+import { composeCard, extractVisualSources, prepareVisuals, visualLayout } from '../scripts/social-card-media.mjs';
 
 test('social card media module loads', async () => {
   const media = await import('../scripts/social-card-media.mjs');
@@ -85,4 +85,16 @@ test('prepareVisuals chooses a square crop when one source survives', async () =
   const metadata = await sharp(visuals[0]).metadata();
   assert.deepEqual({ width: metadata.width, height: metadata.height }, { width: 220, height: 220 });
   await rm(workDir, { recursive: true, force: true });
+});
+
+test('composeCard produces a 1200 by 630 PNG with a visual rail', async () => {
+  const visual = await sharp({
+    create: { width: 226, height: 127, channels: 4, background: '#268bd2' },
+  }).png().toBuffer();
+  const card = await composeCard({ visuals: [visual, visual, visual] });
+  const metadata = await sharp(card).metadata();
+  assert.deepEqual(
+    { width: metadata.width, height: metadata.height, format: metadata.format },
+    { width: 1200, height: 630, format: 'png' },
+  );
 });

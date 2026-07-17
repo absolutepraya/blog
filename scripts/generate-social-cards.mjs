@@ -5,8 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { Resvg } from '@resvg/resvg-js';
-import sharp from 'sharp';
-import { extractVisualSources, prepareVisuals, visualLayout } from './social-card-media.mjs';
+import { composeCard, extractVisualSources, prepareVisuals } from './social-card-media.mjs';
 
 const root = process.cwd();
 const outputDir = join(root, 'static', 'social');
@@ -149,17 +148,6 @@ function sourceFromPath(path) {
   }
 }
 
-async function framedVisual(buffer, rotation) {
-  const bordered = await sharp(buffer)
-    .extend({ top: 4, bottom: 4, left: 4, right: 4, background: '#93a1a1' })
-    .png()
-    .toBuffer();
-  return sharp(bordered)
-    .rotate(rotation, { background: '#fdf6e3' })
-    .png()
-    .toBuffer();
-}
-
 const hugo = spawnSync('hugo', ['list', 'all'], { cwd: root, encoding: 'utf8' });
 if (hugo.status !== 0) {
   process.stderr.write(hugo.stderr);
@@ -210,22 +198,11 @@ try {
       workDir,
       warn: (message) => process.stderr.write(`${message}\n`),
     }) : [];
-    const layout = visualLayout(visuals.length);
-    const visualLayers = await Promise.all(visuals.map((visual, index) => framedVisual(visual, layout.slots[index].rotation)));
     const svg = cardSvg({ ...card, hasVisualRail: visuals.length > 0 });
     const overlay = new Resvg(svg, {
       font: { fontFiles, loadSystemFonts: false },
     }).render().asPng();
-    const png = await sharp({
-      create: { width, height, channels: 4, background: '#fdf6e3' },
-    }).composite([
-      ...visualLayers.map((input, index) => ({
-        input,
-        left: layout.slots[index].x,
-        top: layout.slots[index].y,
-      })),
-      { input: overlay, left: 0, top: 0 },
-    ]).png().toBuffer();
+    const png = await composeCard({ visuals, overlay, width, height });
     await writeFile(join(outputDir, `${cardId(card.path)}.png`), png);
   }
 } finally {

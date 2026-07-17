@@ -107,3 +107,29 @@ export async function prepareVisuals({ sources, staticDir, workDir, ratio, warn 
     .png()
     .toBuffer()));
 }
+
+async function framedVisual(buffer, rotation) {
+  const bordered = await sharp(buffer)
+    .extend({ top: 4, bottom: 4, left: 4, right: 4, background: '#93a1a1' })
+    .png()
+    .toBuffer();
+  return sharp(bordered)
+    .rotate(rotation, { background: '#fdf6e3' })
+    .png()
+    .toBuffer();
+}
+
+export async function composeCard({ visuals, overlay, width = 1200, height = 630 }) {
+  const layout = visualLayout(visuals.length);
+  const visualLayers = await Promise.all(visuals.map((visual, index) => framedVisual(visual, layout.slots[index].rotation)));
+  return sharp({
+    create: { width, height, channels: 4, background: '#fdf6e3' },
+  }).composite([
+    ...visualLayers.map((input, index) => ({
+      input,
+      left: layout.slots[index].x,
+      top: layout.slots[index].y,
+    })),
+    ...(overlay ? [{ input: overlay, left: 0, top: 0 }] : []),
+  ]).png().toBuffer();
+}

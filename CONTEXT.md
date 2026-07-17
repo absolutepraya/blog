@@ -9,13 +9,19 @@ A generated 1200 by 630 image declared through Open Graph and Twitter metadata, 
 _Avoid_: Embed image, unfurl image
 
 **Card identity**:
-The header wordmark `~/abhipraya`, placed at the top of every social preview card and styled with the blog's light Solarized palette.
+The header wordmark `~/abhipraya`, placed at the top left of every social preview card. It uses Ubuntu Bold at 2.5rem, dark teal background, light text, 0.25rem by 0.5rem padding, and 2px letter spacing.
 
 **Card canvas**:
 A full-bleed light Solarized background, not a white card on another color. A restrained rule or accent supports the wordmark without competing with the text.
 
-**Card accent**:
-Solarized blue (`#268bd2`), used for the card rule and section label. It matches the blog's existing established accent.
+**Card date**:
+The published date for a post, positioned at the top right of the card header in Ubuntu Mono and formatted as `Mon DD, YYYY`.
+
+**Card content box**:
+A larger square-cornered frame containing the title and description. Its 4px top, bottom, left, and right border forms the only box around that content.
+
+**Card visual rail**:
+For public regular posts, up to three local Markdown images, `figure` images, or Mermaid diagrams appear in source order in the right quarter of the content box. Each has a 4px square Solarized border. Three use 16:9 crops, two use 4:3, one uses a square crop, and zero keeps the text full-width. Remote, missing, unsupported, and failed sources are skipped.
 
 **Card footer**:
 The quiet `blog.abhipraya.dev` source label at the bottom of a social preview card. It does not show a full page URL, author name, or social handle.
@@ -25,9 +31,6 @@ A purely typographic presentation of the page, rather than a reused content imag
 
 **Card description**:
 Supporting page text placed beneath the title. It renders for no more than three lines before clamping.
-
-**Card section label**:
-The compact page-class label shown above a card title, such as `POSTS`, `PPL`, `ABOUT`, or `TAG`. Dates and tag pills do not appear on cards.
 
 **Card title**:
 The full page title, rendered in no more than two lines. Supporting description text yields before a title is shortened.
