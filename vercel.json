@@ -1,7 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "hugo",
-  "buildCommand": "hugo --minify",
+  "buildCommand": "npm run build",
   "outputDirectory": "public"
 }
-

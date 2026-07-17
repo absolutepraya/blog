@@ -1,0 +1,41 @@
+{{- $isPrivate := eq .Section "private" -}}
+{{- $description := .Site.Params.description | default .Site.Params.subtitle -}}
+{{- if not .IsHome -}}
+  {{- $description = .Params.description | default (.Summary | plainify) | default $description -}}
+{{- end -}}
+{{- if $isPrivate -}}
+<meta name="robots" content="noindex, nofollow, noimageindex">
+{{- else -}}
+  {{- $image := "" -}}
+  {{- with .Params.social_image -}}
+    {{- if or (hasPrefix . "http://") (hasPrefix . "https://") -}}
+      {{- $image = . -}}
+    {{- else -}}
+      {{- $image = absURL . -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $image = absURL (printf "social/%s.png" (md5 .RelPermalink)) -}}
+  {{- end -}}
+<meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+<meta property="og:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}">
+<meta property="og:description" content="{{ $description }}">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:site_name" content="{{ .Site.Title }}">
+<meta property="og:image" content="{{ $image }}">
+<meta property="og:image:secure_url" content="{{ $image }}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}">
+{{- if .IsPage }}
+<meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
+<meta property="article:modified_time" content="{{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" }}">
+<meta property="article:author" content="{{ .Site.Params.author }}">
+{{- range .Params.tags }}<meta property="article:tag" content="{{ . }}">
+{{- end }}{{- end }}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}">
+<meta name="twitter:description" content="{{ $description }}">
+<meta name="twitter:image" content="{{ $image }}">
+<meta name="twitter:image:alt" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}">
+{{- end -}}

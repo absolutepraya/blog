@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "node scripts/generate-social-cards.mjs && hugo --minify",
+    "generate:social-cards": "node scripts/generate-social-cards.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}

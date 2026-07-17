@@ -6,6 +6,7 @@ copyright = "© Daffa Abhipraya"
 
 [params]
   subtitle = "Thoughts on software, systems, and stuff"
+  description = "Thoughts on software, systems, and stuff"
   author = "Daffa Abhipraya"
   mainSections = ["posts"]
   showTagsOnHomepage = false
@@ -46,4 +47,3 @@ weight = 1
 name = "Posts"
 url = "/"
 weight = 2
-
