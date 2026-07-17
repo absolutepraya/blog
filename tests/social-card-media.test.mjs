@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { extractVisualSources, visualLayout } from '../scripts/social-card-media.mjs';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import sharp from 'sharp';
+import { extractVisualSources, prepareVisuals, visualLayout } from '../scripts/social-card-media.mjs';
 
 test('social card media module loads', async () => {
   const media = await import('../scripts/social-card-media.mjs');
@@ -30,4 +34,32 @@ test('visualLayout uses the approved adaptive ratios', () => {
   assert.equal(visualLayout(0).ratio, null);
   assert.equal(visualLayout(3).slots.length, 3);
   assert.equal(visualLayout(0).slots.length, 0);
+});
+
+test('prepareVisuals skips missing files and returns a 16:9 image crop', async () => {
+  const workDir = await mkdtemp(join(tmpdir(), 'social-card-'));
+  const imagesDir = join(workDir, 'images');
+  await mkdir(imagesDir);
+  const source = join(imagesDir, 'source.png');
+  await sharp({
+    create: { width: 40, height: 20, channels: 4, background: '#268bd2' },
+  }).png().toFile(source);
+
+  const warnings = [];
+  const visuals = await prepareVisuals({
+    sources: [
+      { kind: 'image', value: '/images/source.png' },
+      { kind: 'image', value: '/images/missing.png' },
+    ],
+    staticDir: workDir,
+    workDir,
+    ratio: '16:9',
+    warn: (message) => warnings.push(message),
+  });
+
+  const metadata = await sharp(visuals[0]).metadata();
+  assert.equal(visuals.length, 1);
+  assert.deepEqual({ width: metadata.width, height: metadata.height }, { width: 226, height: 127 });
+  assert.equal(warnings.length, 1);
+  await rm(workDir, { recursive: true, force: true });
 });

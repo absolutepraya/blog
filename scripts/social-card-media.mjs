@@ -1,4 +1,33 @@
+import { execFileSync } from 'node:child_process';
+import { writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
+
 const rail = { x: 846, y: 184, width: 246, height: 310 };
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+
+function cropSize(ratio) {
+  if (ratio === '16:9') return [226, 127];
+  if (ratio === '4:3') return [226, 170];
+  return [220, 220];
+}
+
+async function renderMermaid(source, workDir, index) {
+  const inputPath = join(workDir, `diagram-${index}.mmd`);
+  const outputPath = join(workDir, `diagram-${index}.svg`);
+  const configPath = join(scriptDir, 'mermaid-social-config.json');
+
+  await writeFile(inputPath, source);
+  execFileSync('npx', [
+    'mmdc',
+    '-i', inputPath,
+    '-o', outputPath,
+    '-c', configPath,
+    '-b', 'transparent',
+  ], { stdio: 'pipe' });
+  return outputPath;
+}
 
 export function extractVisualSources(body) {
   const pattern = /!\[[^\]]*\]\((\/images\/[^)\s]+)[^)]*\)|{{<\s*figure\s+[^>]*src=["'](\/images\/[^"']+)["'][^>]*>}}|```mermaid\s*\n([\s\S]*?)```/g;
@@ -48,4 +77,27 @@ export function visualLayout(count) {
   }
 
   return { ratio: null, slots: [] };
+}
+
+export async function prepareVisuals({ sources, staticDir, workDir, ratio, warn }) {
+  const [width, height] = cropSize(ratio);
+  const visuals = [];
+
+  for (const [index, source] of sources.entries()) {
+    if (visuals.length === 3) break;
+
+    try {
+      const inputPath = source.kind === 'image'
+        ? join(staticDir, source.value.replace(/^\/images\//, 'images/'))
+        : await renderMermaid(source.value, workDir, index);
+      const resize = source.kind === 'image'
+        ? { fit: 'cover', position: 'centre' }
+        : { fit: 'contain', background: '#fdf6e3' };
+      visuals.push(await sharp(inputPath).resize(width, height, resize).png().toBuffer());
+    } catch (error) {
+      warn(`Skipped social-card ${source.kind} visual: ${error.message}`);
+    }
+  }
+
+  return visuals;
 }
