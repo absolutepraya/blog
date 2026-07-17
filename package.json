@@ -2,9 +2,12 @@
   "private": true,
   "scripts": {
     "build": "node scripts/generate-social-cards.mjs && hugo --minify",
-    "generate:social-cards": "node scripts/generate-social-cards.mjs"
+    "generate:social-cards": "node scripts/generate-social-cards.mjs",
+    "test:social-cards": "node --test tests/social-card-media.test.mjs"
   },
   "dependencies": {
-    "@resvg/resvg-js": "^2.6.2"
+    "@mermaid-js/mermaid-cli": "^11.16.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "sharp": "^0.35.3"
   }
 }
