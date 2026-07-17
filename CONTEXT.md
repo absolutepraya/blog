@@ -21,13 +21,13 @@ The published date for a post, positioned at the top right of the card header in
 A larger square-cornered frame containing the title and description. Its 4px top, bottom, left, and right border forms the only box around that content.
 
 **Card visual rail**:
-For public regular posts, up to three local Markdown images, `figure` images, or Mermaid diagrams appear in source order in the right quarter of the content box. Each has a 4px square Solarized border. Three use 16:9 crops, two use 4:3, one uses a square crop, and zero keeps the text full-width. Remote, missing, unsupported, and failed sources are skipped.
+For public regular posts, up to three local Markdown images, `figure` images, or Mermaid diagrams appear in source order in the right quarter of the content box. Each has a 4px square Solarized border and transparent rotation padding, so tilted cards overlap without opaque background blocks. Three use 16:9 crops, two use 4:3, one uses a square crop, and zero keeps the text full-width. Portrait images crop from the top, landscape images crop from the left, and square images crop from the center. Remote, missing, unsupported, and failed sources are skipped.
 
 **Card footer**:
 The quiet `blog.abhipraya.dev` source label at the bottom of a social preview card. It does not show a full page URL, author name, or social handle.
 
 **Card body**:
-A purely typographic presentation of the page, rather than a reused content image. It carries the page title and supporting page metadata.
+A title-and-description presentation that may use a bounded visual rail from the page's own local media. It does not reuse an image as a full-card background.
 
 **Card description**:
 Supporting page text placed beneath the title. It renders for no more than three lines before clamping.

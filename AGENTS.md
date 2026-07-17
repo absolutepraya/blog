@@ -78,11 +78,11 @@ Post content here in standard Markdown.
 
 ### Social Preview Cards
 
-Every public page receives an automatically generated 1200 by 630 PNG social preview card at build time. Hugo emits its URL through Open Graph and Twitter Card metadata. The card uses the light Solarized theme, the exact `~/abhipraya` header treatment from `.smallcap a`, the post date at the top right, page title, description, and `blog.abhipraya.dev` footer. Public regular posts select up to three local Markdown images, `figure` images, or Mermaid diagrams in body order for a bordered right-side visual rail. Three visuals use 16:9 crops, two use 4:3, one uses a square crop, and no eligible visual keeps the text full-width. Remote and failed sources are skipped with a build warning.
+Every public page receives an automatically generated 1200 by 630 PNG social preview card at build time. Hugo emits its URL through Open Graph and Twitter Card metadata. The card uses the light Solarized theme, the exact `~/abhipraya` header treatment from `.smallcap a`, the post date at the top right, page title, description, and `blog.abhipraya.dev` footer. Public regular posts select up to three local Markdown images, `figure` images, or Mermaid diagrams in body order for a bordered, tilted right-side visual rail. Three visuals use 16:9 crops, two use 4:3, one uses a square crop, and no eligible visual keeps the text full-width. Image crops prefer top for portrait sources, left for landscape sources, and center for square sources. Remote and failed sources are skipped with a build warning. The visual rail always reserves the right quarter, so title and description must remain in the left three quarters.
 
 Private pages emit no social-preview metadata and receive `noindex, nofollow, noimageindex`.
 
-Use `social_image` only when a post needs an intentional custom preview image. The normal generated card remains the default. Generated card files are written to `static/social/` during the build and are gitignored.
+Use `social_image` only when a post needs an intentional custom preview image. The normal generated card remains the default. Generated card files are written to `static/social/` during `npm run build`, including Vercel deployments, and are gitignored. Do not edit generated cards by hand.
 
 ## Private / Password-Protected Posts
 
