@@ -88,14 +88,16 @@ function wrap(text, maxChars, maxLines) {
 }
 
 function titleLayout(title, maxWidth) {
-  for (let fontSize = 70; fontSize >= 36; fontSize -= 2) {
+  for (let fontSize = 70; fontSize >= 28; fontSize -= 2) {
     const maxChars = Math.floor(maxWidth / (fontSize * 0.54));
     const lines = wrap(title, maxChars, 3);
     if (lines.length <= 2 && lines.join(' ').length === title.trim().replace(/\s+/g, ' ').length) {
       return { fontSize, lineHeight: Math.round(fontSize * 1.15), lines };
     }
   }
-  return { fontSize: 36, lineHeight: 42, lines: wrap(title, 54, 2) };
+  const fontSize = 28;
+  const maxChars = Math.floor(maxWidth / (fontSize * 0.54));
+  return { fontSize, lineHeight: Math.round(fontSize * 1.15), lines: wrap(title, maxChars, 2) };
 }
 
 function textLines(lines, x, baseline, lineHeight, attributes = '') {

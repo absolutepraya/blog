@@ -89,8 +89,14 @@ export async function prepareVisuals({ sources, staticDir, workDir, ratio, warn 
       const inputPath = source.kind === 'image'
         ? join(staticDir, source.value.replace(/^\/images\//, 'images/'))
         : await renderMermaid(source.value, workDir, index);
+      const metadata = await sharp(inputPath).metadata();
+      const position = metadata.height > metadata.width
+        ? 'top'
+        : metadata.width > metadata.height
+          ? 'left'
+          : 'centre';
       const resize = source.kind === 'image'
-        ? { fit: 'cover', position: 'centre' }
+        ? { fit: 'cover', position }
         : { fit: 'contain', background: '#fdf6e3' };
       prepared.push({ input: await sharp(inputPath).png().toBuffer(), resize });
     } catch (error) {
@@ -114,7 +120,7 @@ async function framedVisual(buffer, rotation) {
     .png()
     .toBuffer();
   return sharp(bordered)
-    .rotate(rotation, { background: '#fdf6e3' })
+    .rotate(rotation, { background: { r: 253, g: 246, b: 227, alpha: 0 } })
     .png()
     .toBuffer();
 }
