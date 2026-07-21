@@ -1,6 +1,7 @@
 ---
 title: "Meet My Friend Who Lives on My VPS"
 date: 2026-05-10
+lastmod: 2026-07-19
 description: "How I replaced 1 GB of always-on Claude Code with a Hermes Agent named Yanto. A persistent personal assistant that lives on my VPS, talks to me through Telegram, Discord, and WhatsApp, knows my projects, and handles small ops from a phone keyboard."
 tags: ["ai", "hermes-agent", "personal-assistant", "vps", "self-hosted", "telegram", "discord", "whatsapp"]
 toc: true
@@ -16,6 +17,7 @@ Yanto is not a person, and he is not a chatbot in a browser tab either. He is an
 This post is how I built him: the cheap always-on setup, the personality layer that made him feel like a teammate instead of a tool, and enough of the wiring that you could stand up your own. If you only use AI through a chat box today, this is what the next step looks like. If you already self-host, this is a build log.
 
 {{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-platforms.png" alt="Three profile cards side by side: the Yanto agent as a Telegram bot, a Discord app labeled yanto#2842, and a WhatsApp contact, all sharing the same cat-in-a-suit avatar" caption="One agent, three front doors. The same Yanto answers as a Telegram bot, a Discord app, and a WhatsApp contact, with one personality and one memory behind all three." >}}
+
 
 ## Why I Built It
 
@@ -42,7 +44,7 @@ A few things it does out of the box that mattered:
 
 Setup is two short wizards. The first picks where the model runs, anywhere from Nous Portal and Anthropic to GitHub Copilot or a local model on your own hardware. The second picks which chat apps to connect. Both are arrow-key menus, which feels right for a self-hosted thing.
 
-{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-provider-menu.png" alt="Hermes Agent provider selection TUI menu listing Nous Portal, OpenRouter, LM Studio, Anthropic, OpenAI Codex, GitHub Copilot, and many other providers" caption="Provider menu in `hermes setup`. Pick where the model runs. I went with the OpenAI Codex provider running GPT-5.5, but switching is one command away." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-provider-menu.png" alt="Hermes Agent provider selection TUI menu listing Nous Portal, OpenRouter, LM Studio, Anthropic, OpenAI Codex, GitHub Copilot, and many other providers" caption="Provider menu in `hermes setup`. Pick where the model runs without changing the rest of the setup." >}}
 
 {{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-platform-menu.png" alt="Hermes Agent gateway platform selection TUI listing Telegram, Discord, Slack, Mattermost, WhatsApp, Signal, Email, and others" caption="Platform menu in `hermes gateway setup`. Pick which apps the agent answers on. Telegram, Discord, and WhatsApp are the three I run." >}}
 
@@ -57,7 +59,7 @@ graph TD
     Hooks --> Persona["Persona layer<br>SOUL.md + USER.md + MEMORY.md"]
     Persona --> Agent["Agent loop<br>LLM + tool calling"]
 
-    Agent --> Skills["138 shared skills<br>~/.agents/skills/"]
+    Agent --> Skills["Shared skills<br>~/.agents/skills/"]
     Agent --> MCP["MCP servers<br>brave, google-maps, yahoo-finance,<br>context7, todoist"]
     Agent --> Shell["Shell with smart approvals<br>(auto-yes safe, prompt risky)"]
 
@@ -131,7 +133,7 @@ There is a genuinely useful lesson buried here. A model trained on dash-heavy En
 
 The personality is the front. The reach comes from two things: skills (small scripts Yanto can run) and external tools wired in over MCP.
 
-He loads my whole shared skills folder, 138 of them enabled today (up from 54 when I first wrote this post in early May), the same set my Claude Code and OpenCode use. The ones I lean on most:
+He loads the same shared skills folder my Claude Code and OpenCode use. It has grown past a hundred small utilities, and it changes often enough that a fixed count would be stale before this post is. The ones I lean on most:
 
 - `chart`: a TradingView-style chart image for any ticker, indicator set, and timeframe, via the chart-img.com API. Aliases like `qqq`, `ihsg`, `btc` map to the right exchange symbols. The script writes a PNG and Yanto attaches it to the chat.
 - `weather`: a thin wrapper on the free [Open-Meteo](https://open-meteo.com/) API, no key needed, with aliases for the places I actually ask about. Pairs with the Maps tool for "when should I leave, is it raining" questions.
@@ -139,11 +141,11 @@ He loads my whole shared skills folder, 138 of them enabled today (up from 54 wh
 - `gws-*`: a family of Google Workspace wrappers for Drive, Docs, Sheets, Slides, Calendar, and Gmail. (Debian 12 note: pin the underlying CLI to `0.21.1`, the `0.22` series needs a newer glibc only Debian 13 ships.)
 - a daily **deadline digest** skill: pulls my university deadlines from the campus Moodle plus the class group chat at 7am, auto-adds them to Todoist, and posts a Discord card. [Open-source here](https://github.com/absolutepraya/skills/scele-digest).
 
-{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-skills.png" alt="Hermes dashboard Skills page showing 138 of 138 skills enabled, a category sidebar (General, Creative, MLOps and more), and a scrollable list of skills with descriptions" caption="The skills panel: 138 enabled, grouped into categories. Each is a small script Yanto can run, the same folder my Claude Code and OpenCode load." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-skills.png" alt="Hermes dashboard Skills page showing 138 enabled skills, a category sidebar, and a scrollable list of skills with descriptions" caption="The skills panel, grouped into categories. The useful unit is a small script Yanto can run." >}}
 
-On top of skills, a handful of MCP tools (again, external capabilities plugged straight into the agent): live library docs (`context7`), web search (`brave`), places and routes (`google-maps`), live prices and fundamentals (`yahoo-finance`), plus `telegram` and `todoist`.
+On top of skills, a handful of MCP tools give the agent outside capabilities: live library docs (`context7`), web search (`brave`), places and routes (`google-maps`), live prices and fundamentals (`yahoo-finance`), plus `telegram` and `todoist`.
 
-{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-mcp.png" alt="Hermes dashboard MCP page listing six connected servers: brave-search, context7, google-maps, telegram-mcp, todoist, and yahoo-finance, each with its launch command" caption="The MCP servers: six external tool connectors, each one command plus an env var or two. Secrets stay masked." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-mcp.png" alt="Hermes dashboard MCP page showing the connected external tool servers" caption="The MCP panel. Each server is one external capability attached to the agent, with its secrets kept masked." >}}
 
 Two of those earn their keep daily. For "find me a place" questions, I told Yanto to use Maps and Brave together: Maps for the structured facts (rating, hours, distance from a known anchor like my place in Pancoran), Brave for the vibe (Lemon8 and PergiKuliner reviews in Indonesian about whether a spot is actually homey or just trendy). The combination feels grounded instead of a Yelp summary. And Yahoo Finance filled a real gap, the `chart` skill draws a chart but does not know the live price, so now I can ask "BBRI sekarang berapa, sama sebulan terakhir gimana" and get the quote, the 30-day move, and recent news in one turn. It covers Indonesian tickers too, via the `.JK` suffix (`BBRI.JK`, `BBCA.JK`), plus `^JKSE` for the IHSG composite. The 15-minute delay is fine for the "is this a reasonable level to scale in" question I actually have.
 
@@ -220,66 +222,56 @@ The folder-picking surprised me. I have a lot of Karakeep folders and some names
 
 ## The Screeners
 
-A screener is a small program that runs on a schedule, watches a stream of data (stock prices, company filings), and pings me only when something crosses a line worth a look, so I never have to sit and watch the screen myself. If you invest or trade daily like I do, this is probably the most directly useful piece of the whole setup: it turns hours of watching charts and filings into a few alerts that fire only when your own rules are met. The three below all do that, what separates them is how much they lean on the AI model.
+A screener is a small program that runs on a schedule, watches a stream of data, and pings me only when something crosses a line worth a look. It turns hours of watching charts, filings, and recommendations into a few alerts that follow rules I can inspect.
+
+The jobs fall into three useful shapes: a morning digest that always uses the model, price screeners that never do, and IDX research watchers in between.
 
 ### The Ones That Never Wake the Model
 
-The deadline digest uses the model to write prose. A different class of scheduled job does the opposite: it never touches the model at all.
-
-Hermes can run a job in `no_agent` mode, where a plain script runs on a schedule and its output goes straight to a Discord channel, no agent loop, no tokens. I use this for a few market screeners that are pure, deterministic Python.
+Hermes can run a job in `no_agent` mode, where a plain script runs on a schedule and its output goes straight to Discord. No agent loop, no tokens.
 
 ```mermaid
 graph TD
     Cron["Hermes cron tick"]
-    Cron --> Type{"Job type"}
-    Type -- "agent job" --> LLM["deadline digest:<br>LLM reads structured data,<br>writes the digest prose"]
-    Type -- "no_agent job" --> Py["market screeners:<br>plain Python threshold checks<br>on live numbers"]
+    Cron --> Type{"What does the job need?"}
+    Type -- "Write or judge ambiguity" --> LLM["agent job<br>model receives verified input"]
+    Type -- "Apply known rules" --> Py["no_agent job<br>plain Python"]
     LLM --> Disc["Discord"]
-    Py --> Alert["alert only when a rule fires<br>(plus a chart)"]
-    Py --> Beat["heartbeat every run<br>(missing line means broken)"]
+    Py --> Alert["alert only when a rule fires"]
+    Py --> Beat["heartbeat every run"]
     Alert --> Disc
     Beat --> Disc
 ```
 
-The one I lean on most is a buy-timing helper for the ETFs I dollar-cost-average into. Every hour during US market hours it pulls the live price, compares it against the moving averages and the recent high, and if a ticker has pulled back into a buy zone it posts a compact alert with the levels and an annotated chart, then goes quiet. It fires at most once per ticker per signal per day, so a dip that lingers for hours does not spam me. It is explicitly a "here is a reasonable level to scale in" nudge, not advice, the same line Yanto gives in chat.
+The ETF dollar-cost-average helper is the cleanest example. Every hour during US market hours it pulls the live price, compares it with moving averages and the recent high, and posts only when a ticker reaches a buy zone. It fires at most once per ticker per signal per day, so a dip that lingers for hours does not spam me. The alert gives me levels and an annotated chart, not a prediction disguised as certainty.
 
 {{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-market-buy-alert.png" alt="Discord alert from Yanto showing a BUY setup for SPY with signal metrics, reasons, and news context, followed by an annotated SPY chart" caption="A deterministic screener alert. The buy-setup text with its levels and reasons, then its chart right after, no LLM in the loop." >}}
 
-The detail I am proud of is that these screeners are honest about being alive. Each one posts a small heartbeat line on every run, even a boring one with nothing to report. The point is inversion: I do not watch for alerts, I watch for a missing heartbeat. If a line stops showing up, the job broke, and I know within the hour instead of discovering a week later that a screener silently died.
+The production detail I care about most is that these jobs are honest about being alive. Each watcher emits a small heartbeat even when nothing qualifies. The inversion is useful: I do not watch for alerts, I watch for a missing heartbeat. A missing line is an operational problem I can see before a quiet failure turns into a week of blind spots.
 
-### The One That Earns the Wake-Up
+### The Ones That Earn a Wake-Up
 
-The price screeners never touch the model. The morning digest always does. The most interesting job I have added sits exactly between them, and it taught me where that line actually belongs.
+Some inputs are too ambiguous for a threshold, but they still do not justify handing the model a firehose. That is where the company-news and IDX research watchers sit.
 
-It watches IDX corporate-action disclosures, the "keterbukaan informasi" filings Indonesian listed companies publish all day: rights issues, private placements, tender offers, mergers, buybacks, dividends. Most are housekeeping. A few are the kind of thing that quietly re-rates a stock weeks before the chart notices. I wanted those few flagged. The catch is that "interesting" here is not a threshold. A price dip is a number you can compare. "Is this rights issue a controller setting up for a markup, or just diluting retail to cover debt" is a judgment, and it turns on who owns the company and what its balance sheet looks like.
+The deterministic part owns the boring work: source-specific intake, cursors, duplicate handling, parsing, ranking, selection windows, durable state, and Discord delivery. It starts at the current source cursor, so enabling a watcher never creates a historical backfill. It rejects macro chatter and broad market commentary before a candidate can cost a model turn.
 
-So this one is a hybrid. A deterministic Python pass does the funnel, the same cheap hourly work the price screeners do: pull the disclosure feed (with a browser-like fingerprint, because IDX sits behind anti-bot protection that blocks plain requests), drop duplicates, classify each filing by type, and discard the names too illiquid to matter. That stage throws away almost the entire feed and never wakes the model.
-
-The difference is what happens to the survivors. Instead of dumping them to a channel, the script hands them up. Hermes has a cron mode for exactly this shape: the script returns a "wake the agent" signal with a payload, and only then does a model turn happen, with only the handful of filings that made it through the funnel.
-
-And that turn earns its tokens. The model reads the actual disclosure PDFs, pulls the company's fundamentals, and fetches the latest laporan keuangan, the real financial-statement PDF, straight off IDX. Then it scores the filing out of ten against a doctrine I wrote down: who benefits, does the controller need a higher price, is the balance sheet actually healthy, does the chart confirm. A juicy-looking deal on a rotting balance sheet gets marked down on purpose. If the score clears the bar it posts a clean alert with a chart. If it does not, it stays quiet.
+Only a small, already-structured candidate crosses the boundary. The model gets the ticker, source link, publication time, source text, and a closed response contract. It classifies that one thing. It does not fetch more sources, inspect state, choose the destination, or post to Discord. Python validates the answer, applies the ranking and delivery rules, and records the result.
 
 ```mermaid
 graph TD
-    Feed["IDX disclosure feed<br>(hourly)"]
-    Feed --> Filter["Deterministic funnel:<br>dedupe, classify type,<br>drop illiquid names"]
-    Filter --> Q{"Anything survive?"}
-    Q -- "no (almost always)" --> Beat["heartbeat only,<br>model untouched"]
-    Q -- "yes (a handful a day)" --> Wake["Wake the model<br>with just the survivors"]
-    Wake --> Score["Model reads the disclosure PDFs<br>+ fundamentals + laporan keuangan,<br>scores 0-10 on the doctrine"]
-    Score --> Gate{"Score clears the bar?"}
-    Gate -- "yes" --> Alert["clean alert + chart to Discord"]
-    Gate -- "no" --> Quiet["stay quiet (just recorded)"]
+    Feed["Provider message or filing"]
+    Feed --> Filter["Deterministic watcher<br>parse, dedupe, rank, persist"]
+    Filter --> Q{"Candidate needs judgment?"}
+    Q -- "no" --> Beat["record result<br>heartbeat only"]
+    Q -- "yes" --> Wake["Wake model with one<br>closed candidate payload"]
+    Wake --> Classify["Classify only the candidate<br>against a fixed contract"]
+    Classify --> Validate["Python validates, selects,<br>and delivers"]
+    Validate --> Disc["Discord alert or digest"]
 ```
 
-Drawn out like that, the three jobs turned into a spectrum I did not plan:
+Daily and weekly Phintraco swing ideas, company news, and corporate-action research all have different source rules, but they share the same boundary: fetch and persist deterministically, ask the model only for the narrow judgment it is actually good at, then deliver deterministically again.
 
-- the morning digest runs the model every time, because its whole job is turning structured data into prose
-- the IDX screener wakes the model only for the few filings that need a judgment call
-- the price screeners never wake it, because a threshold is a threshold
-
-The rule I keep landing on: spend the model where the input is ambiguous and the output is a judgment. Everything else is Python. The IDX screener is the one job where I happily pay for a model turn, because the thing it decides is exactly the thing a threshold cannot.
-
+The rule I keep landing on is still simple: spend the model where the input is ambiguous and the output is judgment. Everything else is Python. The useful refinement is that the model should not get to decide what it sees, what it sends, or what becomes history.
 ## Under the Hood
 
 The agent runs as a `systemd` service (so the OS keeps it alive). The service points at the Hermes gateway with `Restart=always`, so if the process dies it comes back. When I push a config change I restart it and it reconnects to Telegram and Discord in about six seconds, with the WhatsApp webhook a touch slower.
@@ -288,7 +280,7 @@ Configuration lives in two files: `config.yaml` for runtime settings (model defa
 
 Yanto is mostly a chat presence, but he has a web face too. A small login-gated web dashboard shows his connected platforms, session and message counts, gateway status, and tabs for skills, cron jobs, logs, and tools. Most days I never open it, the chat is the interface, but it is handy for eyeballing what the scheduled jobs have been up to.
 
-{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-dashboard.png" alt="Hermes Agent web dashboard Sessions page showing Telegram, Discord, and WhatsApp all connected, session and message counts, and a left navigation with Chat, Cron, Skills, MCP, and Logs" caption="The web dashboard. All three platforms green and connected, with the session history and a left rail into skills, cron, MCP, and logs. Useful, but I still live in the chat." >}}
+{{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-dashboard.png" alt="Hermes Agent web dashboard Sessions page showing Telegram, Discord, and WhatsApp connected, session and message counts, and navigation for chat, cron, skills, MCP, and logs" caption="The dashboard, with the three platforms connected and a left rail into skills, cron, MCP, and logs. Useful, but I still live in the chat." >}}
 
 ### Smart Approvals
 
@@ -304,15 +296,7 @@ One slick trick worth calling out, because it is what makes charts and slides fl
 
 When a guest messages Yanto, his defaults flip. Reads are fine without asking: recipe lookups, restaurant suggestions, a calendar peek. But anything that touches my data, my projects, or my accounts triggers a permission DM to me, on the same platform, with something like "bro, ada yang minta X, oke gua bantu?". He waits for my yes.
 
-The mechanism is boring on purpose. A guest's Discord and WhatsApp IDs go in his memory file with a note: messages from these IDs get guest-cautious defaults. No special routing code, the same plain-text who-is-this mapping does the work. And because identity is cross-platform, the same guest texting from WhatsApp with a number he knows picks up the same cautious behavior he would on Discord. It is a much nicer pattern than handing someone shared credentials.
-
-## What Changed, and What Is Next
-
-The honest summary is that the cost of small operations collapsed. A short list of things I no longer open a terminal for: DNS records, container status checks, cron inspection, merge-request status on my internal GitLab, the Sunday "where do we eat" stalemate, and quick chart pulls during market hours. The mosh client is still on my phone, but I have not opened it in a week.
-
-Yanto does not replace SSH for everything, and I would be lying if I said otherwise. Long debugging sessions with four logs open at once are faster in a real terminal. I still want to read the diff myself before any change to `nginx`, `systemd`, or `cron`. Container builds and the initial setup of a new service are still tmux work, the cliff of a brand-new app is too tall for chat. What changed is everything below that cliff: the thirty-second chores that used to cost five minutes of friction now cost one sentence.
-
-A couple of threads are still open. A reliable X read path is the big one, the datacenter IP gets throttled and keyword search is gated, so a residential proxy or my own cookies is the real fix if it ever matters enough. And voice: Hermes supports voice memos with transcription, and the version of this I keep imagining is sending one while walking and getting a structured Todoist task back.
+There are two separate boundaries here. The gateway allowlist decides who can reach him at all. The guest notes then give an approved guest cautious defaults, while my own identity gets the reversible-work autopilot. Keeping authentication in the gateway and behavior in the persona files is much less fragile than pretending a prompt is an access-control system.
 
 ## Closing
 
