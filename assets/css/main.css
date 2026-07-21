@@ -302,8 +302,8 @@ pre.mermaid:hover .diagram-zoom-icon,
 
 .diagram-viewer-close {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
   z-index: 1001;
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -323,7 +323,7 @@ pre.mermaid:hover .diagram-zoom-icon,
 
 .diagram-viewer-hint {
   position: fixed;
-  bottom: 1rem;
+  bottom: max(1rem, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -1252,6 +1252,25 @@ pre.mermaid {
 }
 
 @media (max-width: 600px) {
+  .diagram-viewer-close {
+    top: max(0.75rem, env(safe-area-inset-top));
+    right: max(0.75rem, env(safe-area-inset-right));
+  }
+  .diagram-viewer-hint {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    width: calc(100% - 2rem);
+    max-width: 20rem;
+    white-space: normal;
+    text-align: center;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+  }
+  .diagram-viewer-hint span {
+    display: none;
+  }
+  .diagram-viewer-hint::after {
+    content: "Pinch to zoom · Drag to pan · Tap Close to exit";
+  }
   .page-content {
     padding-inline: 1rem;
     padding-block: 1.5rem;

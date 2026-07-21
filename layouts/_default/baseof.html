@@ -203,7 +203,7 @@
             var viewer = document.createElement('div');
             viewer.id = 'diagram-viewer';
             viewer.className = 'diagram-viewer';
-            viewer.innerHTML = '<div class="diagram-viewer-canvas" id="diagram-viewer-canvas"><div class="diagram-viewer-svg-wrap" id="diagram-viewer-svg-wrap"></div></div><button class="diagram-viewer-close" id="diagram-viewer-close">Close</button><div class="diagram-viewer-hint">Scroll to Zoom &ensp;&middot;&ensp; Drag to Pan &ensp;&middot;&ensp; Esc to Close &ensp;&middot;&ensp; Double-Click to Reset</div>';
+            viewer.innerHTML = '<div class="diagram-viewer-canvas" id="diagram-viewer-canvas"><div class="diagram-viewer-svg-wrap" id="diagram-viewer-svg-wrap"></div></div><button class="diagram-viewer-close" id="diagram-viewer-close">Close</button><div class="diagram-viewer-hint"><span>Scroll to Zoom &ensp;&middot;&ensp; Drag to Pan &ensp;&middot;&ensp; Esc to Close &ensp;&middot;&ensp; Double-Click to Reset</span></div>';
             document.body.appendChild(viewer);
         })();
     </script>
@@ -236,7 +236,10 @@
                 clone.style.height = h + 'px';
                 if (clone.tagName === 'IMG') clone.setAttribute('draggable', 'false');
                 wrap.appendChild(clone);
-                var hMargin = 16, vMargin = 64, pad = 12;
+                var isMobile = window.matchMedia('(max-width: 600px)').matches;
+                var hMargin = isMobile ? 12 : 16;
+                var vMargin = isMobile ? 88 : 64;
+                var pad = 12;
                 zoom = Math.min(
                     (window.innerWidth  - hMargin * 2) / (w + pad * 2),
                     (window.innerHeight - vMargin * 2) / (h + pad * 2)
