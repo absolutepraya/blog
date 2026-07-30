@@ -1,0 +1,3 @@
+worktree_path = ".worktrees"
+default_base = "origin/main"
+branch_template = "abhip/{name}"

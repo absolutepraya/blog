@@ -1,13 +1,25 @@
 {
+  "name": "blog",
   "private": true,
+  "engines": {
+    "node": ">=22 <27"
+  },
   "scripts": {
     "build": "node scripts/generate-social-cards.mjs && hugo --minify",
+    "check": "npm run test:social-cards && npm run build",
+    "preview": "npm run build && wrangler dev",
+    "deploy:preview": "npm run build && wrangler deploy --env preview",
+    "deploy:production": "npm run build && wrangler deploy --env=\"\"",
     "generate:social-cards": "node scripts/generate-social-cards.mjs",
-    "test:social-cards": "node --test tests/social-card-media.test.mjs"
+    "test:social-cards": "node --test tests/social-card-media.test.mjs",
+    "smoke:deployment": "node scripts/smoke-cloudflare-deployment.mjs"
   },
   "dependencies": {
     "@mermaid-js/mermaid-cli": "^11.16.0",
     "@resvg/resvg-js": "^2.6.2",
     "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "wrangler": "4.113.0"
   }
 }

@@ -15,7 +15,7 @@ Public post cards can include up to three local images or Mermaid diagrams from 
 ## Develop
 
 ```bash
-npm install
+npm ci
 hugo server
 ```
 
@@ -29,7 +29,19 @@ This generates social preview images under `static/social/` and builds the produ
 
 ## Deploy
 
-Pushes to `main` deploy through Vercel to [blog.abhipraya.dev](https://blog.abhipraya.dev/).
+Cloudflare Worker Assets is the release target. The deployment workflow runs the social-card test and production Hugo build, publishes a public preview Worker for same-repository pull requests, and deploys production only from `main`.
+
+```bash
+npm run check
+npm run preview
+npm run deploy:preview
+```
+
+`npm run deploy:production` is a break-glass command for a clean `main` checkout. Normal production releases run in GitHub Actions. The `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_PREVIEW_API_TOKEN` repository secrets support previews; `CLOUDFLARE_PRODUCTION_API_TOKEN` is scoped to the `Production` GitHub environment.
+
+Before the first verified Cloudflare cutover, Vercel remains the live rollback path for [blog.abhipraya.dev](https://blog.abhipraya.dev/). Do not remove its project, domain alias, or `vercel.json` until Cloudflare production has been verified for seven days.
+
+The Worker serves generated `public/` files. HTML, feeds, sitemap, robots, and social cards revalidate on every request; fonts and fingerprinted CSS are immutable; images cache for one week. Use Cloudflare's targeted cache purge only for an exceptional stale image or social card.
 
 ## Content and images
 
