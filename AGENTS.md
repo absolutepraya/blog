@@ -229,15 +229,17 @@ hugo                 # Production build → public/
 
 ```bash
 npm run build        # Generates social preview cards, then creates the minified production build
+npm run check        # Runs the social-card test and production build
+npm run preview      # Serves Worker Assets locally after a production build
 ```
 
-Output goes to `public/`. Site is deployed to Vercel at `https://blog.abhipraya.dev/`. Pushes to `main` trigger automatic deployment.
+Output goes to `public/`. Cloudflare Worker Assets serves this directory with automatic trailing-slash handling and Hugo's `404.html` page. Same-repository pull requests deploy public preview Workers, while `main` deploys production through the `Production` GitHub environment.
 
-```bash
-vercel ls            # List recent deployments and status
-vercel inspect <url> # Show deployment details
-vercel logs <url>    # Stream build/runtime logs
-```
+`wrangler.jsonc`, `static/_headers`, and `.github/workflows/deploy-cloudflare.yml` are the versioned deployment contract. Use `npm run deploy:production` only as documented break-glass recovery from a clean `main` checkout. The normal release path is GitHub Actions.
+
+Cloudflare Web Analytics is enabled only for `blog.abhipraya.dev` after the initial production cutover. Do not add third-party analytics or preview analytics. The `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_PREVIEW_API_TOKEN` repository secrets support previews; `CLOUDFLARE_PRODUCTION_API_TOKEN` belongs only in the `Production` environment.
+
+Until Cloudflare production has passed the post-cutover checks and seven-day observation window, keep Vercel's project, domain alias, and `vercel.json` intact as the rollback path. The rollback procedure is to remove the Worker custom-domain route, restore the captured Vercel DNS record, then verify Vercel serves the canonical domain again.
 
 ## Commit Messages
 

@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "abhipraya-blog",
+  "compatibility_date": "2026-07-28",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "blog.abhipraya.dev",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": "./public",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "env": {
+    "preview": {
+      "workers_dev": true,
+      "routes": []
+    }
+  }
+}
