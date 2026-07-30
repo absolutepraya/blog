@@ -231,13 +231,28 @@ hugo                 # Production build → public/
 npm run build        # Generates social preview cards, then creates the minified production build
 npm run check        # Runs the social-card test and production build
 npm run preview      # Serves Worker Assets locally after a production build
+npm run deploy:preview
+npm run smoke:deployment -- https://example.workers.dev
 ```
 
-Output goes to `public/`. Cloudflare Worker Assets serves this directory with automatic trailing-slash handling and Hugo's `404.html` page. Same-repository pull requests deploy public preview Workers, while `main` deploys production through the `Production` GitHub environment.
+Output goes to `public/`. Cloudflare Worker Assets serves this complete static directory with automatic trailing-slash handling and Hugo's `404.html` page. There is no application Worker code or server runtime. `wrangler.jsonc` owns the Worker name (`abhipraya-blog`), production custom domain (`blog.abhipraya.dev`), static-assets routing, and the preview environment. Do not edit deployment behavior in the Cloudflare dashboard when it can be represented in this file.
 
-`wrangler.jsonc`, `static/_headers`, and `.github/workflows/deploy-cloudflare.yml` are the versioned deployment contract. Use `npm run deploy:production` only as documented break-glass recovery from a clean `main` checkout. The normal release path is GitHub Actions.
+`wrangler.jsonc`, `static/_headers`, `.github/workflows/deploy-cloudflare.yml`, and `scripts/smoke-cloudflare-deployment.mjs` are the versioned deployment contract. Keep them aligned. `static/_headers` defaults mutable content to revalidation, makes CSS and fonts immutable for one year, caches images for one week with one day of stale-while-revalidate, and applies HSTS plus the safe security headers. Do not add a CSP, Rocket Loader, Auto Minify, or broad zone-level cache configuration without a separate compatibility audit for inline scripts, Mermaid, and KaTeX.
 
-Cloudflare Web Analytics is for `blog.abhipraya.dev` only. Enable its automatic setup from the Cloudflare dashboard after production cutover, and do not add third-party or preview analytics. The `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_PREVIEW_API_TOKEN` repository secrets support previews; `CLOUDFLARE_PRODUCTION_API_TOKEN` belongs only in the `Production` environment.
+The normal release flow is GitHub Actions:
+
+1. `Verify` runs on pull requests and `main`, tests social cards, builds with Hugo 0.163.3 extended, validates generated files, and uploads `public/` as the only deployable artifact.
+2. Same-repository pull requests deploy and smoke-test `abhipraya-blog-pr-<number>`. Fork pull requests run verification only and receive no Cloudflare credentials.
+3. A `main` push deploys the verified artifact through the `Production` GitHub environment and smoke-tests the production domain.
+4. Closing a same-repository pull request deletes its preview Worker.
+
+`main` is protected by a required pull request and the `Verify` check. Force-pushes and branch deletion are blocked. `npm run deploy:production` is an approved break-glass path only: run it from a clean, current `main` checkout and immediately run `npm run smoke:deployment -- https://blog.abhipraya.dev --production`.
+
+Use scoped Cloudflare API tokens, never a Global API key. `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_PREVIEW_API_TOKEN` are repository secrets for previews; `CLOUDFLARE_PRODUCTION_API_TOKEN` belongs only in the `Production` environment. Never print, commit, or include these values in a pull request. Do not grant Cloudflare credentials to fork workflows.
+
+Cloudflare Web Analytics is limited to `blog.abhipraya.dev` and is pending dashboard activation. To activate it, open Cloudflare **Web Analytics**, choose **Add a site**, select the production hostname, and keep automatic setup enabled. Do not use manual JavaScript setup, add third-party analytics, or track preview Workers. After activation, verify the production beacon and dashboard data for visitors, page views, referrers, page-load data, and Core Web Vitals.
+
+The former Vercel project, configuration, and Git integration were intentionally removed on 2026-07-30. There is no rollback service to preserve. Do not recreate Vercel configuration unless a future migration is explicitly approved.
 
 ## Commit Messages
 
