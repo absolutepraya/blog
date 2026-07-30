@@ -77,9 +77,9 @@ For an exceptional stale image or social card, use Cloudflare Dashboard's **Cach
 
 ### Analytics
 
-Cloudflare Web Analytics is intentionally limited to `blog.abhipraya.dev`. It is still awaiting dashboard activation after the cutover: sign in to Cloudflare, open **Web Analytics**, choose **Add a site**, select `blog.abhipraya.dev`, and keep **automatic setup** enabled. This adds Cloudflare's first-party beacon only to the proxied production domain, not preview Workers, and provides visitors, page views, referrers, page-load data, and Core Web Vitals.
+Cloudflare Web Analytics is enabled for `blog.abhipraya.dev` with its first-party beacon in `layouts/_default/baseof.html`. The Worker custom domain is not a Cloudflare zone website, so this uses the manual snippet provided by Cloudflare instead of automatic setup. The layout loads the beacon only when the browser hostname is exactly `blog.abhipraya.dev`, keeping public `workers.dev` preview Workers untracked. It provides visitors, page views, referrers, page-load data, and Core Web Vitals.
 
-Do not add Google Analytics or another third-party analytics script. After activation, verify the production response includes the Cloudflare Web Analytics beacon and confirm data appears in the dashboard.
+Do not add Google Analytics or another third-party analytics script. After deployment, verify the production page requests the Cloudflare Web Analytics beacon and confirm data appears in the dashboard. The Cloudflare site token is public browser configuration, not a secret, but do not rotate or replace it without updating the layout.
 
 ### Provider status
 

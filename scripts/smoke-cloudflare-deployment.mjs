@@ -150,6 +150,8 @@ for (const [pathname, response] of Object.entries({
 
 if (isProduction) {
   assert(!home.headers.get('server')?.toLowerCase().includes('vercel'), 'Production is still served by Vercel');
+  assert(/window\.location\.hostname\s*!==\s*["']blog\.abhipraya\.dev["']/.test(home), 'Production is missing the hostname-gated Web Analytics beacon');
+  assert(home.includes('static.cloudflareinsights.com/beacon.min.js'), 'Production is missing the Cloudflare Web Analytics beacon loader');
 }
 
 console.log(`Cloudflare deployment smoke test passed for ${baseUrl.origin}`);

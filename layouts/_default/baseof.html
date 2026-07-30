@@ -63,6 +63,17 @@
             }
         })();
     </script>
+    <script>
+        (function() {
+            if (window.location.hostname !== 'blog.abhipraya.dev') return;
+
+            var analytics = document.createElement('script');
+            analytics.type = 'module';
+            analytics.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+            analytics.dataset.cfBeacon = '{"token":"f104c2e3d65f402b89ff3b82430370f9"}';
+            document.head.appendChild(analytics);
+        })();
+    </script>
 </head>
 <body>
     <div class="page-content">
