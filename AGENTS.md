@@ -82,7 +82,7 @@ Every public page receives an automatically generated 1200 by 630 PNG social pre
 
 Private pages emit no social-preview metadata and receive `noindex, nofollow, noimageindex`.
 
-Use `social_image` only when a post needs an intentional custom preview image. The normal generated card remains the default. Generated card files are written to `static/social/` during `npm run build`, including Vercel deployments, and are gitignored. Do not edit generated cards by hand.
+Use `social_image` only when a post needs an intentional custom preview image. The normal generated card remains the default. Generated card files are written to `static/social/` during `npm run build`, including Cloudflare deployments, and are gitignored. Do not edit generated cards by hand.
 
 ## Private / Password-Protected Posts
 
@@ -237,9 +237,7 @@ Output goes to `public/`. Cloudflare Worker Assets serves this directory with au
 
 `wrangler.jsonc`, `static/_headers`, and `.github/workflows/deploy-cloudflare.yml` are the versioned deployment contract. Use `npm run deploy:production` only as documented break-glass recovery from a clean `main` checkout. The normal release path is GitHub Actions.
 
-Cloudflare Web Analytics is enabled only for `blog.abhipraya.dev` after the initial production cutover. Do not add third-party analytics or preview analytics. The `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_PREVIEW_API_TOKEN` repository secrets support previews; `CLOUDFLARE_PRODUCTION_API_TOKEN` belongs only in the `Production` environment.
-
-Until Cloudflare production has passed the post-cutover checks and seven-day observation window, keep Vercel's project, domain alias, and `vercel.json` intact as the rollback path. The rollback procedure is to remove the Worker custom-domain route, restore the captured Vercel DNS record, then verify Vercel serves the canonical domain again.
+Cloudflare Web Analytics is for `blog.abhipraya.dev` only. Enable its automatic setup from the Cloudflare dashboard after production cutover, and do not add third-party or preview analytics. The `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_PREVIEW_API_TOKEN` repository secrets support previews; `CLOUDFLARE_PRODUCTION_API_TOKEN` belongs only in the `Production` environment.
 
 ## Commit Messages
 
