@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "abhipraya-blog",
+  "account_id": "40ffe81c2b657eebc19edd8558b5f5ba",
   "compatibility_date": "2026-07-28",
   "workers_dev": true,
   "routes": [
