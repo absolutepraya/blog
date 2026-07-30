@@ -5,6 +5,7 @@ import { join, relative, sep } from 'node:path';
 const args = process.argv.slice(2);
 const target = args.find((value) => !value.startsWith('--'));
 const isProduction = args.includes('--production');
+const deploymentAttempts = 30;
 
 if (!target) {
   throw new Error('Usage: node scripts/smoke-cloudflare-deployment.mjs <base-url> [--production]');
@@ -50,10 +51,10 @@ function deployedPath(file) {
 async function request(pathname, options = {}) {
   const url = new URL(pathname, baseUrl);
   let lastError;
-  for (let attempt = 1; attempt <= 10; attempt += 1) {
+  for (let attempt = 1; attempt <= deploymentAttempts; attempt += 1) {
     try {
       const response = await fetch(url, { redirect: 'manual', ...options });
-      if (response.status < 500 || attempt === 10) return response;
+      if (response.status < 500 || attempt === deploymentAttempts) return response;
     } catch (error) {
       lastError = error;
     }
@@ -64,9 +65,9 @@ async function request(pathname, options = {}) {
 
 async function assertResponse(pathname, expectedStatus, expectedContentType) {
   let response;
-  for (let attempt = 1; attempt <= 10; attempt += 1) {
+  for (let attempt = 1; attempt <= deploymentAttempts; attempt += 1) {
     response = await request(pathname);
-    if (response.status === expectedStatus || attempt === 10) break;
+    if (response.status === expectedStatus || attempt === deploymentAttempts) break;
     await new Promise((resolve) => setTimeout(resolve, 2_000));
   }
   assert(response.status === expectedStatus, `${pathname} returned ${response.status}, expected ${expectedStatus}`);
