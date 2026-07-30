@@ -125,11 +125,15 @@ jobs:
       - run: npm ci
       - name: Delete closed pull-request preview
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PREVIEW_API_TOKEN }}
         run: |
-          set -o pipefail
-          if npx wrangler delete abhipraya-blog-pr-${{ github.event.pull_request.number }} --force 2>&1 | tee deletion.log; then
+          account_id="$(node -e "const fs = require('fs'); const config = JSON.parse(fs.readFileSync('wrangler.jsonc', 'utf8')); process.stdout.write(config.account_id)")"
+          service="abhipraya-blog-pr-${{ github.event.pull_request.number }}"
+          status="$(curl --silent --show-error --output /tmp/delete-preview.json --write-out '%{http_code}' --request DELETE \
+            --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$account_id/workers/services/$service")"
+          if [ "$status" = 200 ] || [ "$status" = 404 ]; then
             exit 0
           fi
-          grep -Eq 'This Worker does not exist on (your|this) account' deletion.log
+          cat /tmp/delete-preview.json
+          exit 1
