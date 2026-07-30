@@ -150,8 +150,20 @@ for (const [pathname, response] of Object.entries({
 
 if (isProduction) {
   assert(!home.headers.get('server')?.toLowerCase().includes('vercel'), 'Production is still served by Vercel');
-  assert(/window\.location\.hostname\s*!==\s*["']blog\.abhipraya\.dev["']/.test(home), 'Production is missing the hostname-gated Web Analytics beacon');
-  assert(home.includes('static.cloudflareinsights.com/beacon.min.js'), 'Production is missing the Cloudflare Web Analytics beacon loader');
+
+  let analyticsBody = canonical;
+  for (let attempt = 1; attempt <= deploymentAttempts; attempt += 1) {
+    const hasHostnameGuard = /window\.location\.hostname\s*!==\s*["']blog\.abhipraya\.dev["']/.test(analyticsBody);
+    const hasBeaconLoader = analyticsBody.includes('static.cloudflareinsights.com/beacon.min.js');
+    if (hasHostnameGuard && hasBeaconLoader) break;
+
+    if (attempt === deploymentAttempts) {
+      fail('Production is missing the hostname-gated Cloudflare Web Analytics beacon');
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+    analyticsBody = await (await assertResponse('/', 200, 'text/html')).text();
+  }
 }
 
 console.log(`Cloudflare deployment smoke test passed for ${baseUrl.origin}`);
