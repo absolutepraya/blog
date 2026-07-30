@@ -39,7 +39,7 @@ npm run deploy:preview
 
 `npm run deploy:production` is a break-glass command for a clean `main` checkout. Normal production releases run in GitHub Actions. The `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_PREVIEW_API_TOKEN` repository secrets support previews; `CLOUDFLARE_PRODUCTION_API_TOKEN` is scoped to the `Production` GitHub environment.
 
-Before the first verified Cloudflare cutover, Vercel remains the live rollback path for [blog.abhipraya.dev](https://blog.abhipraya.dev/). Do not remove its project, domain alias, or `vercel.json` until Cloudflare production has been verified for seven days.
+Enable Cloudflare Web Analytics only for `blog.abhipraya.dev`: in Cloudflare, open Web Analytics, choose Add a site, select the hostname, and keep automatic setup enabled. It provides visitor, referrer, page-load, and Core Web Vitals data without adding a third-party script or tracking preview Workers.
 
 The Worker serves generated `public/` files. HTML, feeds, sitemap, robots, and social cards revalidate on every request; fonts and fingerprinted CSS are immutable; images cache for one week. Use Cloudflare's targeted cache purge only for an exceptional stale image or social card.
 
