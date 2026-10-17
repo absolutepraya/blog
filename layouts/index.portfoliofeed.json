@@ -1,0 +1,19 @@
+{{- $posts := slice -}}
+{{- $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+{{- $pages = where $pages "Draft" "ne" true -}}
+{{- $pages = where $pages "Date" "le" now -}}
+{{- $pages = where $pages "PublishDate" "le" now -}}
+{{- $pages = where $pages "Params.hidden" "ne" true -}}
+{{- $pages = where $pages "Params.password_hash" "eq" nil -}}
+{{- $pages = where $pages "Section" "ne" "private" -}}
+{{- range first 3 $pages.ByDate.Reverse -}}
+  {{- $description := .Params.description | default (.Summary | plainify) -}}
+  {{- $posts = $posts | append (dict
+    "title" .Title
+    "url" .Permalink
+    "date" (.Date.Format "2006-01-02T15:04:05Z07:00")
+    "description" ($description | plainify | htmlUnescape)
+    "image" (partial "social-image.html" .)
+  ) -}}
+{{- end -}}
+{{- dict "posts" $posts | jsonify -}}
