@@ -83,6 +83,7 @@ async function assertResponse(pathname, expectedStatus, expectedContentType) {
 await Promise.all([
   requireFile('public/index.html'),
   requireFile('public/index.xml'),
+  requireFile('public/feed.json'),
   requireFile('public/sitemap.xml'),
   requireFile('public/robots.txt'),
   requireFile('public/404.html'),
@@ -108,6 +109,18 @@ const post = await assertResponse('/posts/agents-dev-setup-on-macbook/', 200, 't
 assert((await about.text()).includes('rel=canonical href=https://blog.abhipraya.dev/about/'), 'About canonical URL is incorrect');
 assert((await post.text()).includes('rel=canonical href=https://blog.abhipraya.dev/posts/agents-dev-setup-on-macbook/'), 'Post canonical URL is incorrect');
 const feed = await assertResponse('/index.xml', 200, 'application/xml');
+const portfolioFeed = await assertResponse('/feed.json', 200, 'application/json');
+assert(portfolioFeed.headers.get('access-control-allow-origin') === '*', 'Portfolio feed is missing public CORS access');
+const portfolioPosts = (await portfolioFeed.json()).posts;
+assert(Array.isArray(portfolioPosts) && portfolioPosts.length <= 3, 'Portfolio feed must contain at most three articles');
+for (const item of portfolioPosts) {
+  const url = new URL(item.url);
+  assert(url.origin === 'https://blog.abhipraya.dev' && url.pathname.startsWith('/posts/'), 'Portfolio feed contains a non-post URL');
+  assert(item.title && item.description && Number.isFinite(Date.parse(item.date)), 'Portfolio feed is missing article metadata');
+  const article = await assertResponse(url.pathname, 200, 'text/html');
+  const html = await article.text();
+  assert(html.includes(item.image), 'Portfolio image differs from article metadata');
+}
 const sitemap = await assertResponse('/sitemap.xml', 200, 'application/xml');
 const robots = await assertResponse('/robots.txt', 200, 'text/plain');
 const font = await assertResponse('/fonts/ubuntu-400.woff2', 200, 'font/woff2');
@@ -141,6 +154,7 @@ assert(css.headers.get('cache-control')?.includes('max-age=31536000'), 'Styleshe
 assert(font.headers.get('cache-control')?.includes('max-age=31536000'), 'Font cache policy is incorrect');
 for (const [pathname, response] of Object.entries({
   '/index.xml': feed,
+  '/feed.json': portfolioFeed,
   '/sitemap.xml': sitemap,
   '/robots.txt': robots,
   '/__cloudflare-migration-missing__/': missing,

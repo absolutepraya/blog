@@ -6,16 +6,7 @@
 {{- if $isPrivate -}}
 <meta name="robots" content="noindex, nofollow, noimageindex">
 {{- else -}}
-  {{- $image := "" -}}
-  {{- with .Params.social_image -}}
-    {{- if or (hasPrefix . "http://") (hasPrefix . "https://") -}}
-      {{- $image = . -}}
-    {{- else -}}
-      {{- $image = absURL . -}}
-    {{- end -}}
-  {{- else -}}
-    {{- $image = absURL (printf "social/%s.png" (md5 .RelPermalink)) -}}
-  {{- end -}}
+  {{- $image := partial "social-image.html" . -}}
 <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
 <meta property="og:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}">
 <meta property="og:description" content="{{ $description }}">

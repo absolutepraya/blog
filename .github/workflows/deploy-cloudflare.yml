@@ -32,12 +32,14 @@ jobs:
           extended: true
       - run: npm ci
       - run: npm run test:social-cards
+      - run: npm run test:feed
       - run: npm run build
       - name: Verify generated artifact
         run: |
           test -f public/index.html
           test -f public/404.html
           test -f public/index.xml
+          test -f public/feed.json
           test -f public/sitemap.xml
           test -f public/robots.txt
           test -f public/_headers

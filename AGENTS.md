@@ -84,6 +84,10 @@ Private pages emit no social-preview metadata and receive `noindex, nofollow, no
 
 Use `social_image` only when a post needs an intentional custom preview image. The normal generated card remains the default. Generated card files are written to `static/social/` during `npm run build`, including Cloudflare deployments, and are gitignored. Do not edit generated cards by hand.
 
+## Portfolio Feed
+
+Hugo generates `/feed.json` with the latest three public posts from `params.mainSections`, newest first. Drafts, future posts, hidden entries, private pages, and password-protected posts are excluded. It includes title, URL, publication date, plain-text description, and the same image URL as Open Graph, through `layouts/partials/social-image.html`. The portfolio fetches this feed in the visitor's browser on page load, so publishing a blog post requires no portfolio rebuild. Only `/feed.json` has public, credential-free CORS access in `static/_headers`; it contains already-public metadata and can be read by the portfolio, its subdomains, and previews. Existing cache revalidation applies.
+
 ## Private / Password-Protected Posts
 
 Posts in `content/private/` are listed under `/private/` (linked in the nav menu) and protected by a per-post client-side password gate. This is a casual UX lock, not real security - the content is still in the HTML source.

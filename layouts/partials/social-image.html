@@ -1,0 +1,5 @@
+{{- $image := absURL (printf "social/%s.png" (md5 .RelPermalink)) -}}
+{{- with .Params.social_image -}}
+  {{- $image = absURL . -}}
+{{- end -}}
+{{- return $image -}}

@@ -17,3 +17,6 @@
 
 /social/*
   Cache-Control: public, max-age=0, must-revalidate
+
+/feed.json
+  Access-Control-Allow-Origin: *
