@@ -13,11 +13,13 @@ test('portfolio feed selects public posts and matches their OG images', async ()
     const output = join(temp, 'public');
     await mkdir(join(content, 'posts'), { recursive: true });
     await mkdir(join(content, 'private'), { recursive: true });
+    await mkdir(join(content, 'other'), { recursive: true });
     const fixtures = [
       ['posts/one', '2026-01-01', ''],
       ['posts/two', '2026-01-02', ''],
       ['posts/three', '2026-01-03', 'social_image: "/images/custom.png"'],
-      ['posts/four', '2026-01-04', ''],
+      ['posts/four', '2026-01-04', 'type: custom'],
+      ['other/impostor', '2026-01-09', 'type: posts'],
       ['posts/hidden', '2026-01-05', 'hidden: true'],
       ['posts/password', '2026-01-06', 'password_hash: "secret"'],
       ['posts/draft', '2026-01-07', 'draft: true'],

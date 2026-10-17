@@ -1,5 +1,5 @@
 {{- $posts := slice -}}
-{{- $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+{{- $pages := where .Site.RegularPages "Section" "in" .Site.Params.mainSections -}}
 {{- $pages = where $pages "Draft" "ne" true -}}
 {{- $pages = where $pages "Date" "le" now -}}
 {{- $pages = where $pages "PublishDate" "le" now -}}
