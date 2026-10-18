@@ -1,7 +1,8 @@
 ---
 title: "Coding From My iPhone Without Coding On It"
 date: 2026-05-11
-description: "How I use Blink Shell, Mosh, Tailscale, tmux, Wispr Flow, and remote agent sessions to do real development work from an iPhone without pretending the phone is a laptop."
+lastmod: 2026-10-18
+description: "How I steer coding agents on a remote box from an iPhone with Blink Shell, Mosh, Tailscale, tmux, and voice input, plus how to get back in when a tailnet-only server locks you out."
 tags: ["ai", "developer-tools", "workflow", "iphone", "blink-shell", "mobile"]
 toc: true
 numbered_headings: true
@@ -9,169 +10,101 @@ aliases:
   - /posts/iphone-agent-dev-setup/
 ---
 
-The iPhone is not my main development machine. It should not try to be.
+I do real development work from my iPhone, but the phone does none of it. The agents run on my MacBook or my VPS in long-lived terminal sessions. The phone connects into those sessions, I say what I want, and the agent does the typing.
 
-The useful version of phone development is narrower: treat the phone as a command surface for agents and remote sessions that already live somewhere better. My MacBook and VPS do the heavy work. The phone gives me a way to check in, steer, approve, dictate, and recover a session when I am away from the desk.
-
-That distinction changes the whole setup. I am not opening Xcode on a phone. I am not pretending a tiny glass keyboard is a workstation. I am connecting into long-lived terminal sessions, speaking the high-level instruction, and letting the agent do the typing.
+Once you see the phone as a remote control instead of a small laptop, the setup comes down to four problems: reaching the box safely, surviving bad networks, not losing your session, and not typing long prompts on glass.
 
 ## The Stack
 
-The mobile stack is small:
-
-- [Blink Shell](https://blink.sh/) for the terminal
-- [Mosh](https://mosh.org/) for resilient remote sessions
-- [Tailscale](https://tailscale.com/) so SSH and Mosh stay private
-- `tmux` on the remote machine for session persistence
-- Claude Code, Codex, and pi as the actual agents
+- [Tailscale](https://tailscale.com/) so the server's shell is reachable only over a private network
+- [Blink Shell](https://blink.sh/) as the terminal (about 20 dollars a year)
+- [Mosh](https://mosh.org/) so the connection survives network changes
+- `tmux` on the remote machine so sessions outlive the connection
 - [Wispr Flow](https://wisprflow.ai/) for speech-to-text
-
-{{< figure src="/images/iphone-agent-dev-setup/blink.png" alt="Blink Shell on iPhone connected to a remote agent session with a custom keyboard bar and tmux status line" caption="Blink Shell is the terminal surface. The real value is that it reconnects into sessions that already have agent context." >}}
-
-Blink Shell is the paid part of the setup. It is about 20 dollars a year, and for this specific use case I think it is worth it. The terminal rendering is solid, the custom keyboard bar matters, and Mosh support makes the whole thing usable on mobile networks.
-
-## Why Blink Shell
-
-The thing I care about most on a phone terminal is not raw terminal purity. It is recovery.
-
-Phone networks switch constantly. Wi-Fi drops. iOS suspends apps. A normal SSH session is fragile in that environment. Mosh is the difference between "remote dev from phone is cute" and "remote dev from phone is something I can actually trust."
-
-With Blink plus Mosh:
-
-- I can switch from Wi-Fi to mobile data without killing the session.
-- I can lock the phone and come back later.
-- I can type through a terminal that has the right modifier keys exposed.
-- I can keep the remote session alive while the agent works.
-
-That last point is the whole game. Mobile development only becomes comfortable when the agent can keep working while I am not actively staring at the screen.
-
-## What Runs Remotely
-
-The agents themselves do not need to run on the phone. They run on a MacBook or VPS session, depending on what I am doing.
-
-Claude Code is there because my Anthropic Max Plan works cleanly in Claude Code, especially after Claude tightened usage outside their own agent. Codex is there because OpenAI's own harness is the nicest place to use OpenAI models, and `/goal` has become one of the best long-session primitives. pi is there for GitHub Copilot models (GPT-5.4 and GPT-5.5) when I want a lane outside those two.
-
-OpenCode is wired into the same `.agents` setup but isn't my daily driver for the phone workflow. I still like the project, but right now the phone flow is terminal-first, not browser-first.
-
-The important part is consistency. The same `.agents` instructions, skills, and MCP surfaces exist across the tools. When I open a phone session, I am not entering a separate mobile environment. I am attaching to the same system from a smaller control surface.
+- Claude Code and Codex as the agents, sharing the same `~/.agents` instructions and skills described in [the MacBook post](/posts/agents-dev-setup-on-macbook/)
 
 ```mermaid
 graph TD
     Phone["iPhone<br>Blink Shell + Wispr Flow"]
     Phone --> Tailnet["Tailscale tailnet"]
     Tailnet --> Mosh["Mosh session"]
-    Mosh --> Tmux["tmux / Herdr-style persistent layout"]
+    Mosh --> Tmux["tmux session"]
     Tmux --> Claude["Claude Code"]
     Tmux --> Codex["Codex"]
-    Tmux --> Pi["pi"]
-    Claude --> Shared["~/.agents<br>instructions, skills"]
+    Claude --> Shared["~/.agents<br>instructions, skills, MCP"]
     Codex --> Shared
-    Pi --> Shared
-    Shared --> Tools["MCP tools<br>Todoist, Linear, Context7, browser tools, Telegram"]
 ```
 
-## The Remote Box
+## No Public SSH at All
 
-I keep a small VPS at [Jetorbit](https://www.jetorbit.com/) - 4 vCPU, 8 GB RAM - and use it as a real remote agent box, not just a place to SSH into for emergencies. The phone setup is essentially a thin control surface for whatever is running on that box.
+My VPS does not accept SSH from the internet. The firewall drops port 22 from everywhere except Tailscale, which puts my MacBook, VPS, iPhone, and laptops on one private network.
 
-Because my Mac and VPS share the same `.agents` architecture, remote work feels like the same system in a different place, not a separate environment I have to mentally translate. The phone slots in the same way.
+Compared with the usual "open port 22 with key auth and hope", there is no SSH port for anyone to scan or brute-force, and I never need a jump host or an IP allowlist for my own devices. From the phone, connecting is just `mosh vps`.
 
-### Tailscale: The Most Important Piece
-
-Honestly, this might be the most important part of the whole setup.
-
-The admin plane of my VPS is tailnet-only. There's **no public SSH, no open port 22** - the only way to get a shell on the box is through [Tailscale](https://tailscale.com/), which puts my MacBook, VPS, iPhone, and work laptop on the same private overlay network. SSH, Mosh, and the internal dashboards bind to the tailnet, not the public internet.
-
-The handful of things that do face the public internet are deliberately narrow and auth-gated: a couple of HTTPS services behind nginx, each with its own login, plus one inbound webhook. Everything else - shells, internal tools, the parts an attacker would actually want - has no public ingress at all. There's no exposed port 22 to scan or brute-force, and the admin surface is effectively invisible from outside the tailnet.
+One trap to check on your own box if you run Docker: a published port like `-p 8080:80` (or `"8080:80"` in a compose file) binds to `0.0.0.0`, and Docker writes its own iptables rules that skip UFW entirely. `ufw status` can show the port as closed while it is open to the whole internet. Test from outside the server, for example `nc -z <public-ip> 8080` from your phone's mobile data, instead of trusting the firewall's own report. If nginx sits in front of the container, publish it as `"127.0.0.1:8080:80"` so only nginx on the same machine can reach it.
 
 {{< figure src="/images/iphone-agent-dev-setup/tailscale.png" alt="Tailscale overlay network connecting personal devices privately" caption="Source: tailscale.com" >}}
 
-Compared to the usual "open port 22 with key auth, hope nobody finds the box" approach, this is dramatically better. And the ergonomics are nicer too - no firewall whitelisting, no jump hosts, no juggling per-service ACLs.
+### Plan Your Way Back In First
 
-### Mosh Over The Wire
+The catch with tailnet-only access: if Tailscale on the server logs out or breaks, you have also closed your only door. Before you close port 22, find your out-of-band access and test it once while everything still works.
 
-Blink Shell connects in over [Mosh](https://mosh.org/) instead of plain SSH.
+For most VPS providers that is a VNC or serial console in the web panel. Mine (Jetorbit) has one, and the recovery looks like this:
 
-The big difference: Mosh runs over UDP rather than TCP, and it doesn't tie the session to a single TCP connection. SSH dies the moment the underlying connection breaks. Mosh just keeps the session alive and resyncs when the network comes back.
+1. Enable VNC in the provider panel and open the console.
+2. Press Enter to get a login prompt. It may be buried under firewall log spam; switching to another TTY with `Ctrl+Alt+F2` helps.
+3. Log in as root, or as your normal user if you know its sudo password. If you do not know the root password, many providers can reset it from the panel without touching your data. (As root, drop the `sudo` in the next steps.)
+4. Silence kernel messages so you can actually type: `sudo dmesg -D`.
+5. Run `sudo tailscale up`, open the printed URL on another device, and authenticate.
+6. Turn kernel messages back on with `sudo dmesg -E`, and disable VNC in the panel.
 
-What that means in practice on a phone:
+Write this down somewhere you can reach without the server, like a note on your phone. The time you need it is exactly when you cannot SSH in to read it. Also check that key expiry is turned off for the server in the Tailscale admin console (it is on mine). Otherwise its login quietly expires months later and you are back at step one.
 
-- I can switch from mobile data to Wi-Fi mid-command and the session doesn't drop.
-- I can step into an elevator, lose signal entirely, and pick up where I was when I come out.
-- Locking the phone and coming back ten minutes later doesn't kill anything.
+## Mosh Keeps the Session Alive
 
-For long-running agent work over flaky networks, this is the difference between "remote workflow that actually works on a phone" and "rage-quitting back to a laptop I might not have with me."
+On a phone, the network changes constantly: Wi-Fi to mobile data, an elevator with no signal, iOS suspending the app. Plain SSH runs over one TCP connection and dies when that connection breaks. Mosh runs over UDP, is not tied to one connection, and resyncs when the network comes back. I can lock the phone, walk somewhere else, and pick up the same session ten minutes later.
 
-### Session Persistence
+Blink Shell is the paid part of the setup, and Mosh support is most of why I pay for it. Its custom keyboard bar is the rest. Agent and tmux work need escape, control, arrows, tab, and pipe, which iOS buries. My rule is that any key I use more than twice in a session gets a slot on the bar.
 
-All my shell sessions on the VPS are managed by my homemade [tmux-menu](https://github.com/absolutepraya/dotfiles/blob/config/vps/scripts/tmux-menu), powered by [fzf](https://github.com/junegunn/fzf). Reconnecting usually means resuming the latest session state instead of rebuilding context from scratch.
+{{< figure src="/images/iphone-agent-dev-setup/blink.png" alt="Blink Shell on iPhone connected to a remote agent session with a custom keyboard bar and tmux status line" caption="Blink Shell with the custom keyboard bar, reconnected into an agent session that kept running while the phone was locked." >}}
+
+## tmux Makes Disconnecting Free
+
+Mosh survives network changes, but if the client really goes away, the session needs to live on the server. Logging in over SSH or Mosh opens a small picker I wrote, `tmux-menu`, built on [fzf](https://github.com/junegunn/fzf) and a few lines in `~/.bashrc`. I pick a session and land back where I was, with the agent's context intact. Esc drops me to a plain shell when I just need one command.
 
 {{< figure src="/images/iphone-agent-dev-setup/tmux-menu.png" alt="tmux-menu showing fzf-powered session picker on VPS" caption="tmux-menu is the first thing I see when I log into the VPS. Pick a session, jump back into it." >}}
 
-The flow looks like this:
+This matters more on a phone than anywhere else. If disconnecting means starting over, you will not start anything from your phone. If it is free, you will.
 
-```mermaid
-graph LR
-    A[ssh / mosh<br/>into VPS] --> B[tmux-menu launches]
-    B --> C[fzf picker:<br/>list of sessions]
-    C --> D{pick}
-    D -->|existing| E[attach -<br/>resume state]
-    D -->|new| F[create new<br/>session]
-```
+If you want a native app instead of a terminal, [Claude Remote Control](https://code.claude.com/docs/en/remote-control) (Claude Code only) and [T3 Code](https://t3.codes/)'s mobile app (Claude Code, Codex, and others) are simpler paths, with native notifications. I stay with the terminal route because the same tmux session also works from my MacBook, and it covers Codex too.
 
-This part is easy to underestimate. A remote workflow gets dramatically better the moment "disconnecting" stops meaning "start over." On a phone it's the difference between using it for real work and using it for screenshots.
+## Say the Intent, Do Not Type Code
 
-### Where Claude Remote Control Still Fits
+Typing long prompts on an iPhone keyboard is the worst part of this, so I mostly do not. Wispr Flow installs as a keyboard you tap to speak into. I say a messy instruction, clean it up a little, and send it.
 
-[Claude Remote Control](https://code.claude.com/docs/en/remote-control) still has a place. If I specifically want the Claude app on my iPhone, it's the cleanest path - native UI, native notifications, no terminal in the loop.
+{{< figure src="/images/iphone-agent-dev-setup/wisprflow-iphone.png" alt="Wispr Flow listening interface on iPhone showing the iPhone microphone as the active input" caption="Wispr Flow as the iPhone keyboard. Speaking a paragraph is much faster than thumb-typing it." >}}
 
-But most of the time I prefer the Blink Shell + Mosh + tmux route into the VPS for Claude Code, because the terminal interface is more complete and the same session keeps working when I move back to the MacBook. Remote Control is useful, just not my default.
+What you dictate should be intent, not code. For example: "Check the failing CI, inspect the relevant test, fix it if the root cause is obvious, and do not push without showing me the diff." That is painful to type on a phone and takes five seconds to say. It also sets the limits up front (fix only if obvious, show the diff first), which matters when you will not be watching every step.
 
-## Voice Is The Interface
+## What the Phone Is Good and Bad At
 
-Typing long prompts on the iPhone keyboard is the worst part of this workflow, so I avoid doing it.
+Good for short interruptions where the agent does the work:
 
-On the phone I use Wispr Flow. It installs as a keyboard I tap to speak into, so I can say a messy instruction, clean it up lightly, and send it into the terminal. For agent work this is a much better input method than thumb-typing a paragraph into a prompt.
+- asking an agent to look at a failing PR while I am away from my desk
+- approving a small fix after reading a short diff
+- checking whether a long command or agent run finished
+- creating a task or issue from the context of a session
+- sending a spoken instruction into a session that is already running
 
-{{< figure src="/images/iphone-agent-dev-setup/wisprflow-iphone.png" alt="Wispr Flow listening interface on iPhone showing the iPhone microphone as the active input" caption="Wispr Flow turns the phone from a typing surface into a steering surface. That is the difference between usable and annoying." >}}
+Bad for anything where I need to read a lot: deep code review, large diffs, designing a feature. I can technically do those on the phone, but the screen is too small to judge the work well, so I leave them for the MacBook.
 
-The best use case is not code entry. It is intent entry.
+## Getting Started
 
-"Check the failing CI, inspect the relevant test, fix it if the root cause is obvious, and do not push without showing me the diff" is a very annoying thing to type on a phone. It is easy to say. The agent can do the mechanical work after that.
+If you want a version of this:
 
-## What I Actually Do From The Phone
+1. Put the box on Tailscale, then test your provider's console recovery before you close public SSH.
+2. Connect with Mosh instead of SSH, from a terminal app that supports it.
+3. Run everything inside tmux, so a disconnect never kills an agent.
+4. Use voice input for prompts, and include the limits in what you say.
 
-The phone is good for small, high-leverage interruptions:
-
-- Asking an agent to inspect a failing PR while I am away from my desk.
-- Approving a low-risk fix after reading the diff.
-- Checking whether a long command finished.
-- Asking for a Todoist task or Linear issue to be created from context.
-- Resuming a remote shell after a commute or unstable network.
-- Sending a spoken instruction into an existing agent session.
-
-It is bad for deep code review, reading large diffs, or designing a complicated feature. I can technically do those from the phone, but the ergonomics are wrong. The phone is a control plane, not the cockpit.
-
-## The Keyboard Bar Matters
-
-The custom keyboard row in Blink looks minor until you lose it. Agent and tmux workflows still need terminal keys: escape, control, arrows, pipe, slash, tab, command modifiers, and symbols that are buried on iOS.
-
-The bar does not make the phone keyboard great. It makes it survivable.
-
-The rule is simple: anything I need more than twice in a terminal session should be one tap away. Otherwise the phone becomes a symbol-hunting exercise.
-
-## How This Fits The Desktop Setup
-
-The desktop setup is still the main system: Herdr inside WezTerm, multiple agents side by side, voice dictation through Wispr Flow or Handy, and the full MacBook screen for reading diffs.
-
-The phone setup exists because the same sessions are reachable from anywhere. Tailscale removes the public network problem. Mosh removes the flaky-network problem. tmux removes the reconnect problem. Wispr Flow removes most of the typing problem.
-
-Once those four problems are gone, the phone becomes surprisingly useful.
-
-## Closing
-
-The best mobile dev setup I have found is not "make the phone more like a laptop." It is "make the laptop and VPS reachable, persistent, and easy to steer."
-
-That is why Blink Shell is worth paying for. Not because I want to live inside a terminal on a phone, but because it gives me a clean enough bridge back into the agent system that is already running.
-
-When the agent is doing the typing, the phone only needs to be good at giving direction.
+Once those are in place, the phone only has to be good at giving direction.

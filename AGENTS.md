@@ -188,9 +188,13 @@ Flowchart, sequence, gitGraph, class, state, ER, pie, user journey, gantt — al
 
 Colors are Solarized (matching `beautiful-mermaid` npm package). Theming is handled automatically via CSS variables + JS color derivation in `baseof.html`. Diagrams re-render on dark mode toggle. **Do not** hardcode colors in diagram source.
 
+### Mermaid Render Check
+
+`npm run check:mermaid` renders every ` ```mermaid ` block under `content/` with the installed mermaid-cli and fails with `file:line` plus Mermaid's error when a diagram does not render. CI runs it in `Verify`, so a broken diagram blocks previews and production. It also fails when the Mermaid CDN pin in `layouts/_default/baseof.html` differs from the installed `mermaid` version. When upgrading `@mermaid-js/mermaid-cli`, update that pin to match. Chromium launches through `scripts/puppeteer-config.json` (`--no-sandbox`), shared with social-card rendering, because Ubuntu CI runners block the Chromium sandbox.
+
 ### Known Mermaid Syntax Issues
 
-These cause silent render failures — the diagram just won't appear:
+These cause render failures in the browser (the diagram just won't appear). The render check catches parse errors before deploy:
 
 | Broken | Fix |
 |--------|-----|
@@ -233,7 +237,8 @@ hugo                 # Production build → public/
 
 ```bash
 npm run build        # Generates social preview cards, then creates the minified production build
-npm run check        # Runs the social-card test and production build
+npm run check        # Runs the social-card, feed, and Mermaid tests, the Mermaid render check, and the production build
+npm run check:mermaid # Renders every Mermaid block under content/ and fails with file:line on any error
 npm run preview      # Serves Worker Assets locally after a production build
 npm run deploy:preview
 npm run smoke:deployment -- https://example.workers.dev
@@ -245,7 +250,7 @@ Output goes to `public/`. Cloudflare Worker Assets serves this complete static d
 
 The normal release flow is GitHub Actions:
 
-1. `Verify` runs on pull requests and `main`, tests social cards, builds with Hugo 0.163.3 extended, validates generated files, and uploads `public/` as the only deployable artifact.
+1. `Verify` runs on pull requests and `main`, tests social cards, renders every Mermaid diagram (`npm run check:mermaid`), builds with Hugo 0.163.3 extended, validates generated files, and uploads `public/` as the only deployable artifact.
 2. Same-repository pull requests deploy and smoke-test `abhipraya-blog-pr-<number>`. Fork pull requests run verification only and receive no Cloudflare credentials.
 3. A `main` push deploys the verified artifact through the `Production` GitHub environment and smoke-tests the production domain.
 4. Closing a same-repository pull request deletes its preview Worker.

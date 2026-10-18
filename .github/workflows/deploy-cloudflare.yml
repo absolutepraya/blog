@@ -33,6 +33,8 @@ jobs:
       - run: npm ci
       - run: npm run test:social-cards
       - run: npm run test:feed
+      - run: npm run test:mermaid
+      - run: npm run check:mermaid
       - run: npm run build
       - name: Verify generated artifact
         run: |

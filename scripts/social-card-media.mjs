@@ -17,6 +17,7 @@ async function renderMermaid(source, workDir, index) {
   const inputPath = join(workDir, `diagram-${index}.mmd`);
   const outputPath = join(workDir, `diagram-${index}.svg`);
   const configPath = join(scriptDir, 'mermaid-social-config.json');
+  const puppeteerConfigPath = join(scriptDir, 'puppeteer-config.json');
 
   await writeFile(inputPath, source);
   execFileSync('npx', [
@@ -24,6 +25,7 @@ async function renderMermaid(source, workDir, index) {
     '-i', inputPath,
     '-o', outputPath,
     '-c', configPath,
+    '-p', puppeteerConfigPath,
     '-b', 'transparent',
   ], { stdio: 'pipe' });
   return outputPath;

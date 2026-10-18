@@ -81,7 +81,7 @@ Any Chromium-based tool accepts a proxy. Three equivalent ways:
 - **Environment:** `HTTP_PROXY` and `HTTPS_PROXY`
 - **Playwright or Puppeteer:** pass `proxy: { server, username, password }` to `launch` or `newContext`
 
-My bookmark manager is [Karakeep](https://karakeep.app/), which exposes the crawler's proxy as config, so I did not touch any code. Three environment variables:
+My bookmark manager is Marka, built on [Karakeep](https://karakeep.app/), which exposes the crawler's proxy as config, so I did not touch any code. Three environment variables:
 
 ```env
 CRAWLER_HTTP_PROXY=http://USER-region-Rand:PASS@prem.mymiyel.site:3010
