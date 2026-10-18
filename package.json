@@ -6,14 +6,16 @@
   },
   "scripts": {
     "build": "node scripts/generate-social-cards.mjs && hugo --minify",
-    "check": "npm run test:social-cards && npm run test:feed && npm run build",
+    "check": "npm run test:social-cards && npm run test:feed && npm run test:mermaid && npm run check:mermaid && npm run build",
+    "check:mermaid": "node scripts/check-mermaid.mjs",
     "preview": "npm run build && wrangler dev",
     "deploy:preview": "npm run build && wrangler deploy --env preview",
     "deploy:production": "npm run build && wrangler deploy --env=\"\"",
     "generate:social-cards": "node scripts/generate-social-cards.mjs",
     "test:social-cards": "node --test tests/social-card-media.test.mjs",
     "smoke:deployment": "node scripts/smoke-cloudflare-deployment.mjs",
-    "test:feed": "node --test tests/portfolio-feed.test.mjs"
+    "test:feed": "node --test tests/portfolio-feed.test.mjs",
+    "test:mermaid": "node --test tests/check-mermaid.test.mjs"
   },
   "dependencies": {
     "@mermaid-js/mermaid-cli": "^11.16.0",
