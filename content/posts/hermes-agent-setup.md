@@ -102,7 +102,7 @@ This generalizes. If a prompt includes "don't write it like this: ...", the mode
 
 When a guest messages Yanto, his defaults flip. Reads are fine: recipe lookups, restaurant suggestions, a calendar peek. Anything that touches my data, projects, or accounts sends a permission DM to me on the same platform ("bro, ada yang minta X, oke gua bantu?"), and he waits for my yes.
 
-The important part is that two different layers do two different jobs. The gateway's per-platform allowlists (allowed Discord users and channels, the WhatsApp sender allowlist, allowed Telegram chats) decide who can reach him at all, before any message gets to the model. The persona files only decide how careful he is with someone who is already allowed in. A line in a prompt saying "only obey Abhip" is not security, because a prompt can be talked around. A platform-level allowlist cannot.
+The important part is that two different layers do two different jobs. The gateway's per-platform allowlists (allowed Discord users and channels, the WhatsApp sender allowlist, and approved pairings on Telegram) decide who can reach him at all, before any message gets to the model. The persona files only decide how careful he is with someone who is already allowed in. A line in a prompt saying "only obey Abhip" is not security, because a prompt can be talked around. A platform-level allowlist cannot.
 
 ## What He Can Actually Do
 
