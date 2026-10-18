@@ -26,6 +26,7 @@ So I keep one canonical folder, `~/.agents`, and treat every client as a thin re
 ├── AGENTS.md          # shared instructions, the only real copy
 ├── skills/            # every installed skill, one real copy each
 ├── runbooks/          # long procedures, read only when needed
+├── references/        # shared reference docs
 └── .skill-lock.json   # what was installed, from where
 ```
 
@@ -83,7 +84,7 @@ The front matter is what the agent sees upfront. The `description` is what it ma
 ```md
 ---
 name: nextcloud
-description: Use when the user references Nextcloud files (reading, uploading, saving, sharing, or managing files in cloud storage).
+description: Use when the user references Nextcloud files (reading, uploading, saving, sharing, or managing files in cloud storage, such as Data, Torrents, Wallpapers, Courses).
 ---
 ```
 
@@ -91,11 +92,11 @@ description: Use when the user references Nextcloud files (reading, uploading, s
 
 The agent loads only `SKILL.md`. Anything else in the folder stays on disk until the instructions point at it. That means a skill can be much bigger than you would ever want in context. I use two patterns.
 
-**Reference docs under `references/`.** `SKILL.md` keeps the routing (the hard rules, when to use what, an index of reference files), and the detail lives in topic files. My slide-deck skill for my internship is the extreme case:
+**Reference docs under `references/`.** `SKILL.md` keeps the routing (the hard rules, when to use what, an index of reference files), and the detail lives in topic files. My slide-deck skill for my internship (it lives on my work laptop, not this Mac) is the extreme case:
 
 ```
 work-slides/
-├── SKILL.md                              # ~8.5 KB, entry point and routing
+├── SKILL.md                              # ~11 KB, entry point and routing
 └── references/
     ├── palette-and-typography.md         # ~6 KB
     ├── layouts-and-cards.md              # ~18 KB
@@ -106,7 +107,7 @@ work-slides/
     └── preferences-and-lessons.md        # ~20 KB
 ```
 
-That is about 120 KB of material behind an 8.5 KB entry point. Designing an architecture slide pulls in `architecture-diagrams.md`; picking colors pulls in `palette-and-typography.md`. The rest never loads.
+That is about 120 KB of material behind an 11 KB entry point. Designing an architecture slide pulls in `architecture-diagrams.md`; picking colors pulls in `palette-and-typography.md`. The rest never loads.
 
 **Scripts under `bin/`.** When the work is deterministic (calling an API, running a build), put a script in the skill and tell the agent to run it, instead of describing the logic in prose and hoping the agent rewrites it correctly every time:
 
@@ -133,7 +134,7 @@ graph TD
 
 The most useful skills I have are ones I wrote. My rule: when I have explained the same setup to an agent three times, it becomes a skill. Some examples:
 
-- a homework skill for my university's Moodle, so the agent can check pending assignments without me clicking through the portal
+- a homework skill for my university's Moodle, so the agent can check deadlines and assignment specs, and submit files, without me clicking through the portal
 - deck and document skills for my internship, so the brand palette, templates, and build pipeline are always known
 - `nextcloud`, so "upload this somewhere" always goes through my self-hosted Nextcloud with no path guessing
 
@@ -199,7 +200,7 @@ I have two Codex accounts. Codex keeps both its settings and its login in `CODEX
 ```bash
 mkdir -p ~/.codex2
 ln -s ~/.codex/config.toml ~/.codex2/config.toml
-alias codex2='CODEX_HOME=~/.codex2 codex'
+codex2() { CODEX_HOME=~/.codex2 command codex "$@"; }   # in ~/.zshrc
 codex2 login
 ```
 
@@ -209,11 +210,11 @@ MCP servers and settings stay shared, and logins stay separate. Never copy `auth
 
 This is the part that changes every few months, so it is deliberately short:
 
-- **Agents:** [Claude Code](https://www.anthropic.com/product/claude-code) and [Codex](https://openai.com/codex/), each in its own provider's harness.
-- **Interface:** [T3 Code](https://t3.codes/), an open-source GUI over those same agents. It runs the real Claude Code and Codex underneath, so everything in `~/.agents` still applies, and I get threads, diffs, and PRs in one window instead of a wall of terminal panes. This is where I spend almost all my agent time now.
+- **Agents:** [Claude Code](https://claude.com/product/claude-code) and [Codex](https://openai.com/codex/), each in its own provider's harness.
+- **Interface:** [T3 Code](https://t3.codes/), an open-source control surface for coding agents (Claude Code, Codex, and others). It runs the real Claude Code and Codex underneath, so everything in `~/.agents` still applies, and I get threads, diffs, and PRs in one window instead of a wall of terminal panes. This is where I spend almost all my agent time now.
 - **Terminal:** [Herdr](https://herdr.dev/) inside WezTerm, for the times I want raw terminal sessions.
 - **Status line:** [ccstatusline](https://github.com/sirmalloc/ccstatusline) for context usage, model, and branch in Claude Code. Seeing context fill up is what stops long sessions from going bad without warning.
-- **Voice:** [Wispr Flow](https://wisprflow.ai/), with [Handy](https://handy.computer/) running Parakeet V3 as an offline fallback. Long prompts are easier to say than to type.
+- **Voice:** [Wispr Flow](https://wisprflow.ai/), with [Handy](https://handy.computer/) running Whisper large-v3-turbo as an offline fallback. Long prompts are easier to say than to type.
 - **Docs and search:** [Context7](https://context7.com/) for current library docs, Brave Search for the web.
 
 {{< figure src="/images/macbook-agent-dev-setup/ccstatusline.png" alt="ccstatusline showing model, context usage, git branch, and tool activity" caption="ccstatusline keeps context usage visible, so I notice a session filling up before it degrades." >}}

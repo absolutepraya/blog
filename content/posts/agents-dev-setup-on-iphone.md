@@ -37,9 +37,11 @@ graph TD
 
 ## No Public SSH at All
 
-My VPS has no open SSH port. The only way to get a shell is through Tailscale, which puts my MacBook, VPS, iPhone, and work laptop on one private network. SSH, Mosh, and internal dashboards listen on the tailnet, not the public internet. The few things that do face the internet are a couple of HTTPS services behind nginx, each with its own login, plus one inbound webhook.
+My VPS does not accept SSH from the internet. The firewall drops port 22 from everywhere except Tailscale, which puts my MacBook, VPS, iPhone, and laptops on one private network.
 
-Compared with the usual "open port 22 with key auth and hope", there is nothing to scan or brute-force, and I never deal with firewall allowlists or jump hosts. From the phone, connecting is just `mosh vps`.
+Compared with the usual "open port 22 with key auth and hope", there is no SSH port for anyone to scan or brute-force, and I never need a jump host or an IP allowlist for my own devices. From the phone, connecting is just `mosh vps`.
+
+One trap to check on your own box if you run Docker: a published port like `-p 8080:80` (or `"8080:80"` in a compose file) binds to `0.0.0.0`, and Docker writes its own iptables rules that skip UFW entirely. `ufw status` can show the port as closed while it is open to the whole internet. Test from outside the server, for example `nc -z <public-ip> 8080` from your phone's mobile data, instead of trusting the firewall's own report. If nginx sits in front of the container, publish it as `"127.0.0.1:8080:80"` so only nginx on the same machine can reach it.
 
 {{< figure src="/images/iphone-agent-dev-setup/tailscale.png" alt="Tailscale overlay network connecting personal devices privately" caption="Source: tailscale.com" >}}
 
@@ -51,12 +53,12 @@ For most VPS providers that is a VNC or serial console in the web panel. Mine (J
 
 1. Enable VNC in the provider panel and open the console.
 2. Press Enter to get a login prompt. It may be buried under firewall log spam; switching to another TTY with `Ctrl+Alt+F2` helps.
-3. Log in. If you do not know the root password, many providers can reset it from the panel without touching your data.
+3. Log in as root, or as your normal user if you know its sudo password. If you do not know the root password, many providers can reset it from the panel without touching your data. (As root, drop the `sudo` in the next steps.)
 4. Silence kernel messages so you can actually type: `sudo dmesg -D`.
 5. Run `sudo tailscale up`, open the printed URL on another device, and authenticate.
 6. Turn kernel messages back on with `sudo dmesg -E`, and disable VNC in the panel.
 
-Write this down somewhere you can reach without the server, like a note on your phone. The time you need it is exactly when you cannot SSH in to read it. It is also worth turning off key expiry for the server in the Tailscale admin console, so its login does not quietly expire months later.
+Write this down somewhere you can reach without the server, like a note on your phone. The time you need it is exactly when you cannot SSH in to read it. Also check that key expiry is turned off for the server in the Tailscale admin console (it is on mine). Otherwise its login quietly expires months later and you are back at step one.
 
 ## Mosh Keeps the Session Alive
 
@@ -68,7 +70,7 @@ Blink Shell is the paid part of the setup, and Mosh support is most of why I pay
 
 ## tmux Makes Disconnecting Free
 
-Mosh survives network changes, but if the client really goes away, the session needs to live on the server. Every shell on my VPS runs inside tmux, and logging in opens a small picker, [tmux-menu](https://github.com/absolutepraya/dotfiles/blob/config/vps/scripts/tmux-menu), built on [fzf](https://github.com/junegunn/fzf). I pick a session and land back where I was, with the agent's context intact.
+Mosh survives network changes, but if the client really goes away, the session needs to live on the server. Logging in over SSH or Mosh opens a small picker I wrote, `tmux-menu`, built on [fzf](https://github.com/junegunn/fzf) and a few lines in `~/.bashrc`. I pick a session and land back where I was, with the agent's context intact. Esc drops me to a plain shell when I just need one command.
 
 {{< figure src="/images/iphone-agent-dev-setup/tmux-menu.png" alt="tmux-menu showing fzf-powered session picker on VPS" caption="tmux-menu is the first thing I see when I log into the VPS. Pick a session, jump back into it." >}}
 

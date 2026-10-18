@@ -28,7 +28,7 @@ The box is a 4-core, 8 GB Debian VPS that already hosts Nextcloud, Marka (my boo
 
 {{< figure src="/images/meet-my-friend-who-lives-on-my-vps/hermes-landing.png" alt="Hermes Agent landing page from Nous Research, with the headline 'The agent that grows with you'" caption="The framework underneath everything in this post: Hermes Agent by Nous Research." >}}
 
-Hermes Agent by Nous Research is an open-source agent that runs as one always-on process. It idles at around 60 to 130 MB, against the gigabyte I had been spending, and connects to Telegram, Discord, Slack, WhatsApp, Signal, Email, and more at once, all sharing one brain. It speaks MCP, loads skills from a folder (the same `~/.agents/skills/` my coding agents already share), runs as a system service, and has its own scheduler.
+Hermes Agent by Nous Research is an open-source agent that runs as one always-on process. On my box it sits at about 300 MB, well under the gigabyte the two Claude sessions were holding, and it connects to Telegram, Discord, Slack, WhatsApp, Signal, Email, and more at once, all sharing one brain. It speaks MCP, loads skills from a folder (the same `~/.agents/skills/` my coding agents already share), runs as a system service, and has its own scheduler.
 
 Setup is two arrow-key wizards: one for the model provider (Nous Portal, Anthropic, GitHub Copilot, a local model, and so on), one for which chat apps to connect.
 
@@ -40,7 +40,7 @@ The whole pipeline:
 graph TD
     User["You / a guest"]
     User --> Platform["Telegram / Discord / WhatsApp"]
-    Platform --> Gateway["Hermes Gateway<br>allowlist gate, ~100 MB"]
+    Platform --> Gateway["Hermes Gateway<br>allowlist gate, ~300 MB"]
     Gateway --> Hooks["Plugin hooks<br>(e.g. discord-context buffer)"]
     Hooks --> Persona["Persona layer<br>SOUL.md + USER.md + MEMORY.md"]
     Persona --> Agent["Agent loop<br>LLM + tool calling"]
@@ -94,7 +94,7 @@ graph TD
 
 Near the top of `SOUL.md` is a block of ABSOLUTE OUTPUT RULES. The first one bans dashes inside sentences, because a model trained on dash-heavy English leaks em dashes no matter how often you forbid them.
 
-Mine kept leaking them anyway, and the reason was my own prompt. The rule showed the forbidden character as a bad example, and the model copied the example. Once I rewrote the rules so the character never literally appears (a placeholder like `[emdash]` instead), violations dropped to near zero.
+Mine kept leaking them anyway, and the reason was my own prompt. The rule showed the forbidden character as a bad example, and the model copied the example. Once I rewrote the examples to use a placeholder like `[emdash]` instead of the real character, violations dropped to near zero.
 
 This generalizes. If a prompt includes "don't write it like this: ...", the model still reads that text as a demonstration. Describe the bad pattern with a placeholder, or show only the good version.
 
@@ -102,7 +102,7 @@ This generalizes. If a prompt includes "don't write it like this: ...", the mode
 
 When a guest messages Yanto, his defaults flip. Reads are fine: recipe lookups, restaurant suggestions, a calendar peek. Anything that touches my data, projects, or accounts sends a permission DM to me on the same platform ("bro, ada yang minta X, oke gua bantu?"), and he waits for my yes.
 
-The important part is that two different layers do two different jobs. The gateway allowlist (Discord user IDs, the WhatsApp sender allowlist, Telegram user IDs) decides who can reach him at all. Unknown senders never reach the model. The persona files only decide how careful he is with someone who is already allowed in. A line in a prompt saying "only obey Abhip" is not security, because a prompt can be talked around. A platform-level allowlist cannot.
+The important part is that two different layers do two different jobs. The gateway's per-platform allowlists (allowed Discord users and channels, the WhatsApp sender allowlist, allowed Telegram chats) decide who can reach him at all, before any message gets to the model. The persona files only decide how careful he is with someone who is already allowed in. A line in a prompt saying "only obey Abhip" is not security, because a prompt can be talked around. A platform-level allowlist cannot.
 
 ## What He Can Actually Do
 
@@ -110,11 +110,11 @@ The reach comes from three layers: skills (small scripts in a folder), MCP serve
 
 A few combinations turned out better than any single tool:
 
-- **Maps plus search for places.** Maps gives structured facts (rating, hours, distance from a known anchor). Brave gives the vibe from Indonesian reviews on Lemon8 and PergiKuliner, whether a spot is actually homey or just trendy. Together they beat either one alone.
+- **Maps plus search for places.** A small places skill tells him to use both. Maps gives structured facts (rating, hours, distance from a known anchor). Brave gives the vibe from Indonesian reviews on Lemon8 and PergiKuliner, whether a spot is actually homey or just trendy. Together they beat either one alone.
 - **Chart plus live quotes.** The chart skill draws a chart but does not know the live price. Yahoo Finance fills that, including Indonesian tickers via the `.JK` suffix and `^JKSE` for IHSG.
-- **RSSHub as the one feed reader.** A self-hosted [RSSHub](https://docs.rsshub.app/) turns most sources into a clean feed, so there is one uniform way to read news instead of a scraper per site. X throttles datacenter IPs hard, so his memory file says to fall back to a `site:x.com` search and to tell me when a route is broken instead of inventing a summary.
+- **RSSHub as the one feed reader.** A self-hosted [RSSHub](https://docs.rsshub.app/) turns most sources into a clean feed, so there is one uniform way to read news instead of a scraper per site. X throttles datacenter IPs hard and its keyword search route is broken, so an `x-search` skill tells him to fall back to a Brave search with `site:x.com` instead.
 
-That last instruction matters more than it looks. An agent with a broken tool will happily write something plausible. Telling it to report a broken route out loud is the cheapest hallucination guard I have.
+Writing the broken route down matters more than it looks. An agent with a broken tool will happily write something plausible from nothing. A skill that names the broken path and the working fallback is the cheapest hallucination guard I have.
 
 ### Python Slices, the Model Writes
 
@@ -133,13 +133,13 @@ I send Yanto TikTok and Instagram carousels, the kind where all the useful infor
 ```mermaid
 graph TD
     Link["TikTok / Instagram link<br>sent on WhatsApp"]
-    Link --> Media["media skill:<br>cobalt downloads every slide"]
+    Link --> Media["media skill:<br>downloads every slide"]
     Media --> Read["Yanto reads the slides<br>(vision turns text-on-image<br>into a clean list)"]
     Read --> Save["marka skill:<br>bookmark + slides + note<br>into the chosen folder"]
     Save --> Reply["reply in chat:<br>the extracted list plus a link"]
 ```
 
-Two details made this reliable. First, fetching and reading are separate steps. A self-hosted [cobalt](https://cobalt.tools/) instance does the download, and the model does the reading, because plain text extraction gives a wall of disconnected words while the model gives "Dior Sauvage, fresh, ~1.2jt" as one clean line.
+Two details made this reliable. First, fetching and reading are separate steps. The media skill does the download (a public TikTok downloader API for TikTok, and a self-hosted [cobalt](https://cobalt.tools/) instance for Instagram and X), and the model does the reading, because plain text extraction gives a wall of disconnected words while the model gives "Dior Sauvage, fresh, ~1.2jt" as one clean line.
 
 Second, the save skill never guesses a folder. If I say "simpen ke Watch" and there is both `Wishlist > Watch` and `Gifts > Watch`, the skill returns every match with its full path. Yanto looks at the post, sees wristwatches, and picks. If he cannot tell, he asks. The skill handles the lookup, and the model handles the judgment. A skill that silently picks the first match is how files end up in the wrong place without anyone noticing.
 
@@ -182,13 +182,13 @@ graph TD
     Beat --> Disc
 ```
 
-My ETF dollar-cost-average helper (paused right now) is the cleanest example. Every hour during US market hours it compared the live price with moving averages and the recent high, and posted only when a ticker reached a buy zone, at most once per ticker per signal per day. A price threshold does not need a language model, and paying one to compare two numbers is both slower and less reliable.
+My ETF dollar-cost-average helper (paused right now) is the cleanest example. Every hour during US market hours it compared the live price with its moving averages, RSI, and 20-day high, and posted only when a ticker reached a buy zone, at most once per ticker per alert level per day. A price threshold does not need a language model, and paying one to compare two numbers is both slower and less reliable.
 
 {{< figure src="/images/meet-my-friend-who-lives-on-my-vps/yanto-market-buy-alert.png" alt="Discord alert from Yanto showing a BUY setup for SPY with signal metrics, reasons, and news context, followed by an annotated SPY chart" caption="A deterministic screener alert. Levels, reasons, and a chart, no LLM in the loop." >}}
 
 ### Watch for the Missing Heartbeat
 
-Every job posts a one-line heartbeat to a Discord channel on every run, even when nothing qualified, in a fixed shape: `name · time · a few status tokens`, with a warning marker for a degraded run.
+My watchers post a one-line heartbeat to a Discord channel on every run, even when nothing qualified, in a fixed shape: `name · time · a few status tokens`, with a warning marker for a degraded run.
 
 This flips how you monitor. A quiet alert channel can mean "nothing happened" or "the job has been dead for a week", and you cannot tell which. A missing heartbeat is unambiguous. I now refuse to add any new cron without one.
 
@@ -196,7 +196,7 @@ This flips how you monitor. A quiet alert channel can mean "nothing happened" or
 
 Some inputs are too ambiguous for a threshold, like deciding whether a news item is really about one company, but they still do not justify handing the model a firehose. For those, code does everything around one narrow question.
 
-The deterministic part owns intake, parsing, deduplication, ranking, state, and delivery. It rejects macro chatter before a candidate can cost a model turn. Only one small, structured candidate crosses over: the ticker, source link, publication time, source text, and a closed response format. The model classifies that one thing. It does not fetch more sources, read state, choose the destination, or post. Python validates the answer and delivers it.
+The deterministic part owns intake, parsing, deduplication, ranking, state, and delivery. It rejects macro chatter before a candidate can cost a model turn. Only one small, structured candidate crosses over: the ticker, source link, publication time, source text, and a closed response format. The model answers in a fixed format: which of three routes the item belongs to (company news, macro news, or exclude), a ranking band from 1 to 5, and the facts used to spot duplicates. It does not fetch more sources, read state, or post anything. Python validates the answer (a macro item cannot be routed to company news, for example), sorts by the bands, and delivers.
 
 ```mermaid
 graph TD
@@ -210,7 +210,7 @@ graph TD
     Validate --> Disc["Discord alert or digest"]
 ```
 
-The rule: spend the model where the input is ambiguous and the output is judgment. The model should not get to decide what it sees, what it sends, or what becomes history.
+The rule: spend the model where the input is ambiguous and the output is judgment. The model can label and rank, but it should not get to decide what it sees, whether something gets posted, or what becomes history.
 
 ## What Running Crons for Months Taught Me
 
@@ -218,11 +218,11 @@ The screeners started as a few scripts. They now live in two Git repositories on
 
 **Decide up front whether the model is involved.** Every cron package has exactly one contract file: `CRON.md` for a deterministic job, or `SKILL.md` for one that uses the agent. Never both. Having to pick a filename is how I ended up asking "does this actually need a model?" before writing any code.
 
-**Code is source, state is not.** A watcher's cursors, dedupe records, and retry queues live in a `state/` directory on the VPS. The deploy script copies only `bin/` and never touches `state/`. State is never committed, copied between machines, or hand-edited. If you redeploy and your watcher re-alerts everything from last week, this is the rule you broke.
+**Code is source, state is not.** A watcher's cursors, dedupe records, and retry queues live in state directories on the VPS, outside the deploy path. The deploy script copies only `bin/` and never touches state. State is never committed, copied between machines, or hand-edited. If you redeploy and your watcher re-alerts everything from last week, this is the rule you broke.
 
 **Move the cursor only after delivery succeeds.** Intake stages new events and advances its "last seen" cursor only after the inbox confirms it received them. If the process dies in between, the next run picks the same events up again and deduplication catches the repeats. A new watcher starts at the current cursor, so turning one on never floods the channel with history.
 
-**Cut over forward, not backward.** When I replace a job, I stop the old writer before starting the new one and give the new one a fresh cursor. I do not replay or migrate old history unless I actually need it. The old state stays untouched for rollback. Two writers on the same stream is how you get duplicate alerts, and trying to transfer history perfectly is how a simple swap turns into a weekend.
+**Cut over forward, not backward.** When I replace a job, I stop the old writer before starting the new one, and the new one starts from a fresh cursor at the point where the old one stopped. I do not replay or migrate old history unless I actually need it. The old state stays untouched for rollback. Two writers on the same stream is how you get duplicate alerts, and trying to transfer history perfectly is how a simple swap turns into a weekend.
 
 **CI checks code but cannot deploy.** GitHub Actions runs the tests and has no credentials for the server. A small release agent on the VPS deploys only the exact `main` commit that passed CI. A compromised or misconfigured CI workflow cannot push anything to the box.
 
@@ -234,11 +234,11 @@ The screeners started as a few scripts. They now live in two Git repositories on
 
 The gateway runs as a `systemd` service with `Restart=always`, so it comes back if it dies. After a config change I restart it and it reconnects to Telegram and Discord in about six seconds.
 
-Configuration lives in two files: `config.yaml` for runtime settings (model defaults, approval modes, per-platform behavior) and `.env` for secrets. My configs get backed up to a dotfiles repo by a scheduled job that collects an allowlist of files, scrubs known key names and token shapes, and runs a Gitleaks secret scan before anything is pushed. If the scan fails, nothing is published.
+Configuration lives in two files: `config.yaml` for runtime settings (model defaults, approval modes, per-platform behavior) and `.env` for secrets and environment-specific settings. My configs get backed up to a dotfiles repo by a scheduled job on the VPS that pulls an allowlist of files from both machines over SSH, scrubs known key names and token shapes, and runs a Gitleaks secret scan before anything is pushed. If the scan fails, nothing is published.
 
 ### Smart Approvals
 
-Hermes has three approval modes for shell commands: `manual` prompts for everything, even `ls`; `off` bypasses everything; and `smart` has a small auxiliary model judge each command, auto-approving safe reads (`ls`, `cat`, `git status`) and prompting on risky ones (`rm -rf`, `sudo`, force-push).
+Hermes has three approval modes for shell commands: `manual` prompts for everything, even `ls`; `off` bypasses everything; and `smart` sends commands that match a dangerous pattern to a small auxiliary model, which approves the low-risk ones, denies the high-risk ones, and asks me when it is unsure. As the owner, I can still override a denial once.
 
 I run `smart`. For a box that hosts real things, `off` is irresponsible and `manual` turns every chat into a sudo prompt. In practice it looks like this: I noticed a monitoring page was publicly reachable, Yanto inspected the current state, proposed two fixes with tradeoffs, and waited for me to pick before changing anything.
 
