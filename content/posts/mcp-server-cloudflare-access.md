@@ -239,6 +239,8 @@ curl -sk -o /dev/null -w '%{http_code}\n' \
 
 The first should return `401`. The second should return `400`, because nginx wants the AOP certificate and you did not send one. If it returns anything from your MCP proxy, the lock is not working.
 
+If you kept the IP allowlist, you can also see the two layers separately. Send the right client certificate from an address that is not Cloudflare's and you should get `403` from the allowlist. Send a wrong certificate, or none, and you get `400` first. I saw exactly that: `400` without a certificate, `400` with a wrong one, `403` with the right one, and `401` through Cloudflare without a login.
+
 ## Things that will bite you
 
 - **Not every client works with Managed OAuth yet.** I only use this with ChatGPT. A [GitHub issue](https://github.com/anthropics/claude-ai-mcp/issues/410) reported claude.ai web connectors failing against it over a missing `resource` parameter, while Claude Code connected to the same URL. It was closed as not planned in June, and people were still reporting the same failure as late as June 21, so I cannot tell you whether it works today. Test the specific client you care about.
