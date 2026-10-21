@@ -66,6 +66,8 @@ services:
 
 Two details matter more than they look. Pin the MCPHub image by digest, so an update is a decision you make instead of something that happens to you. And publish MCPHub on `127.0.0.1`, not `3002:3002`. Docker writes its own firewall rules, so a plainly published port can be open to the whole internet while your firewall tool says it is closed.
 
+One limit of the loopback binding: it keeps the internet out, but any process running on the same machine can still call MCPHub directly, because its own authentication is off in this setup. That is fine on a server only you use. If other people or untrusted software run on the same host, either turn MCPHub's bearer authentication back on and have nginx send the key, or keep MCPHub off the host entirely by putting nginx on the same private Compose network. I have not set up either of those.
+
 ## Step 2: One group per audience
 
 Each audience gets a group with an exact tool list. The settings file looks like this:
@@ -212,7 +214,7 @@ There are three honest fixes:
 
 - **Validate the Access JWT on your server.** It is what Cloudflare's docs ask for, and they describe [how to do it](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/). nginx cannot verify a JWT by itself, so it means a small validator in front of MCPHub.
 - **Use [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/).** `cloudflared` connects outward from your server to Cloudflare, so you can close the public port entirely. There is no origin IP to attack, which makes it the simplest of the three if you are starting fresh.
-- **Use Authenticated Origin Pulls with your own certificate.** nginx demands a client certificate that only your Cloudflare account can present. It keeps everything above intact, so that is what I used.
+- **Use Authenticated Origin Pulls with your own certificate.** nginx demands a client certificate that only your Cloudflare account can present. It keeps everything above intact, so that is what I used. It is a different control from the first option, though, and I come back to that below.
 
 ### Authenticated Origin Pulls, done properly
 
@@ -248,18 +250,31 @@ curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/origin_tls_c
     {"hostname":"admin-mcp.example.com","cert_id":"<id>","enabled":true}]}'
 ```
 
-Enable it per hostname, never zone-wide. A zone-wide setting would demand client certificates for every other site in your zone, and the ones that do not present one would break.
+Enable it per hostname. Cloudflare's docs describe the global, zone-level, and per-hostname kinds as independent, and a per-hostname certificate takes precedence for that hostname. Scoping it to these hostnames keeps the change limited to the origins you are deliberately locking. Cloudflare only presents the certificate. Whether a client certificate is required is decided by your origin, so an origin that does not ask for one is unaffected.
 
-On the server, install only `ca.pem`, since that is all nginx needs to recognize your certificate, and shred `ca.key` and `aop.key`. Cloudflare keeps its own copy of the client key, and your server never needs it. The nginx side is two lines, inside each `server` block from Step 3:
+On the server, install only `ca.pem`, since that is all nginx needs to recognize your certificate, and shred `ca.key` and `aop.key`. Cloudflare keeps its own copy of the client key, and your server never needs it. The nginx side is two lines, inside each `server` block from Step 3. Start with `optional`, which asks for a certificate but still lets requests without one through:
 
 ```nginx
 ssl_client_certificate /etc/ssl/cloudflare-origin/aop-client-ca.pem;
-ssl_verify_client on;
+ssl_verify_client optional;   # switch to "on" once you have confirmed it works
 ```
 
 Keep the IP allowlist too if you like. The two guard against different things, and the allowlist costs nothing.
 
-The order matters, and getting it backwards takes your endpoint down. First upload the certificate and enable it for the hostnames. Then **wait until its status is `active`**. Mine said `pending_deployment` right after the upload. Only after that, make nginx require it. If nginx starts demanding a client certificate before Cloudflare is presenting one, every request through Cloudflare fails with a `400`.
+One caveat about my own choice. AOP proves that a request came through my Cloudflare zone for that hostname. It does not check the user's Access token, which is what Cloudflare's docs ask an MCP server to do. I am relying on the fact that every hostname in my zone that can reach this server sits behind an Access application. If you add a hostname in the same zone later and forget to protect it, AOP will happily let its traffic through. If you want to follow Cloudflare's docs to the letter, or you cannot guarantee that, validate the JWT instead.
+
+The order matters, and getting it backwards takes your endpoint down. If nginx demands a client certificate before Cloudflare is presenting one, every request through Cloudflare fails with a `400`. Cloudflare's own setup guide goes in this order: upload the certificate, set nginx to `ssl_verify_client optional`, enable AOP for the hostnames, confirm it works, and only then switch nginx to `on`.
+
+Confirming means looking at what nginx actually saw. Add the verification result to the access log, outside the `server` block:
+
+```nginx
+log_format aop '$remote_addr "$request" $status client_cert=$ssl_client_verify';
+access_log /var/log/nginx/team-mcp.access.log aop;
+```
+
+Wait until the certificate's status is `active` (mine said `pending_deployment` right after the upload), then make a request through Cloudflare while signed in, for example a tool call from your connector. The log line should say `client_cert=SUCCESS`. A plain `curl` will not do, because Access turns it away at the edge before nginx sees anything. When you see `SUCCESS`, change `optional` to `on`, reload, and run the direct-to-origin test from the next section.
+
+I did not stage mine this way. I waited for `active`, then switched nginx straight to `on`, and it worked, but the staged order is safer. It costs one extra reload and removes the chance of locking out your own connector.
 
 ## Check it from the outside
 
