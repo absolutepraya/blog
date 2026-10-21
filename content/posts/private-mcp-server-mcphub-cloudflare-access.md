@@ -60,9 +60,28 @@ services:
     environment:
       PORT: "3002"
       DISABLE_WEB: "true"   # no dashboard
+      MCPHUB_SETTING_PATH: /app/runtime-config/mcp_settings.json
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        # first start only: copy the seed into the live settings volume
+        if [ ! -s /app/runtime-config/mcp_settings.json ]; then
+          cp /app/config-seed/mcp_settings.json /app/runtime-config/mcp_settings.json
+        fi
+        exec /usr/local/bin/entrypoint.sh pnpm start
     ports:
       - 127.0.0.1:3002:3002 # loopback only
+    volumes:
+      - ./config/mcp_settings.json:/app/config-seed/mcp_settings.json:ro  # in Git, no secrets
+      - mcphub-config:/app/runtime-config  # live settings, users, OAuth state
+      - mcphub-state:/app/data
+
+volumes:
+  mcphub-config:
+  mcphub-state:
 ```
+
+The entrypoint and command lines are specific to the image version I pinned, which starts through `/usr/local/bin/entrypoint.sh`. Check what yours runs before copying them. The part to keep is the shape: the seed is mounted read-only, and the live settings sit in a named volume that survives `docker compose up` recreating the container.
 
 Two details matter more than they look. Pin the MCPHub image by digest, so an update is a decision you make instead of something that happens to you. And publish MCPHub on `127.0.0.1`, not `3002:3002`. Docker writes its own firewall rules, so a plainly published port can be open to the whole internet while your firewall tool says it is closed.
 
@@ -178,7 +197,7 @@ An AI client cannot fill in a login form, so Access has a feature for it. **Mana
 
 Do not turn Managed OAuth on in front of MCP server code that already runs its own OAuth. It replaces the `401` the client expects.
 
-Cloudflare recommends a short access token paired with a longer grant session, so the client refreshes quietly while the login stays valid. I use the default 15 minute token and a 30 day grant.
+Cloudflare recommends a short access token paired with a longer grant session, so the client refreshes quietly while the login stays valid. I use the default 15-minute token and a 30-day grant.
 
 ### Adding and removing people
 
@@ -252,7 +271,7 @@ curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/origin_tls_c
 
 Enable it per hostname. Cloudflare's docs describe the global, zone-level, and per-hostname kinds as independent, and a per-hostname certificate takes precedence for that hostname. Scoping it to these hostnames keeps the change limited to the origins you are deliberately locking. Cloudflare only presents the certificate. Whether a client certificate is required is decided by your origin, so an origin that does not ask for one is unaffected.
 
-On the server, install only `ca.pem`, since that is all nginx needs to recognize your certificate, and shred `ca.key` and `aop.key`. Cloudflare keeps its own copy of the client key, and your server never needs it. The nginx side is two lines, inside each `server` block from Step 3. Start with `optional`, which asks for a certificate but still lets requests without one through:
+On the server, install only `ca.pem`, since that is all nginx needs to recognize your certificate, and save it as `/etc/ssl/cloudflare-origin/aop-client-ca.pem`, the path the nginx lines below use. Then shred `ca.key` and `aop.key`. Cloudflare keeps its own copy of the client key, and your server never needs it. The nginx side is two lines, inside each `server` block from Step 3. Start with `optional`, which asks for a certificate but still lets requests without one through:
 
 ```nginx
 ssl_client_certificate /etc/ssl/cloudflare-origin/aop-client-ca.pem;
@@ -265,11 +284,17 @@ One caveat about my own choice. AOP proves that a request came through my Cloudf
 
 The order matters, and getting it backwards takes your endpoint down. If nginx demands a client certificate before Cloudflare is presenting one, every request through Cloudflare fails with a `400`. Cloudflare's own setup guide goes in this order: upload the certificate, set nginx to `ssl_verify_client optional`, enable AOP for the hostnames, confirm it works, and only then switch nginx to `on`.
 
-Confirming means looking at what nginx actually saw. Add the verification result to the access log, outside the `server` block:
+Confirming means looking at what nginx actually saw. Add the verification result to the access log. `log_format` is only valid in nginx's `http` context, so it goes above the `server` block in the vhost file, which works when your main config includes the vhost files from inside its `http` block (Debian's default layout does, with `include /etc/nginx/sites-enabled/*;`). If yours does not, put it in the `http` block of `nginx.conf` instead. `access_log` can then sit inside the `server` block:
 
 ```nginx
+# top of the vhost file, which is included inside the http block
 log_format aop '$remote_addr "$request" $status client_cert=$ssl_client_verify';
-access_log /var/log/nginx/team-mcp.access.log aop;
+
+server {
+    server_name team-mcp.example.com;
+    # ... the rest of the server block from Step 3 ...
+    access_log /var/log/nginx/team-mcp.access.log aop;
+}
 ```
 
 Wait until the certificate's status is `active` (mine said `pending_deployment` right after the upload), then make a request through Cloudflare while signed in, for example a tool call from your connector. The log line should say `client_cert=SUCCESS`. A plain `curl` will not do, because Access turns it away at the edge before nginx sees anything. When you see `SUCCESS`, change `optional` to `on`, reload, and run the direct-to-origin test from the next section.
