@@ -87,6 +87,39 @@ test('prepareVisuals chooses a square crop when one source survives', async () =
   await rm(workDir, { recursive: true, force: true });
 });
 
+test('prepareVisuals preserves HTML labels in Mermaid thumbnails', async (t) => {
+  const workDir = await mkdtemp(join(tmpdir(), 'social-card-labels-'));
+  t.after(() => rm(workDir, { recursive: true, force: true }));
+  const warnings = [];
+  const pixels = [];
+
+  for (const color of ['inherit', 'transparent']) {
+    const visuals = await prepareVisuals({
+      sources: [{
+        kind: 'mermaid',
+        value: `flowchart TD
+  A["First line<br>Second line"]
+  classDef label color:${color}
+  class A label`,
+      }],
+      staticDir: workDir,
+      workDir,
+      warn: (message) => warnings.push(message),
+    });
+    assert.deepEqual(warnings, []);
+    assert.equal(visuals.length, 1);
+    pixels.push(await sharp(visuals[0]).ensureAlpha().raw().toBuffer());
+  }
+
+  let changedPixels = 0;
+  for (let i = 0; i < pixels[0].length; i += 4) {
+    if (pixels[0].subarray(i, i + 4).some((value, channel) => Math.abs(value - pixels[1][i + channel]) > 32)) {
+      changedPixels += 1;
+    }
+  }
+  assert.ok(changedPixels > 100, `Visible labels should change thumbnail pixels; found ${changedPixels}`);
+});
+
 test('composeCard produces a 1200 by 630 PNG with a visual rail', async () => {
   const visual = await sharp({
     create: { width: 226, height: 127, channels: 4, background: '#268bd2' },
