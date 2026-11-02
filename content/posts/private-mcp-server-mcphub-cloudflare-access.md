@@ -66,7 +66,8 @@ services:
       - |
         # first start only: copy the seed into the live settings volume
         if [ ! -s /app/runtime-config/mcp_settings.json ]; then
-          cp /app/config-seed/mcp_settings.json /app/runtime-config/mcp_settings.json
+          cp /app/config-seed/mcp_settings.json /app/runtime-config/mcp_settings.json.tmp
+          mv /app/runtime-config/mcp_settings.json.tmp /app/runtime-config/mcp_settings.json
         fi
         exec /usr/local/bin/entrypoint.sh pnpm start
     ports:
