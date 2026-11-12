@@ -88,9 +88,16 @@ Two details worth copying. The media is mounted read-only, so a bug in Jellyfin 
 The proxy is nginx with a Let's Encrypt certificate. Streaming video through a proxy goes wrong in a few specific ways, so these lines matter:
 
 ```nginx
+# Put this above the server block (a file in /etc/nginx/conf.d/ works).
+# $uri has no query string, so tokens that clients put in URLs never reach the log.
+log_format no_query '$remote_addr [$time_local] "$request_method $uri $server_protocol" '
+                    '$status $body_bytes_sent';
+
 server {
     listen 443 ssl http2;
     server_name jellyfin.example.com;
+
+    access_log /var/log/nginx/jellyfin-access.log no_query;
 
     # ssl_certificate and ssl_certificate_key from certbot go here
 
@@ -116,7 +123,7 @@ server {
 }
 ```
 
-I also keep the access log without query strings, so API tokens that clients put in URLs never end up in a log file. My DNS record points straight at the server rather than through a CDN proxy.
+The `log_format` at the top keeps query strings out of the access log, so API tokens that clients put in URLs never end up in a log file. My DNS record points straight at the server rather than through a CDN proxy.
 
 When the container is up, open the site, create the admin account, and add libraries later (step 4).
 
@@ -183,6 +190,8 @@ One rule: hard links only work inside a single filesystem, so the Jellyfin folde
 
 Hooks fail. The server is busy, a script crashes, a link gets deleted. So there is a second small script, `reconcile.py`, that a systemd timer runs every five minutes. It asks qBittorrent which torrents finished and checks that their links still exist. By default it only reports a missing link (so a link I removed on purpose does not silently come back), and `--repair` relinks. Create an `enabled-at` timestamp file once, so it ignores torrents that finished before you turned all this on.
 
+`reconcile.py` and the removal script talk to qBittorrent's Web UI API on localhost without a login, and they run inside the qBittorrent container. For that to work, tick "Bypass authentication for clients on localhost" under Options, Web UI, or add credentials to the scripts yourself. The bypass has a cost: anything that can reach that port from the same machine can control qBittorrent, which is why the web UI port stays bound to `127.0.0.1`.
+
 The complete scripts, with every value you need to change marked `FILL IN`, are in a gist: [handoff scripts][gist-handoff].
 
 ## Step 4: Libraries and Metadata
@@ -202,6 +211,8 @@ I settled on soft subtitles only, and let the player draw them. Most anime and m
 For titles with no English subtitle at all, I let a small worker fetch exactly one from [OpenSubtitles](https://www.opensubtitles.com/). It runs every five minutes from a systemd timer, looks at each movie and episode in the four main libraries, and skips anything that already has an embedded or external English track. For the rest it searches through Jellyfin's own subtitle provider, picks the best match (hash matches first, human over machine translated, then download count), and downloads one.
 
 Why one? Because the free OpenSubtitles tier allows 20 downloads per day, and I would rather spend them where they are needed. The worker also keeps its own database of attempts, caps itself at 20 per rolling day, and double-checks that a download really arrived, because Jellyfin can answer "success" when nothing was saved. Source: [subtitle worker][gist-subtitles].
+
+Because the media mount is read-only, turn off "Save subtitles into media folders" in every library (Dashboard, Libraries, edit the library, Subtitle downloads). Jellyfin then stores downloaded subtitles in its own metadata folder instead of trying to write next to the video, which the mount would refuse.
 
 ### Getting an OpenSubtitles account
 
@@ -298,7 +309,7 @@ Everything is in gists with fill-in markers: the [tracking skill][gist-tracking]
 
 1. Create the SIMKL app (client ID) and the AniList client.
 2. Authorize both accounts, and put the credentials where each README says.
-3. `docker compose up -d` using the example compose file. Both bind to localhost.
+3. `docker compose -f compose.example.yml up -d`, using the example compose file from the gists. Both servers bind to localhost.
 4. Add both as MCP servers in your agent by URL.
 5. Install the skill and fill in its markers.
 
