@@ -13,7 +13,7 @@ notes/               — Scratch notes for drafting posts (gitignored, not rende
                        When asked to save/take notes for a blog post, write them here
                        Naming: kebab-case topic slug (e.g., tdd-qa-advanced-tooling.md)
                        Ticket prefix optional (e.g., sira-110-tdd-qa-advanced-tooling.md)
-notes/gists/         — Neutralized copies of scripts and agent skills staged for public gists (gitignored)
+notes/gists/         - Neutralized copies of scripts and agent skills staged for public gists (gitignored)
 archive/ppl/part-a/  — Archived Part A evidence-text drafts (NOT rendered by Hugo)
 static/images/             — Original images (referenced as /images/filename.png in markdown)
 static/images/compressed/  — Auto-generated WebP versions (served by Hugo render hooks)
