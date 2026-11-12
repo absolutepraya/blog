@@ -1,6 +1,6 @@
 // Render every Mermaid block under content/ and fail when any diagram does not render.
-// The site loads Mermaid from a pinned CDN URL in baseof.html, so this also fails when
-// that pin drifts from the Mermaid version mermaid-cli renders with here.
+// The site loads Mermaid, its ELK layout and rough.js from pinned CDN URLs in baseof.html, so this
+// also fails when a pin drifts from the version installed here (mermaid-cli renders with Mermaid).
 import { readFile, readdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, join, relative } from 'node:path';
@@ -10,7 +10,8 @@ import { renderMermaid } from '@mermaid-js/mermaid-cli';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
-const pinPattern = /cdn\.jsdelivr\.net\/npm\/mermaid@([^/]+)\//;
+// CDN-loaded packages whose pin in baseof.html must match the installed version.
+export const CDN_PACKAGES = ['mermaid', '@mermaid-js/layout-elk', 'roughjs'];
 
 export function extractMermaidBlocks(markdown) {
   const blocks = [];
@@ -22,8 +23,13 @@ export function extractMermaidBlocks(markdown) {
   return blocks;
 }
 
+export function pinnedVersion(template, pkg) {
+  const escaped = pkg.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+  return template.match(new RegExp(`cdn\\.jsdelivr\\.net/npm/${escaped}@([^/]+)/`))?.[1] ?? null;
+}
+
 export function pinnedMermaidVersion(template) {
-  return template.match(pinPattern)?.[1] ?? null;
+  return pinnedVersion(template, 'mermaid');
 }
 
 async function markdownFiles(dir) {
@@ -39,12 +45,16 @@ async function markdownFiles(dir) {
 async function main() {
   const failures = [];
 
-  const installed = require('mermaid/package.json').version;
   const template = await readFile(join(root, 'layouts/_default/baseof.html'), 'utf8');
-  const pinned = pinnedMermaidVersion(template);
-  if (pinned !== installed) {
-    failures.push(`layouts/_default/baseof.html: Mermaid CDN pin is ${pinned ?? 'missing'}, but the checker renders with ${installed}. Pin mermaid@${installed}.`);
+  const installedVersions = {};
+  for (const pkg of CDN_PACKAGES) {
+    installedVersions[pkg] = JSON.parse(await readFile(require.resolve(`${pkg}/package.json`), 'utf8')).version;
+    const pinned = pinnedVersion(template, pkg);
+    if (pinned !== installedVersions[pkg]) {
+      failures.push(`layouts/_default/baseof.html: ${pkg} CDN pin is ${pinned ?? 'missing'}, but ${installedVersions[pkg]} is installed. Pin ${pkg}@${installedVersions[pkg]}.`);
+    }
   }
+  const installed = installedVersions.mermaid;
 
   const files = await markdownFiles(join(root, 'content'));
   const blocks = [];

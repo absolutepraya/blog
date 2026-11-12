@@ -92,9 +92,11 @@ await Promise.all([
 const socialCard = await findFirstFile('public/social', (name) => name.endsWith('.png'));
 const image = await findFirstFile('public/images', (name) => /\.(avif|jpe?g|png|webp|svg)$/i.test(name));
 const stylesheet = await findFirstFile('public/css', (name) => name.endsWith('.css'));
+const sketchScript = await findFirstFile('public/js', (name) => name.startsWith('mermaid-sketch') && name.endsWith('.js'));
 assert(socialCard, 'Expected at least one generated social card');
 assert(image, 'Expected at least one generated image');
 assert(stylesheet, 'Expected at least one generated stylesheet');
+assert(sketchScript, 'Expected the generated Mermaid sketch script');
 
 const home = await assertResponse('/', 200, 'text/html');
 const canonical = home.text ? await home.text() : '';
@@ -124,7 +126,9 @@ for (const item of portfolioPosts) {
 const sitemap = await assertResponse('/sitemap.xml', 200, 'application/xml');
 const robots = await assertResponse('/robots.txt', 200, 'text/plain');
 const font = await assertResponse('/fonts/ubuntu-400.woff2', 200, 'font/woff2');
+const diagramFont = await assertResponse('/fonts/shantell-sans-400.woff2', 200, 'font/woff2');
 const css = await assertResponse(deployedPath(stylesheet), 200, 'text/css');
+const sketch = await assertResponse(deployedPath(sketchScript), 200, 'javascript');
 await assertResponse(deployedPath(image), 200, undefined);
 await assertResponse(deployedPath(socialCard), 200, 'image/png');
 await assertResponse('/private/', 200, 'text/html');
@@ -152,6 +156,8 @@ const socialResponse = await request(deployedPath(socialCard));
 assert(socialResponse.headers.get('cache-control')?.includes('max-age=0'), 'Social-card cache policy is incorrect');
 assert(css.headers.get('cache-control')?.includes('max-age=31536000'), 'Stylesheet cache policy is incorrect');
 assert(font.headers.get('cache-control')?.includes('max-age=31536000'), 'Font cache policy is incorrect');
+assert(diagramFont.headers.get('cache-control')?.includes('max-age=31536000'), 'Diagram font cache policy is incorrect');
+assert(sketch.headers.get('cache-control')?.includes('max-age=31536000'), 'Sketch script cache policy is incorrect');
 for (const [pathname, response] of Object.entries({
   '/index.xml': feed,
   '/feed.json': portfolioFeed,

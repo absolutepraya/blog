@@ -19,12 +19,13 @@ static/images/compressed/  — Auto-generated WebP versions (served by Hugo rend
 assets/css/main.css        — All custom CSS (Solarized palette, layout, responsive)
 layouts/_default/baseof.html  — Base template (dark mode, Mermaid init)
 layouts/_default/_markup/render-codeblock-mermaid.html — Mermaid render hook
+assets/js/mermaid-sketch.js — Mermaid sketch look: role tints, fonts, ELK config, rough.js pass
 layouts/_default/_markup/render-image.html — WebP image render hook
 layouts/shortcodes/figure.html — Custom figure shortcode with WebP support
 scripts/convert-images.sh  — Image-to-WebP conversion script
 .githooks/pre-commit       — Auto-converts staged images to WebP on commit
 hugo.toml                  — Hugo config
-static/fonts/              — Self-hosted Ubuntu/Ubuntu Mono woff2 fonts
+static/fonts/              — Self-hosted Ubuntu/Ubuntu Mono woff2 fonts, plus Shantell Sans (diagram labels, SIL OFL)
 ```
 
 The `archive/` directory sits outside `content/`, so Hugo ignores it entirely. Archived files are old evidence-style drafts kept as reference material for writing proper blogs.
@@ -186,11 +187,40 @@ Flowchart, sequence, gitGraph, class, state, ER, pie, user journey, gantt — al
 
 ### Mermaid Theming
 
-Colors are Solarized (matching `beautiful-mermaid` npm package). Theming is handled automatically via CSS variables + JS color derivation in `baseof.html`. Diagrams re-render on dark mode toggle. **Do not** hardcode colors in diagram source.
+Colors are Solarized (matching `beautiful-mermaid` npm package). Theming is handled automatically via CSS variables + JS color derivation in `baseof.html` and `assets/js/mermaid-sketch.js`. Diagrams re-render on dark mode toggle. **Do not** hardcode colors in diagram source.
+
+### Mermaid Sketch Look
+
+Every diagram renders in a hand-drawn "sketch" look: soft Solarized tints, Shantell Sans labels, and rough.js outlines. Mermaid renders in its classic look first, then `sketchPass()` in `assets/js/mermaid-sketch.js` redraws each shape with rough.js, so flowchart, state, sequence, pie, xychart, sankey, and radar all share one style. Mermaid's built-in `handDrawn` look is not used because it only covers flowchart-style shapes. Diagram layout uses ELK (`layout: 'elk'` in `baseof.html`).
+
+Tag nodes with a role class to tint them (untagged nodes stay neutral):
+
+| Role | Use | Hue |
+|------|-----|-----|
+| `svc` | Service or process | blue |
+| `out` | Output | cyan |
+| `store` | Storage or config | green |
+| `human` | Person | yellow |
+| `gate` | Gate or boundary | orange |
+| `ext` | External system | violet |
+
+```mermaid
+graph TD
+    User["You"]:::human --> Gateway["Gateway"]:::gate
+    Gateway --> Agent["Agent loop"]:::svc
+```
+
+State diagrams use `class Queued ext` instead. Roles carry no meaning on their own, so name the role in the label or surrounding text. Gotchas:
+
+- ELK does not keep declaration order for nodes with no edges between them. A list that should read top to bottom needs invisible links: `A ~~~ B ~~~ C`.
+- Roles are plain class names with no `classDef`. The tint rules live in `sketchTheme()`, never in diagram source.
+- Mermaid's theme CSS beats SVG presentation attributes, so the rough.js paths (class `sk`) carry their paint inline and the tint rules skip them with `:not(.sk)`.
+- Diagram text is Shantell Sans (Latin subset), so labels with other scripts fall back to Ubuntu.
+- The sketch wiggle uses a fixed seed, so diagrams look identical on every load.
 
 ### Mermaid Render Check
 
-`npm run check:mermaid` renders every ` ```mermaid ` block under `content/` with the installed mermaid-cli and fails with `file:line` plus Mermaid's error when a diagram does not render. CI runs it in `Verify`, so a broken diagram blocks previews and production. It also fails when the Mermaid CDN pin in `layouts/_default/baseof.html` differs from the installed `mermaid` version. When upgrading `@mermaid-js/mermaid-cli`, update that pin to match. Chromium launches through `scripts/puppeteer-config.json` (`--no-sandbox`), shared with social-card rendering, because Ubuntu CI runners block the Chromium sandbox.
+`npm run check:mermaid` renders every ` ```mermaid ` block under `content/` with the installed mermaid-cli and fails with `file:line` plus Mermaid's error when a diagram does not render. CI runs it in `Verify`, so a broken diagram blocks previews and production. It also fails when a CDN pin in `layouts/_default/baseof.html` (`mermaid`, `@mermaid-js/layout-elk`, or `roughjs`) differs from the installed version. When upgrading `@mermaid-js/mermaid-cli`, update the pins to match. Chromium launches through `scripts/puppeteer-config.json` (`--no-sandbox`), shared with social-card rendering, because Ubuntu CI runners block the Chromium sandbox.
 
 ### Known Mermaid Syntax Issues
 
@@ -246,7 +276,7 @@ npm run smoke:deployment -- https://example.workers.dev
 
 Output goes to `public/`. Cloudflare Worker Assets serves this complete static directory with automatic trailing-slash handling and Hugo's `404.html` page. There is no application Worker code or server runtime. `wrangler.jsonc` owns the Worker name (`abhipraya-blog`), production custom domain (`blog.abhipraya.dev`), static-assets routing, and the preview environment. Do not edit deployment behavior in the Cloudflare dashboard when it can be represented in this file.
 
-`wrangler.jsonc`, `static/_headers`, `.github/workflows/deploy-cloudflare.yml`, and `scripts/smoke-cloudflare-deployment.mjs` are the versioned deployment contract. Keep them aligned. `static/_headers` defaults mutable content to revalidation, makes CSS and fonts immutable for one year, caches images for one week with one day of stale-while-revalidate, and applies HSTS plus the safe security headers. Do not add a CSP, Rocket Loader, Auto Minify, or broad zone-level cache configuration without a separate compatibility audit for inline scripts, Mermaid, and KaTeX.
+`wrangler.jsonc`, `static/_headers`, `.github/workflows/deploy-cloudflare.yml`, and `scripts/smoke-cloudflare-deployment.mjs` are the versioned deployment contract. Keep them aligned. `static/_headers` defaults mutable content to revalidation, makes CSS, JS, and fonts immutable for one year, caches images for one week with one day of stale-while-revalidate, and applies HSTS plus the safe security headers. Do not add a CSP, Rocket Loader, Auto Minify, or broad zone-level cache configuration without a separate compatibility audit for inline scripts, Mermaid, and KaTeX.
 
 The normal release flow is GitHub Actions:
 
