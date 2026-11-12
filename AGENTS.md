@@ -13,6 +13,7 @@ notes/               — Scratch notes for drafting posts (gitignored, not rende
                        When asked to save/take notes for a blog post, write them here
                        Naming: kebab-case topic slug (e.g., tdd-qa-advanced-tooling.md)
                        Ticket prefix optional (e.g., sira-110-tdd-qa-advanced-tooling.md)
+notes/gists/         - Neutralized copies of scripts and agent skills staged for public gists (gitignored)
 archive/ppl/part-a/  — Archived Part A evidence-text drafts (NOT rendered by Hugo)
 static/images/             — Original images (referenced as /images/filename.png in markdown)
 static/images/compressed/  — Auto-generated WebP versions (served by Hugo render hooks)
@@ -77,6 +78,19 @@ Post content here in standard Markdown.
 | `password_hash` | No | SHA-256 hex digest of post password. Shows a client-side password prompt; cached in localStorage per post slug |
 | `social_image` | No | Absolute URL or site-relative image path that replaces the generated social preview card for this page |
 
+### Code, Scripts, and Gists
+
+Short snippets go inline in fenced code blocks. Anything a reader would copy whole (a script, an agent skill, a small server) goes into a **public GitHub gist**, one gist per piece, linked from the post with reference-style links (`[name][gist-name]`). Stage the files in `notes/gists/` first.
+
+Neutralize every gist and every snippet before publishing:
+
+- Use placeholder hosts (`jellyfin.example.com`), generic paths (`/srv/media`), and generic user names. No real hostnames, IPs, account names, tokens, or key file contents.
+- Mark every value the reader must supply with a `FILL IN` comment in scripts, and with `[FILL ... HERE]` in agent skills and markdown.
+- Scan the files for names, hostnames, IPs, emails, and tokens before creating the gist, and compile or test what can be tested.
+- Gists are flat (no folders). Add a `README.md` that explains the layout and setup order, for example how to recreate a package directory.
+
+With `gh` (it needs the `gist` scope): `gh gist create --public -d "description" README.md file1 file2`, update one file with `gh gist edit <id> -f <name> <path>`, and confirm what was uploaded with `gh api gists/<id> --jq '.files | keys'`. If your shell aliases `ls`, expand file lists with a glob or `command ls -1`, because a decorated listing uploads only the README.
+
 ### Social Preview Cards
 
 Every public page receives an automatically generated 1200 by 630 PNG social preview card at build time. Hugo emits its URL through Open Graph and Twitter Card metadata. The card uses the light Solarized theme, the exact `~/abhipraya` header treatment from `.smallcap a`, the post date at the top right, page title, description, and `blog.abhipraya.dev` footer. Public regular posts select up to three local Markdown images, `figure` images, or Mermaid diagrams in body order for a bordered, tilted right-side visual rail. Three visuals use 16:9 crops, two use 4:3, one uses a square crop, and no eligible visual keeps the text full-width. Image crops prefer top for portrait sources, left for landscape sources, and center for square sources. Remote and failed sources are skipped with a build warning. The visual rail always reserves the right quarter, so title and description must remain in the left three quarters.
@@ -129,6 +143,21 @@ magick a.png b.png c.png -resize x520 -background '#0b0e11' -splice 16x0 +append
 ```
 
 Use `+append` (with `-splice`/`-chop`/`-border` for even gaps and padding all around). Avoid `montage`, which needs a font config that may be missing and errors out.
+
+### Screenshots and Redaction
+
+Capture screenshots at full resolution and keep the original capture outside the repo. Redact inside the image with a **pixel mosaic** (blocky pixelation), not a solid box and not a Gaussian blur. Only hide what is actually sensitive: real hostnames and URLs, the server's public IP, credentials and mail settings, usernames in login fields, tokens, and API keys. Do not hide harmless context such as an agent's contact name in a chat, movie titles in a media app, or a torrent client's torrent list.
+
+Retina captures are 2x (a 1280 px wide view is a 2560 px PNG), so scale coordinates by 2. Pixelate a region with ImageMagick by shrinking it and scaling it back up (about 22 px blocks):
+
+```bash
+# region x1,y1 to x2,y2 on the 2x capture
+w=$((x2-x1)); h=$((y2-y1))
+magick in.png \( +clone -crop ${w}x${h}+${x1}+${y1} +repage -scale $((w/22))x$((h/22))! -scale ${w}x${h}! \) \
+  -geometry +${x1}+${y1} -composite out.png
+```
+
+Open the result and check that the redacted text is unreadable before committing. After regenerating an image, hard refresh (`Cmd+Shift+R`) because the browser caches the old one. Never capture a page section that holds a secret in plain text (client secrets, API keys) at all.
 
 ### Automatic WebP Compression
 
@@ -257,6 +286,19 @@ hugo server          # Dev server with LiveReload
 hugo                 # Production build → public/
 ```
 
+### Previewing on a Phone
+
+To open a draft on a phone, run Hugo with the public base URL and start the Cloudflare tunnel with the `cf` shell function (it points `~/.cloudflared/config.yml` at a port and runs `cloudflared tunnel run my-tunnel`):
+
+```bash
+hugo server --port 1313 --bind 127.0.0.1 --baseURL https://mac.abhipraya.dev --appendPort=false --disableLiveReload
+cf 1313
+```
+
+Anyone with the URL can read the draft while the tunnel runs, so stop it when you are done: stop `cloudflared`, then restart `hugo server --port 1313` without `--baseURL` so links and images resolve on `http://localhost:1313`. `cf` leaves the tunnel config on the last port, so the next `cf <port>` resets it.
+
+`npm run check:mermaid` needs a local Chrome (`npx puppeteer browsers install chrome`). Without it the check fails locally with "Could not find Chrome"; CI still runs it in `Verify`.
+
 ### Known Dev Issues
 
 **CSS disappears on hot reload** — Fixed by skipping CSS fingerprinting during `hugo server` (only fingerprints in production builds). If CSS still breaks, hard refresh (`Cmd+Shift+R`).
@@ -293,6 +335,16 @@ Cloudflare Web Analytics is enabled for `blog.abhipraya.dev` through the first-p
 
 The former Vercel project, configuration, and Git integration were intentionally removed on 2026-07-30. There is no rollback service to preserve. Do not recreate Vercel configuration unless a future migration is explicitly approved.
 
+## Publishing a Post
+
+`main` only takes pull requests, so a new post follows this flow:
+
+1. Branch from the current remote main: `git switch -c <branch> origin/main`.
+2. Commit the post and its images. The pre-commit hook adds the WebP copies to the same commit. Use a capitalized imperative commit message (see below), and push with `git push -u origin <branch>`.
+3. Open a real (non-draft) PR. Describe the problem the post solves, then the post, and end with the model and harness that wrote it.
+4. Wait for `Verify` and for CodeRabbit. Treat each CodeRabbit comment as a claim: check it against the post, the code it links, and the running system, fix the valid ones, and reply with the commit SHA before resolving the thread. A comment about a linked gist means fixing the gist, not only the post. Reply text must avoid double quotes if it goes through the review helper script.
+5. Squash merge (`gh pr merge --squash --delete-branch`) once `Verify` passes and no thread is open, then confirm the production deploy on `main` finished and the live URL returns 200.
+
 ## Commit Messages
 
 Use **capitalized imperative sentences** with no prefix/scope. Start with a verb.
@@ -313,6 +365,8 @@ When writing blog post content:
 - **No em dashes** (`—`). Use a regular hyphen (`-`), comma, or restructure the sentence instead.
 - **No emoji**. None. Not in titles, not in body text, not anywhere.
 - **Humanized, conversational voice.** Write like a person talking, not a report. Avoid AI tells: formal openers ("It is important to note", "What matters is"), abstract concluders ("Ultimately", "In conclusion"), and hedge phrases. Be concrete and specific over generic.
+- **Run a humanizer pass before the PR.** Edit the finished post once for AI tells (staged contrasts, one-line closers, decorative bold, triads) without touching code blocks, commands, links, or front matter. Headings stay Title Case to match the other posts.
+- **Name the agent plainly.** The agent is Yanto on Hermes Agent and is already public on this blog, so he can be named. Real hostnames, IPs, and account names still never appear.
 - **On-ramp then depth** (technical posts). Lead each technical beat with one plain-English sentence (what it is, why it matters) before the detail, so a non-technical reader stays with you and a technical reader still gets the substance.
 
 ## Privacy: Before Publishing a Personal Post
@@ -323,7 +377,7 @@ Posts here go out under a real-name byline, so nothing in them is anonymous. Bef
 - Real names of non-public people (partner, friends, clients). Generalize to roles instead.
 - Internal hostnames, URLs, or reachable endpoints (attack surface).
 - Financial holdings, positions, or account identifiers.
-- **Screenshots**: check for usernames, phone numbers, IDs, message text, and dashboard session previews. Redact inside the image, the alt text and caption do not hide pixels.
+- **Screenshots**: check for usernames, phone numbers, IDs, message text, and dashboard session previews. Redact inside the image with a pixel mosaic (see Screenshots and Redaction), the alt text and caption do not hide pixels. Do not over-redact: contact names of agents, media titles, and torrent lists are fine.
 
 ## Do NOT
 
