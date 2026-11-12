@@ -359,31 +359,16 @@
         })();
     </script>
     {{ if .Page.Store.Get "hasMermaid" }}
+    {{ $sketch := resources.Get "js/mermaid-sketch.js" }}
+    {{ if not hugo.IsServer }}{{ $sketch = $sketch | fingerprint }}{{ end }}
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.esm.min.mjs';
+        import elkLayouts from 'https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.2/dist/mermaid-layout-elk.esm.min.mjs';
+        import rough from 'https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.esm.js';
+        import { colorMix, cssVar, loadSketchFont, sketchTheme, sketchPass } from '{{ $sketch.RelPermalink }}';
 
+        mermaid.registerLayoutLoaders(elkLayouts);
         var root = document.documentElement;
-        function hexToRgb(hex) {
-            var h = hex.replace('#', '');
-            return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)];
-        }
-        function rgbToHex(r, g, b) {
-            return '#' + [r,g,b].map(function(c) {
-                var x = Math.round(Math.max(0, Math.min(255, c))).toString(16);
-                return x.length === 1 ? '0' + x : x;
-            }).join('');
-        }
-        function colorMix(fgHex, bgHex, pct) {
-            var fg = hexToRgb(fgHex), bg = hexToRgb(bgHex), t = pct / 100;
-            return rgbToHex(fg[0]*t + bg[0]*(1-t), fg[1]*t + bg[1]*(1-t), fg[2]*t + bg[2]*(1-t));
-        }
-        function cssVar(name, fallback) {
-            var value = getComputedStyle(root).getPropertyValue(name).trim();
-            if (!value) return fallback;
-            var m = value.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
-            if (m) return rgbToHex(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]));
-            return value;
-        }
         function buildThemeVars(isDark) {
             var bg     = cssVar('--mermaid-bg',     isDark ? '#002b36' : '#fdf6e3');
             var fg     = cssVar('--mermaid-fg',     isDark ? '#839496' : '#657b83');
@@ -468,29 +453,62 @@
         }
 
         var isDark = root.classList.contains('dark-theme');
+        var pres = Array.prototype.slice.call(document.querySelectorAll('pre.mermaid'));
         var originals = {};
-        document.querySelectorAll('pre.mermaid').forEach(function(el, i) {
-            originals[i] = el.textContent;
+        pres.forEach(function(el, i) {
+            originals[i] = el.innerHTML; // innerHTML, not textContent: textContent drops the <br> line breaks in labels
             el.setAttribute('data-idx', i);
         });
+        function restore(el) {
+            var idx = el.getAttribute('data-idx');
+            if (idx !== null && originals[idx] !== undefined) {
+                el.removeAttribute('data-processed');
+                el.innerHTML = originals[idx];
+            }
+        }
+        // Diagrams are themed through the Shantell Sans font-family set in the Mermaid config.
+        function themed(el) {
+            var svg = el.querySelector('svg');
+            return !svg || getComputedStyle(svg).fontFamily.indexOf('Shantell') !== -1;
+        }
 
-        mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: buildThemeVars(isDark), htmlLabels: true });
-        await mermaid.run();
+        async function configure(dark) {
+            await loadSketchFont();
+            var sketch = sketchTheme(dark);
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: 'base',
+                htmlLabels: true,
+                layout: 'elk',
+                themeVariables: Object.assign(buildThemeVars(dark), sketch.themeVariables),
+                themeCSS: sketch.themeCSS,
+                elk: sketch.elk
+            });
+        }
+        async function renderAll(dark) {
+            await mermaid.run();
+            // The first ELK render loads the engine and can come out unthemed: re-render only those diagrams.
+            var stale = pres.filter(function(el) { return !themed(el); });
+            if (stale.length) {
+                stale.forEach(restore);
+                await mermaid.run({ nodes: stale });
+            }
+            var bgHex = cssVar('--mermaid-bg', dark ? '#002b36' : '#fdf6e3');
+            var fgHex = cssVar('--mermaid-fg', dark ? '#839496' : '#657b83');
+            pres.forEach(function(el) { sketchPass(el, { rough: rough, bgHex: bgHex, fgHex: fgHex }); });
+        }
+
+        await configure(isDark);
+        await renderAll(isDark);
         attachDiagramClicks();
 
         var toggle = document.getElementById('dark-mode-toggle');
         if (toggle) {
             toggle.addEventListener('change', async function() {
                 var nowDark = document.documentElement.classList.contains('dark-theme');
-                document.querySelectorAll('pre.mermaid').forEach(function(el) {
-                    var idx = el.getAttribute('data-idx');
-                    if (idx !== null && originals[idx]) {
-                        el.removeAttribute('data-processed');
-                        el.innerHTML = originals[idx];
-                    }
-                });
-                mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: buildThemeVars(nowDark), htmlLabels: true });
-                await mermaid.run();
+                pres.forEach(restore);
+                await configure(nowDark);
+                await renderAll(nowDark);
                 attachDiagramClicks();
             });
         }

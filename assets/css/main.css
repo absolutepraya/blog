@@ -31,6 +31,21 @@
   font-display: swap;
   src: url('/fonts/ubuntu-mono-700.woff2') format('woff2');
 }
+/* Diagram labels only (Mermaid sketch look). Latin subset, SIL OFL: see /fonts/shantell-sans-OFL.txt */
+@font-face {
+  font-family: 'Shantell Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/shantell-sans-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Shantell Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/shantell-sans-700.woff2') format('woff2');
+}
 
 /* --- Variables --- */
 :root {

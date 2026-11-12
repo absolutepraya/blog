@@ -77,6 +77,7 @@ graph TD
         L2["2. SOUL.md<br>voice, persona, refusal patterns"]
         L3["3. USER.md<br>about the owner"]
         L4["4. Per-guest notes<br>identity, permission flow"]
+        L1 ~~~ L2 ~~~ L3 ~~~ L4
     end
 
     Msg --> Stack
