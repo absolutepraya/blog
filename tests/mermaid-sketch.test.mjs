@@ -2,11 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   FONT_FAMILY,
+  KEPT_CLASSES,
   ROLE_VARS,
   colorMix,
   contrastRatio,
   hexToRgb,
   rgbToHex,
+  roundedRectPath,
+  sketchClassName,
   sketchTheme,
 } from '../assets/js/mermaid-sketch.js';
 
@@ -55,4 +58,23 @@ test('sketchTheme tints every role and keeps the rules off the rough.js paths', 
   assert.equal(themeVariables.xyChart.backgroundColor, '#fdf6e3');
   assert.equal(themeVariables.xyChart.plotColorPalette.split(',').length, 8);
   assert.deepEqual(elk, { cycleBreakingStrategy: 'DEPTH_FIRST' });
+});
+
+test('roundedRectPath traces four arcs and clamps the radius to the box', () => {
+  const path = roundedRectPath(10, 20, 100, 40, 5, 5);
+  assert.ok(path.startsWith('M15,20'), 'starts after the top-left corner');
+  assert.equal((path.match(/A/g) || []).length, 4);
+  assert.ok(path.endsWith('Z'));
+  // A radius larger than half the box collapses to a stadium instead of overshooting.
+  assert.ok(roundedRectPath(0, 0, 100, 20, 50, 50).includes('A50,10'));
+  // A lone rx or ry applies to both axes, as in SVG.
+  assert.ok(roundedRectPath(0, 0, 100, 40, 6, 0).includes('A6,6'));
+});
+
+test('sketchClassName keeps the classes that drive pie highlighting and drops the rest', () => {
+  assert.deepEqual(KEPT_CLASSES, ['pieCircle', 'highlighted', 'highlightedOnHover']);
+  assert.equal(sketchClassName('pieCircle highlighted'), 'sketch pieCircle highlighted');
+  assert.equal(sketchClassName('pieCircle highlightedOnHover'), 'sketch pieCircle highlightedOnHover');
+  assert.equal(sketchClassName('basic label-container'), 'sketch');
+  assert.equal(sketchClassName(null), 'sketch');
 });

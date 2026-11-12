@@ -139,6 +139,32 @@ const SKIP = 'defs, marker, clipPath, mask, pattern, foreignObject, symbol, line
 const STYLE = { roughness: 0.9, bowing: 0.9, strokeMin: 1.4, soften: 80 };
 const MIN_STROKE_CONTRAST = 2.4;
 
+// Mermaid draws rounded nodes (`(text)`, state nodes) and sequence actors as <rect rx ry>. rough.js
+// rectangles have square corners, so those are redrawn as a rounded path to keep the shape.
+export function roundedRectPath(x, y, w, h, rx, ry) {
+    let rX = rx > 0 ? rx : ry;
+    let rY = ry > 0 ? ry : rx;
+    rX = Math.min(rX, w / 2);
+    rY = Math.min(rY, h / 2);
+    return [
+        `M${x + rX},${y}`,
+        `H${x + w - rX}`, `A${rX},${rY} 0 0 1 ${x + w},${y + rY}`,
+        `V${y + h - rY}`, `A${rX},${rY} 0 0 1 ${x + w - rX},${y + h}`,
+        `H${x + rX}`, `A${rX},${rY} 0 0 1 ${x},${y + h - rY}`,
+        `V${y + rY}`, `A${rX},${rY} 0 0 1 ${x + rX},${y}`,
+        'Z',
+    ].join(' ');
+}
+
+// Classes Mermaid's CSS keys behavior on, kept on the replacement group: pie slices use them for the
+// configured highlight and hover highlight, and `.pieCircle` carries the slice opacity.
+export const KEPT_CLASSES = ['pieCircle', 'highlighted', 'highlightedOnHover'];
+
+export function sketchClassName(originalClass) {
+    const kept = (originalClass || '').split(/\s+/).filter((c) => KEPT_CLASSES.includes(c));
+    return ['sketch', ...kept].join(' ');
+}
+
 function parseRgb(value) {
     const m = value && value.match(/rgba?\(([^)]+)\)/);
     if (!m) return null;
@@ -212,7 +238,13 @@ export function sketchPass(root, { rough, bgHex, fgHex }) {
             const n = (k) => parseFloat(el.getAttribute(k)) || 0;
             let node;
             try {
-                if (tag === 'rect') node = rc.rectangle(n('x'), n('y'), n('width'), n('height'), opts);
+                if (tag === 'rect') {
+                    const rx = n('rx');
+                    const ry = n('ry');
+                    node = rx > 0 || ry > 0
+                        ? rc.path(roundedRectPath(n('x'), n('y'), n('width'), n('height'), rx, ry), opts)
+                        : rc.rectangle(n('x'), n('y'), n('width'), n('height'), opts);
+                }
                 else if (tag === 'circle') node = rc.circle(n('cx'), n('cy'), n('r') * 2, opts);
                 else if (tag === 'ellipse') node = rc.ellipse(n('cx'), n('cy'), n('rx') * 2, n('ry') * 2, opts);
                 else if (tag === 'line') node = rc.line(n('x1'), n('y1'), n('x2'), n('y2'), opts);
@@ -226,7 +258,7 @@ export function sketchPass(root, { rough, bgHex, fgHex }) {
                 return; // leave the original shape in place
             }
             if (!node) return;
-            node.setAttribute('class', 'sketch');
+            node.setAttribute('class', sketchClassName(el.getAttribute('class')));
             node.setAttribute('stroke-linecap', 'round');
             node.setAttribute('stroke-linejoin', 'round');
             ['transform', 'opacity'].forEach((a) => { if (el.getAttribute(a)) node.setAttribute(a, el.getAttribute(a)); });

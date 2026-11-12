@@ -2,7 +2,7 @@
   "name": "blog",
   "private": true,
   "engines": {
-    "node": ">=22 <27"
+    "node": ">=22.7 <27"
   },
   "scripts": {
     "build": "node scripts/generate-social-cards.mjs && hugo --minify",
