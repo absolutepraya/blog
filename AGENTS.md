@@ -331,6 +331,8 @@ The normal release flow is GitHub Actions:
 
 Use scoped Cloudflare API tokens, never a Global API key. `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_PREVIEW_API_TOKEN` are repository secrets for previews; `CLOUDFLARE_PRODUCTION_API_TOKEN` belongs only in the `Production` environment. Never print, commit, or include these values in a pull request. Do not grant Cloudflare credentials to fork workflows.
 
+`static/robots.txt` allows all crawlers and declares `Content-Signal: search=yes, ai-input=yes`; `ai-train` is deliberately omitted, which neither grants nor restricts it. Cloudflare Bot Fight Mode, AI-bot blocking, and managed robots.txt are off for the zone, so this file is the only crawler policy.
+
 Cloudflare Web Analytics is enabled for `blog.abhipraya.dev` through the first-party beacon in `layouts/_default/baseof.html`. The Worker custom domain is not a Cloudflare zone website, so Cloudflare requires its manual snippet rather than automatic setup. The hostname guard must remain exact: `blog.abhipraya.dev` loads the beacon, while `workers.dev` preview URLs do not. Do not add third-party analytics or another beacon. After a change, verify the production page requests the beacon and confirm dashboard data for visitors, page views, referrers, page-load data, and Core Web Vitals.
 
 The former Vercel project, configuration, and Git integration were intentionally removed on 2026-07-30. There is no rollback service to preserve. Do not recreate Vercel configuration unless a future migration is explicitly approved.
