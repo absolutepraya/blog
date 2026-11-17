@@ -12,7 +12,8 @@ export default {
         assetUrl.pathname = assetPath;
         assetUrl.search = '';
         const asset = await env.ASSETS.fetch(new Request(assetUrl, { method: 'GET' }));
-        if (asset.ok) {
+        const isHtml = asset.headers.get('content-type')?.includes('text/html');
+        if (asset.ok && !isHtml) {
           const text = await asset.text();
           const headers = new Headers(asset.headers);
           headers.set('Content-Type', 'text/markdown; charset=utf-8');
