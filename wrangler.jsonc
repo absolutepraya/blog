@@ -3,6 +3,7 @@
   "name": "abhipraya-blog",
   "account_id": "40ffe81c2b657eebc19edd8558b5f5ba",
   "compatibility_date": "2026-07-28",
+  "main": "worker/index.js",
   "workers_dev": true,
   "routes": [
     {
@@ -11,7 +12,9 @@
     }
   ],
   "assets": {
+    "binding": "ASSETS",
     "directory": "./public",
+    "run_worker_first": ["/*", "!/css/*", "!/js/*", "!/fonts/*", "!/images/*", "!/social/*"],
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
   },

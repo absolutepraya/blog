@@ -82,6 +82,7 @@ async function assertResponse(pathname, expectedStatus, expectedContentType) {
 
 await Promise.all([
   requireFile('public/index.html'),
+  requireFile('public/index.md'),
   requireFile('public/index.xml'),
   requireFile('public/feed.json'),
   requireFile('public/sitemap.xml'),
@@ -123,6 +124,17 @@ for (const item of portfolioPosts) {
   const html = await article.text();
   assert(html.includes(item.image), 'Portfolio image differs from article metadata');
 }
+const markdownHome = await request('/', { headers: { accept: 'text/markdown' } });
+assert(markdownHome.status === 200, `/ returned ${markdownHome.status} for Accept: text/markdown, expected 200`);
+assert(markdownHome.headers.get('content-type')?.includes('text/markdown'), 'Markdown negotiation did not return text/markdown');
+assert(markdownHome.headers.get('vary')?.toLowerCase().includes('accept'), 'Markdown response is missing Vary: Accept');
+assert(Number(markdownHome.headers.get('x-markdown-tokens')) > 0, 'Markdown response is missing x-markdown-tokens');
+assert((await markdownHome.text()).startsWith('# '), 'Markdown home does not start with a heading');
+const markdownPost = await request('/posts/agents-dev-setup-on-macbook/', { headers: { accept: 'text/markdown' } });
+assert(markdownPost.headers.get('content-type')?.includes('text/markdown'), 'Post did not negotiate to markdown');
+const browserHome = await request('/', { headers: { accept: 'text/html,application/xhtml+xml,*/*;q=0.8' } });
+assert(browserHome.headers.get('content-type')?.includes('text/html'), 'Browser Accept header no longer returns HTML');
+
 const sitemap = await assertResponse('/sitemap.xml', 200, 'application/xml');
 const robots = await assertResponse('/robots.txt', 200, 'text/plain');
 const font = await assertResponse('/fonts/ubuntu-400.woff2', 200, 'font/woff2');

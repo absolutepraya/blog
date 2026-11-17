@@ -26,6 +26,9 @@ layouts/shortcodes/figure.html — Custom figure shortcode with WebP support
 scripts/convert-images.sh  — Image-to-WebP conversion script
 .githooks/pre-commit       — Auto-converts staged images to WebP on commit
 hugo.toml                  — Hugo config
+worker/                    — Cloudflare Worker in front of the static assets (Markdown content negotiation)
+layouts/_default/single.md — Markdown twin of every page (served as /<page>/index.md)
+layouts/index.md           — Markdown twin of the home page
 static/fonts/              — Self-hosted Ubuntu/Ubuntu Mono woff2 fonts, plus Shantell Sans (diagram labels, SIL OFL)
 ```
 
@@ -309,14 +312,14 @@ Anyone with the URL can read the draft while the tunnel runs, so stop it when yo
 
 ```bash
 npm run build        # Generates social preview cards, then creates the minified production build
-npm run check        # Runs the social-card, feed, and Mermaid tests, the Mermaid render check, and the production build
+npm run check        # Runs the social-card, feed, Markdown negotiation, and Mermaid tests, the Mermaid render check, and the production build
 npm run check:mermaid # Renders every Mermaid block under content/ and fails with file:line on any error
 npm run preview      # Serves Worker Assets locally after a production build
 npm run deploy:preview
 npm run smoke:deployment -- https://example.workers.dev
 ```
 
-Output goes to `public/`. Cloudflare Worker Assets serves this complete static directory with automatic trailing-slash handling and Hugo's `404.html` page. There is no application Worker code or server runtime. `wrangler.jsonc` owns the Worker name (`abhipraya-blog`), production custom domain (`blog.abhipraya.dev`), static-assets routing, and the preview environment. Do not edit deployment behavior in the Cloudflare dashboard when it can be represented in this file.
+Output goes to `public/`. Cloudflare Worker Assets serves this complete static directory with automatic trailing-slash handling and Hugo's `404.html` page. The only Worker code is `worker/index.js`, a thin wrapper that serves the static assets and answers `Accept: text/markdown` (see Markdown for Agents below); there is no server runtime. `wrangler.jsonc` owns the Worker name (`abhipraya-blog`), production custom domain (`blog.abhipraya.dev`), static-assets routing, and the preview environment. Do not edit deployment behavior in the Cloudflare dashboard when it can be represented in this file.
 
 `wrangler.jsonc`, `static/_headers`, `.github/workflows/deploy-cloudflare.yml`, and `scripts/smoke-cloudflare-deployment.mjs` are the versioned deployment contract. Keep them aligned. `static/_headers` defaults mutable content to revalidation, makes CSS, JS, and fonts immutable for one year, caches images for one week with one day of stale-while-revalidate, and applies HSTS plus the safe security headers. Do not add a CSP, Rocket Loader, Auto Minify, or broad zone-level cache configuration without a separate compatibility audit for inline scripts, Mermaid, and KaTeX.
 
@@ -332,6 +335,16 @@ The normal release flow is GitHub Actions:
 Use scoped Cloudflare API tokens, never a Global API key. `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_PREVIEW_API_TOKEN` are repository secrets for previews; `CLOUDFLARE_PRODUCTION_API_TOKEN` belongs only in the `Production` environment. Never print, commit, or include these values in a pull request. Do not grant Cloudflare credentials to fork workflows.
 
 `static/robots.txt` allows all crawlers and declares `Content-Signal: search=yes, ai-input=yes`; `ai-train` is deliberately omitted, which neither grants nor restricts it. Cloudflare Bot Fight Mode, AI-bot blocking, and managed robots.txt are off for the zone, so this file is the only crawler policy.
+
+## Markdown for Agents
+
+A request with `Accept: text/markdown` gets a Markdown version of the page, with `Content-Type: text/markdown`, `Vary: Accept` and an approximate `x-markdown-tokens` count. Browsers and `*/*` clients still get HTML. The zone is on the Cloudflare Free plan, which does not include Cloudflare's own Markdown for Agents feature, so this is done in the repo instead.
+
+- Hugo emits an `index.md` next to every page through the `Markdown` output format in `hugo.toml`. `layouts/_default/single.md` builds it from the page's raw Markdown: front matter fields become a short header, `figure` shortcodes become Markdown images, `ref` shortcodes become absolute links, and any other shortcode is dropped. Add a rule to `single.md` when a post uses a new shortcode.
+- Password-protected posts (`password_hash`) emit only a stub, so their body never appears as plain Markdown.
+- `worker/index.js` runs first for page routes (`run_worker_first` in `wrangler.jsonc` skips `/css`, `/js`, `/fonts`, `/images` and `/social`) and maps `/posts/x/` to `/posts/x/index.md`. The matching logic lives in `worker/negotiate.js` and is covered by `npm run test:markdown`.
+- Worker requests count against the free plan's 100,000 daily invocations, which is far above this site's traffic.
+- `scripts/smoke-cloudflare-deployment.mjs` checks the negotiation on every preview and production deploy.
 
 Cloudflare Web Analytics is enabled for `blog.abhipraya.dev` through the first-party beacon in `layouts/_default/baseof.html`. The Worker custom domain is not a Cloudflare zone website, so Cloudflare requires its manual snippet rather than automatic setup. The hostname guard must remain exact: `blog.abhipraya.dev` loads the beacon, while `workers.dev` preview URLs do not. Do not add third-party analytics or another beacon. After a change, verify the production page requests the beacon and confirm dashboard data for visitors, page views, referrers, page-load data, and Core Web Vitals.
 

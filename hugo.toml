@@ -54,5 +54,12 @@ weight = 2
   isPlainText = true
   notAlternative = true
 
+[outputFormats.Markdown]
+  mediaType = "text/markdown"
+  baseName = "index"
+  isPlainText = true
+  notAlternative = true
+
 [outputs]
-  home = ["HTML", "RSS", "PortfolioFeed"]
+  home = ["HTML", "RSS", "PortfolioFeed", "Markdown"]
+  page = ["HTML", "Markdown"]
