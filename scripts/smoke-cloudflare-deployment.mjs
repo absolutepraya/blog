@@ -103,7 +103,12 @@ const home = await assertResponse('/', 200, 'text/html');
 const canonical = home.text ? await home.text() : '';
 assert(canonical.includes('rel=canonical href=https://blog.abhipraya.dev/'), 'Home canonical URL is incorrect');
 
-const aboutRedirect = await request('/about');
+// A freshly deployed Worker can answer 404 for a few seconds, so retry until the redirect appears.
+let aboutRedirect = await request('/about');
+for (let attempt = 1; attempt < deploymentAttempts && ![301, 302, 307, 308].includes(aboutRedirect.status); attempt += 1) {
+  await new Promise((resolve) => setTimeout(resolve, 2_000));
+  aboutRedirect = await request('/about');
+}
 assert([301, 302, 307, 308].includes(aboutRedirect.status), `/about returned ${aboutRedirect.status}, expected a redirect`);
 assert(new URL(aboutRedirect.headers.get('location'), baseUrl).pathname === '/about/', '/about does not redirect to /about/');
 
