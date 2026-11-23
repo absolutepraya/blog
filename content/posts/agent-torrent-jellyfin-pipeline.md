@@ -190,9 +190,11 @@ One rule: hard links only work inside a single filesystem, so the Jellyfin folde
 
 Hooks fail. The server is busy, a script crashes, a link gets deleted. So there is a second small script, `reconcile.py`, that a systemd timer runs every five minutes. It asks qBittorrent which torrents finished and checks that their links still exist. By default it only reports a missing link (so a link I removed on purpose does not silently come back), and `--repair` relinks. Create an `enabled-at` timestamp file once, so it ignores torrents that finished before you turned all this on.
 
+There is a third small piece, and I only added it after it bit me. Jellyfin normally spots new links through its real-time file watcher, and my first series download never showed up: the show and season folders were brand new, the watcher missed them, and nothing in my setup told Jellyfin to look. The hook only creates links. So a timer on the host (not inside the qBittorrent container) now runs `notify.py` every minute. For each handoff it has not announced yet, it tells Jellyfin to refresh that one show or movie folder, and it only marks the handoff as announced once Jellyfin accepts the notice, so a failure just retries. It uses its own Jellyfin API key, kept on the host, because the scripts folder is mounted into the qBittorrent container and I did not want a Jellyfin key sitting in there.
+
 `reconcile.py` and the removal script talk to qBittorrent's Web UI API on localhost without a login, and they run inside the qBittorrent container. For that to work, tick "Bypass authentication for clients on localhost" under Options, Web UI, or add credentials to the scripts yourself. The bypass has a cost: anything that can reach that port from the same machine can control qBittorrent, which is why the web UI port stays bound to `127.0.0.1`.
 
-The complete scripts, with every value you need to change marked `FILL IN`, are in a gist: [handoff scripts][gist-handoff].
+The complete scripts, including the notifier and its timer, with every value you need to change marked `FILL IN`, are in a gist: [handoff scripts][gist-handoff].
 
 ## Step 4: Libraries and Metadata
 
@@ -273,15 +275,16 @@ Streamyfin was my pick over Infuse (great, but the good features are paid), Swif
 
 Everything so far kicks in the moment a download lands in qBittorrent. The last step is not having to go and find that download yourself.
 
-My agent, Yanto, runs on the same server (I wrote about him in [Meet My Friend Who Lives on My VPS](/posts/meet-my-friend-who-lives-on-my-vps/)). He is built on [Hermes Agent](https://hermes-agent.nousresearch.com/), which lets you teach an agent new abilities with skills: a markdown file of instructions, plus optional helper scripts. I wrote three.
+My agent, Yanto, runs on the same server (I wrote about him in [Meet My Friend Who Lives on My VPS](/posts/meet-my-friend-who-lives-on-my-vps/)). He is built on [Hermes Agent](https://hermes-agent.nousresearch.com/), which lets you teach an agent new abilities with skills: a markdown file of instructions, plus optional helper scripts. I wrote four.
 
 - `/nyaa` for anime. It searches Nyaa, and for a season it opens the actual torrent's file list to check that all episodes are there, instead of trusting the title. It checks the info hash, whether I already have it, and that there is enough free disk space (it keeps a reserve). My preference is baked in: 1080p or better, and about 20 GiB or less for a 10 to 15 episode season, but only as a guide. It always shows a short list first with size, seeders and subtitle info, and only adds what I choose.
-- `/yts` for movies. Same flow against YTS, reusing the same safe "add to qBittorrent" helper.
+- `/yts` for movies. Same flow against YTS, reusing the same safe "add to qBittorrent" helper. YTS only has movies, which I found out when I asked it for a series and it offered me an unrelated 1985 film with a similar name.
+- `/knaben` for TV series. Nyaa is really for anime, so I needed another source. I tried The Pirate Bay's own API (it returned nothing half the time from my VPS), EZTV (nothing for older shows), and 1337x and TorrentGalaxy (blocked). [Knaben](https://knaben.org/) is a search aggregator with a JSON API that pulls from The Pirate Bay, 1337x and others, and it answered every show I threw at it. Same flow again: shortlist first, I pick, it adds. Since most results come from sites where anyone can upload, it inspects the torrent's file list before adding, and that already paid off. The top-seeded "episode" for one show was a lone `.exe`, which the check rejected.
 - `/jellyfin` for browsing, scanning and cleanup. It uses a Jellyfin MCP server (a way to give an agent a set of tools) with its own API key.
 
 In chat I just write `/nyaa find the full season of <show>`, and reply "option 1 to qb". The skills know that "qb" means qBittorrent.
 
-The skill files are plain markdown, so the gists are easy to adapt even if you do not use Hermes. The unusual lines are marked `[FILL ... HERE]`: [nyaa skill][gist-nyaa], [yts skill][gist-yts], [jellyfin skill][gist-jellyfin].
+The skill files are plain markdown, so the gists are easy to adapt even if you do not use Hermes. The unusual lines are marked `[FILL ... HERE]`: [nyaa skill][gist-nyaa], [yts skill][gist-yts], [jellyfin skill][gist-jellyfin], and the [knaben skill][gist-knaben].
 
 ### Deleting is the hard part
 
@@ -324,6 +327,8 @@ I run them behind a private gateway with an access allowlist, which I described 
 - Anime metadata can leak into your movies, so scope that plugin to the anime libraries.
 - Jellyfin can report a subtitle as downloaded when nothing was saved. Read the item's subtitle list again to confirm.
 - An accepted torrent is not a finished download, and a finished download is not a Jellyfin item. Make the agent's skill check each stage before it says "done".
+- Jellyfin's file watcher can miss a brand new show folder, so the first episode of a new series may never appear. Have something tell Jellyfin about each handoff instead of hoping it notices.
+- A torrent with plenty of seeders can still be junk. Check the file list for executables and a plausible number of video files before you add it.
 - Seeding forever on hard links means disk space only comes back when you remove the torrent. Mine sits around 36 GB free of 160, so the agent checks free space before every add.
 
 ## What It Costs
@@ -339,6 +344,7 @@ The weak spot is that I still pick the release by reading a short list. I would 
 [gist-nyaa]: https://gist.github.com/absolutepraya/4f7a22712d87bd612a55d5208d1fe0cd
 [gist-yts]: https://gist.github.com/absolutepraya/08a392ed250f054e7785630b9b27081a
 [gist-jellyfin]: https://gist.github.com/absolutepraya/2d258db2e4ff9afa749e529aaad09131
+[gist-knaben]: https://gist.github.com/absolutepraya/3aa581cc4aec026fc1aeca4238ab15e7
 [gist-tracking]: https://gist.github.com/absolutepraya/fe3901b82f517752214dc0881aaa7ab5
 [gist-simkl]: https://gist.github.com/absolutepraya/05e2f790b6c68beb6948830a0479508a
 [gist-anilist]: https://gist.github.com/absolutepraya/40154eb5118c0e01399725396eb2d765
