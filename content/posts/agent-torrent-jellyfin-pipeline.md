@@ -194,9 +194,15 @@ There is a third small piece, and I only added it after it bit me. Jellyfin norm
 
 Two cases it deliberately does not cover. The first run records the handoffs that already exist without announcing them (so installing it does not rescan everything), which means a show Jellyfin missed before you installed it stays missing until you run one library scan by hand. And `reconcile.py --repair` re-creates links without changing what the notifier tracks, so after a repair, scan the library once as well.
 
+The notifier also tells me when something is ready. qBittorrent can send an email when a download finishes, but it is a plain line of text with the torrent's file name, and it arrives before Jellyfin has even seen the file. So I turned that off and let the notifier do it instead. Once Jellyfin has the movie (or every episode from that download) with its metadata, `finished_mail.py` builds an email from what Jellyfin and qBittorrent know and sends it through [Resend](https://resend.com): the backdrop as a banner, the poster next to the title, the tagline and summary, a button that opens the title in Jellyfin, then the director, cast and ratings, the episode list for a series, and the file details (quality, audio, subtitles, size, release name, and how long the download took).
+
+{{< figure src="/images/jellyfin-automation/finished-email-light-dark.png" alt="The same download-finished email for The Expendables in light and dark mode: a group-shot banner, the poster beside the title with year, rating and genres, the tagline and plot, a Watch in Jellyfin button, then About and File tables" caption="One email, two looks. It follows the light or dark setting of whatever device opens it." >}}
+
+Email HTML is its own small world. Layout is tables with inline styles, because many mail apps strip anything fancier, and the dark version is a media query that swaps the colors on apps that support one. The rest just keep the light design. If Jellyfin still has not listed a title after half an hour, it sends a short plain email naming the files instead, so a download never goes quiet. You can open [the example email](/examples/jellyfin-finished-email/) in your browser and flip your system theme to see both.
+
 `reconcile.py` and the removal script talk to qBittorrent's Web UI API on localhost without a login, and they run inside the qBittorrent container. For that to work, tick "Bypass authentication for clients on localhost" under Options, Web UI, or add credentials to the scripts yourself. The bypass has a cost: anything that can reach that port from the same machine can control qBittorrent, which is why the web UI port stays bound to `127.0.0.1`.
 
-The complete scripts, including the notifier and its timer, with every value you need to change marked `FILL IN`, are in a gist: [handoff scripts][gist-handoff].
+The complete scripts, including the notifier, the email and the timer, with every value you need to change marked `FILL IN`, are in a gist: [handoff scripts][gist-handoff].
 
 ## Step 4: Libraries and Metadata
 
@@ -330,6 +336,7 @@ I run them behind a private gateway with an access allowlist, which I described 
 - Jellyfin can report a subtitle as downloaded when nothing was saved. Read the item's subtitle list again to confirm.
 - An accepted torrent is not a finished download, and a finished download is not a Jellyfin item. Make the agent's skill check each stage before it says "done".
 - Jellyfin's file watcher can miss a brand new show folder, so the first episode of a new series may never appear. Have something tell Jellyfin about each handoff instead of hoping it notices.
+- A file's embedded track titles can be junk too. One movie's audio track was named "GPAC ISO Audio Handler", so the email builds that line from the codec and channels instead.
 - A torrent with plenty of seeders can still be junk. Check the file list for executables and a plausible number of video files before you add it.
 - Seeding forever on hard links means disk space only comes back when you remove the torrent. Mine sits around 36 GB free of 160, so the agent checks free space before every add.
 
